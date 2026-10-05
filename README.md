@@ -7,13 +7,27 @@ Conception : `docs/superpowers/specs/2026-10-05-lanceur-design.md`.
 
 ## Compiler et installer
 
-Téléphone branché en USB, débogage USB activé :
+La version de tous les jours est la **release**, signée avec ta propre clé. Téléphone branché (USB ou débogage sans fil) :
 
 ```bash
-JAVA_HOME=/opt/android-studio/jbr ./gradlew :app:installDebug
+JAVA_HOME=/opt/android-studio/jbr ./gradlew :app:assembleRelease
+~/Android/Sdk/platform-tools/adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
-Puis sur le téléphone : *Paramètres > Applis > Applis par défaut > Appli d'écran d'accueil > Lanceur*.
+`install -r` met à jour l'app en gardant favoris, applis cachées et rôle d'écran d'accueil.
+Au premier essai : *Paramètres > Applis > Applis par défaut > Appli d'écran d'accueil > Lanceur*.
+
+### Clé de signature
+
+- La clé est dans `~/.android/lanceur/release.jks` ; son mot de passe est dans `keystore.properties`, à la racine
+  du projet. Les deux sont exclus de git.
+- **Sauvegarde ces deux fichiers** (gestionnaire de mots de passe, disque externe). Sans eux, impossible de mettre
+  à jour l'app installée : il faudrait la désinstaller, ce qui efface ses réglages.
+
+### Version debug
+
+`installDebug` installe une app distincte, `app.lanceur.debug`, à côté de la release : elle sert au développement et
+aux tests d'interface, sans jamais toucher à la version que tu utilises.
 
 ## Tests
 
