@@ -83,4 +83,12 @@ class PrefsRepoTest {
         repo.prune(listOf(chrome))
         assertEquals(listOf(chrome.key), repo.prefs.first().favorites)
     }
+
+    @Test
+    fun unhiding_a_renamed_activity_unhides_the_whole_package() = runTest {
+        val repo = PrefsRepo(store())
+        repo.hide(chrome.key)
+        repo.unhide(chrome.key.copy(className = "app.chrome.Other"))
+        assertEquals(emptySet<Any>(), repo.prefs.first().hidden)
+    }
 }

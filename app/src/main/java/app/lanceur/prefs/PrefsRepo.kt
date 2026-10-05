@@ -30,7 +30,10 @@ class PrefsRepo(private val store: DataStore<Preferences>) {
     /** Cacher une appli la retire aussi des favoris. */
     suspend fun hide(key: AppKey) = update { it.copy(hidden = it.hidden + key, favorites = it.favorites - key) }
 
-    suspend fun unhide(key: AppKey) = update { it.copy(hidden = it.hidden - key) }
+    /** Démasque tout le paquet dans ce profil (voir `VisibleApps.packageInProfile`). */
+    suspend fun unhide(key: AppKey) = update { prefs ->
+        with(VisibleApps) { prefs.copy(hidden = prefs.hidden.filterNotTo(LinkedHashSet()) { it.packageInProfile() == key.packageInProfile() }) }
+    }
 
     suspend fun setAlphabetSide(side: AlphabetSide) = update { it.copy(alphabetSide = side) }
 
