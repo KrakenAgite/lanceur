@@ -13,4 +13,6 @@ data class LauncherPrefs(
     val widgetPageEnabled: Boolean = true,
     /** Dans l'ordre d'affichage sur la page de widgets. */
     val widgets: List<WidgetSlot> = emptyList(),
+    /** Données des widgets intégrés (note, tâches, réglages…), par identifiant. */
+    val widgetData: Map<Int, String> = emptyMap(),
 )

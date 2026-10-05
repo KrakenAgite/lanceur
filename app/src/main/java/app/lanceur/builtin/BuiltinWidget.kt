@@ -35,6 +35,8 @@ class BuiltinServices(
     val openBatterySettings: () -> Unit,
     val openPlayer: () -> Unit,
     val grantMediaAccess: () -> Unit,
+    val data: (Int) -> String? = { null },
+    val saveData: (Int, String) -> Unit = { _, _ -> },
     val refresh: Int,
 )
 

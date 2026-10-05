@@ -140,8 +140,12 @@ class LauncherViewModel(
         viewModelScope.launch { prefsRepo.addWidget(slot) }
     }
 
-    fun addBuiltinWidget(kind: BuiltinKind) {
-        viewModelScope.launch { prefsRepo.addBuiltinWidget(kind) }
+    fun addBuiltinWidget(kind: BuiltinKind, data: String? = null) {
+        viewModelScope.launch { prefsRepo.addBuiltinWidget(kind, data) }
+    }
+
+    fun setWidgetData(appWidgetId: Int, data: String) {
+        viewModelScope.launch { prefsRepo.setWidgetData(appWidgetId, data) }
     }
 
     fun removeWidget(appWidgetId: Int) {

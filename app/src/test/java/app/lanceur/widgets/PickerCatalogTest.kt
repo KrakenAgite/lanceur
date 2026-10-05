@@ -51,7 +51,7 @@ class PickerCatalogTest {
         val groups = PickerCatalog.build(all, emptySet(), "", app.lanceur.builtin.BuiltinSlots.pickerEntries())
         assertEquals(listOf("Lanceur", "Agenda", "Éditions", "Météo"), groups.map { it.appLabel })
         assertEquals(
-            listOf("Lecture en cours", "Agenda · mois", "Agenda · semaine", "Batterie · anneau", "Batterie · barre"),
+            app.lanceur.builtin.BuiltinKind.entries.map { it.label },
             groups.first().entries.map { it.widgetLabel },
         )
     }

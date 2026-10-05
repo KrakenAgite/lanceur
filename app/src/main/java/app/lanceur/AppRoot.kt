@@ -259,6 +259,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 container.appLauncher.startSafely(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             }
         },
+        data = { prefs.widgetData[it] },
+        saveData = vm::setWidgetData,
         refresh = widgetRefresh,
     )
     Box(Modifier.fillMaxSize()) {

@@ -11,6 +11,8 @@ enum class BuiltinKind(
     val emoji: String,
     private val heights: Map<WidgetSize, Int>,
     val defaultSize: WidgetSize,
+    /** Réglé par une feuille, à l'ajout et par ⚙ en mode édition. */
+    val configurable: Boolean = false,
 ) {
     NOW_PLAYING("Lecture en cours", "🎵", mapOf(SMALL to 120, MEDIUM to 200, LARGE to 300), MEDIUM),
     CALENDAR_MONTH("Agenda · mois", "📅", mapOf(SMALL to 300, MEDIUM to 400, LARGE to 520), MEDIUM),

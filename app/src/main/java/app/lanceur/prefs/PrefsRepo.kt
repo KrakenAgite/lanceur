@@ -62,12 +62,18 @@ class PrefsRepo(
     }
 
     /** L'identifiant est choisi dans la même transaction que l'ajout : deux ajouts rapides n'ont jamais le même. */
-    suspend fun addBuiltinWidget(kind: BuiltinKind) = update { prefs ->
-        prefs.copy(widgets = prefs.widgets + BuiltinSlots.create(kind, prefs.widgets))
+    suspend fun addBuiltinWidget(kind: BuiltinKind, data: String? = null) = update { prefs ->
+        val slot = BuiltinSlots.create(kind, prefs.widgets)
+        prefs.copy(
+            widgets = prefs.widgets + slot,
+            widgetData = if (data == null) prefs.widgetData else prefs.widgetData + (slot.appWidgetId to data),
+        )
     }
 
+    suspend fun setWidgetData(appWidgetId: Int, data: String) = update { it.copy(widgetData = it.widgetData + (appWidgetId to data)) }
+
     suspend fun removeWidget(appWidgetId: Int) = update { prefs ->
-        prefs.copy(widgets = prefs.widgets.filterNot { it.appWidgetId == appWidgetId })
+        prefs.copy(widgets = prefs.widgets.filterNot { it.appWidgetId == appWidgetId }, widgetData = prefs.widgetData - appWidgetId)
     }
 
     suspend fun setWidgetSize(appWidgetId: Int, size: WidgetSize) = update { prefs ->
@@ -95,6 +101,7 @@ class PrefsRepo(
     }
 
     private companion object {
+        const val DATA_PREFIX = "widget_data_"
         val FAVORITES = stringPreferencesKey("favorites")
         val HIDDEN = stringSetPreferencesKey("hidden")
         val SIDE = stringPreferencesKey("alphabet_side")
@@ -109,6 +116,10 @@ class PrefsRepo(
             permissionHintDismissed = stored[HINT_DISMISSED] ?: false,
             widgetPageEnabled = stored[WIDGET_PAGE] ?: true,
             widgets = stored[WIDGETS].orEmpty().split('\n').mapNotNull(WidgetSlot::decode).distinctBy { it.appWidgetId },
+            widgetData = stored.asMap().mapNotNull { (key, value) ->
+                val id = key.name.takeIf { it.startsWith(DATA_PREFIX) }?.removePrefix(DATA_PREFIX)?.toIntOrNull()
+                if (id != null && value is String) id to value else null
+            }.toMap(),
         )
 
         fun encode(prefs: LauncherPrefs, out: MutablePreferences) {
@@ -118,6 +129,9 @@ class PrefsRepo(
             out[HINT_DISMISSED] = prefs.permissionHintDismissed
             out[WIDGET_PAGE] = prefs.widgetPageEnabled
             out[WIDGETS] = prefs.widgets.joinToString("\n") { it.encode() }
+            // Les données d'un widget retiré disparaissent avec lui
+            out.asMap().keys.filter { it.name.startsWith(DATA_PREFIX) }.toList().forEach { out.remove(it) }
+            prefs.widgetData.forEach { (id, text) -> out[stringPreferencesKey(DATA_PREFIX + id)] = text }
         }
     }
 }

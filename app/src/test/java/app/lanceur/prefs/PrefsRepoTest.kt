@@ -173,4 +173,16 @@ class PrefsRepoTest {
         assertEquals(listOf(4, -1, -2), widgets.map { it.appWidgetId })
         assertEquals(WidgetSize.MEDIUM, widgets.last().size)
     }
+
+    @Test
+    fun widget_data_is_kept_per_widget_and_removed_with_it() = runTest {
+        val repo = PrefsRepo(store())
+        repo.addBuiltinWidget(app.lanceur.builtin.BuiltinKind.BATTERY_BAR, data = "a=1")
+        repo.addBuiltinWidget(app.lanceur.builtin.BuiltinKind.BATTERY_BAR)
+        repo.setWidgetData(-2, "b=2")
+        assertEquals(mapOf(-1 to "a=1", -2 to "b=2"), repo.prefs.first().widgetData)
+        repo.removeWidget(-1)
+        assertEquals(mapOf(-2 to "b=2"), repo.prefs.first().widgetData)
+        assertEquals(listOf(-2), repo.prefs.first().widgets.map { it.appWidgetId })
+    }
 }
