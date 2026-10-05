@@ -30,6 +30,7 @@ import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppIcon
 import app.lanceur.apps.AppKey
 import app.lanceur.apps.HomeRole
+import app.lanceur.apps.HomeRoleWatcher
 import app.lanceur.home.HomeActions
 import app.lanceur.home.HomeScreen
 import app.lanceur.home.LauncherViewModel
@@ -66,11 +67,12 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
 
     val authenticator = remember(activity) { Authenticator(activity) }
     val icon: @Composable (AppKey) -> Unit = { key -> AppIcon(key, container.iconLoader) }
-    var isDefault by remember { mutableStateOf(HomeRole.isHeld(context)) }
+    val roleWatcher = remember { HomeRoleWatcher { container.catalog.reload() } }
+    var isDefault by remember { mutableStateOf(HomeRole.isHeld(context).also(roleWatcher::update)) }
     var permissionsGranted by remember { mutableStateOf(SearchPermissions.allGranted(context)) }
 
     LifecycleResumeEffect(Unit) {
-        isDefault = HomeRole.isHeld(context)
+        isDefault = HomeRole.isHeld(context).also(roleWatcher::update)
         permissionsGranted = SearchPermissions.allGranted(context)
         onPauseOrDispose { }
     }
@@ -79,7 +81,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         searchVm.refresh()
     }
     val roleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        isDefault = HomeRole.isHeld(context)
+        isDefault = HomeRole.isHeld(context).also(roleWatcher::update)
     }
 
     fun toast(message: String) {
