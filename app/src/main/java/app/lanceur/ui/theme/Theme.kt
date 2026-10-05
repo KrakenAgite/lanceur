@@ -1,10 +1,12 @@
 package app.lanceur.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 
 /** Material You : les couleurs suivent le fond d'écran du téléphone. */
@@ -12,5 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 fun LanceurTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val scheme = if (isSystemInDarkTheme()) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    MaterialTheme(colorScheme = scheme, content = content)
+    MaterialTheme(colorScheme = scheme) {
+        // Les écrans n'utilisent pas de Surface : sans cela, textes et icônes seraient noirs par défaut
+        CompositionLocalProvider(LocalContentColor provides scheme.onSurface, content = content)
+    }
 }
