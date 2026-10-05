@@ -51,6 +51,7 @@ rôle d'écran d'accueil sont conservés. Espresso est fixé en 3.7.0 : la versi
 | Appui long sur l'heure | Dossier caché (empreinte) |
 | Appui long sur une zone vide | Réglages |
 | Double toucher sur une zone vide | Mise en veille (voir ci-dessous) |
+| Glisser vers la droite | Page de widgets (désactivable dans les réglages) |
 
 ## Double toucher pour verrouiller
 
@@ -60,6 +61,13 @@ d'accessibilité. Celui de Lanceur ne reçoit aucun événement et ne lit rien �
 1. *Paramètres > Accessibilité > Lanceur : double toucher pour verrouiller* → activer (ou *Réglages* de Lanceur > *Activer*).
 2. Si l'option est grisée (« Paramètre restreint », fréquent pour une appli installée hors Play Store) :
    *Paramètres > Applis > Lanceur > ⋮ > Autoriser les paramètres restreints*, puis recommencer l'étape 1.
+
+## Page de widgets
+
+À gauche de l'accueil : le résumé du jour (prochains événements, alarme suivante), puis tes widgets en pleine largeur.
+*+ Ajouter un widget* ouvre le sélecteur ; la première fois, Android demande d'autoriser Lanceur à créer des widgets.
+*Modifier* permet de les déplacer (poignée), de choisir leur hauteur (S, M, L), de les reconfigurer ou de les retirer.
+Les widgets d'une appli cachée ou de l'Espace privé ne sont jamais proposés ni affichés.
 
 ## Limites d'Android
 
