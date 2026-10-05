@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ class SettingsActions(
     val requestPermissions: () -> Unit = {},
     val setSide: (AlphabetSide) -> Unit = {},
     val enableLockService: () -> Unit = {},
+    val setWidgetPageEnabled: (Boolean) -> Unit = {},
 )
 
 @Composable
@@ -41,6 +43,7 @@ fun SettingsScreen(
     isDefaultLauncher: Boolean,
     permissionsGranted: Boolean,
     lockServiceEnabled: Boolean,
+    widgetPageEnabled: Boolean,
     icon: @Composable (AppKey) -> Unit,
     actions: SettingsActions,
     modifier: Modifier = Modifier,
@@ -73,6 +76,12 @@ fun SettingsScreen(
             actionLabel = if (lockServiceEnabled) null else "Activer",
             onAction = actions.enableLockService,
         )
+        SwitchRow(
+            title = "Page de widgets à gauche",
+            subtitle = "Glisser vers la droite depuis l'accueil",
+            checked = widgetPageEnabled,
+            onCheckedChange = actions.setWidgetPageEnabled,
+        )
         SettingRow(
             title = "Applis cachées",
             subtitle = "Protégées par ton empreinte",
@@ -101,5 +110,16 @@ private fun SettingRow(title: String, subtitle: String, actionLabel: String?, on
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (actionLabel != null) FilledTonalButton(onClick = onAction) { Text(actionLabel) }
+    }
+}
+
+@Composable
+private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

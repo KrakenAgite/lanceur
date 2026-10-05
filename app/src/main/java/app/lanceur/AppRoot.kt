@@ -14,16 +14,24 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lanceur.apps.AppEntry
@@ -32,6 +40,7 @@ import app.lanceur.apps.AppKey
 import app.lanceur.apps.HomeRole
 import app.lanceur.apps.HomeRoleWatcher
 import app.lanceur.home.HomeActions
+import app.lanceur.home.HomePager
 import app.lanceur.home.HomeScreen
 import app.lanceur.home.LauncherViewModel
 import app.lanceur.home.ListMode
@@ -44,16 +53,34 @@ import app.lanceur.search.SearchScreen
 import app.lanceur.search.SearchViewModel
 import app.lanceur.settings.SettingsActions
 import app.lanceur.settings.SettingsScreen
+import app.lanceur.summary.DaySummaryState
 import app.lanceur.ui.AppMenuAction
 import app.lanceur.vault.Authenticator
 import app.lanceur.vault.VaultActions
 import app.lanceur.vault.VaultEvent
 import app.lanceur.vault.VaultScreen
 import app.lanceur.vault.VaultState
+import app.lanceur.widgets.HostedWidget
+import app.lanceur.widgets.PickerCatalog
+import app.lanceur.widgets.ProviderEntry
+import app.lanceur.widgets.VisibleWidgets
+import app.lanceur.widgets.WidgetPage
+import app.lanceur.widgets.WidgetPageActions
+import app.lanceur.widgets.WidgetPicker
+import app.lanceur.widgets.WidgetSlot
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-/** Assemble les écrans : l'accueil est toujours dessous, les autres écrans se superposent. */
+/** Actions qui passent par l'activité : écrans d'Android pour lier ou configurer un widget. */
+class WidgetHostActions(
+    val add: (ProviderEntry) -> Unit = {},
+    val reconfigure: (WidgetSlot) -> Unit = {},
+)
+
+/** Assemble les écrans : les deux pages (widgets, accueil) sont dessous, les autres écrans se superposent. */
 @Composable
-fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppContainer) {
+fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppContainer, widgetHostActions: WidgetHostActions) {
     val context = LocalContext.current
     val activity = LocalActivity.current ?: return
     val loaded by vm.loaded.collectAsStateWithLifecycle()
@@ -62,29 +89,67 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     val screen by vm.screen.collectAsStateWithLifecycle()
     val mode by vm.listMode.collectAsStateWithLifecycle()
     val vault by vm.vault.collectAsStateWithLifecycle()
+    val widgetEditMode by vm.widgetEditMode.collectAsStateWithLifecycle()
+    val homePageRequests by vm.homePageRequests.collectAsStateWithLifecycle()
     val privateSpace by container.catalog.privateSpace.collectAsStateWithLifecycle()
     val query by searchVm.query.collectAsStateWithLifecycle()
     val results by searchVm.results.collectAsStateWithLifecycle()
 
+    val scope = rememberCoroutineScope()
     val authenticator = remember(activity) { Authenticator(activity) }
     val icon: @Composable (AppKey) -> Unit = { key -> AppIcon(key, container.iconLoader) }
     val roleWatcher = remember { HomeRoleWatcher { container.catalog.reload() } }
     var isDefault by remember { mutableStateOf(HomeRole.isHeld(context).also(roleWatcher::update)) }
     var permissionsGranted by remember { mutableStateOf(SearchPermissions.allGranted(context)) }
     var lockServiceEnabled by remember { mutableStateOf(LockScreenService.isEnabled(context)) }
+    var summary by remember { mutableStateOf<DaySummaryState?>(null) }
+    var widgetRefresh by remember { mutableIntStateOf(0) }
+    var pickerQuery by remember { mutableStateOf("") }
+
+    fun reloadSummary() {
+        scope.launch { summary = container.daySummary.load() }
+    }
 
     LifecycleResumeEffect(Unit) {
         isDefault = HomeRole.isHeld(context).also(roleWatcher::update)
         permissionsGranted = SearchPermissions.allGranted(context)
         lockServiceEnabled = LockScreenService.isEnabled(context)
+        widgetRefresh++
+        reloadSummary()
         onPauseOrDispose { }
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         permissionsGranted = SearchPermissions.allGranted(context)
         searchVm.refresh()
+        reloadSummary()
     }
     val roleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         isDefault = HomeRole.isHeld(context).also(roleWatcher::update)
+    }
+
+    // Pas d'écoute des widgets quand la page est désactivée (MainActivity gère onStart / onStop)
+    LaunchedEffect(prefs.widgetPageEnabled) {
+        if (prefs.widgetPageEnabled) container.widgetHost.startListening() else container.widgetHost.stopListening()
+    }
+    val availableIds = remember(prefs.widgets, widgetRefresh) { container.widgetHost.availableIds(prefs.widgets) }
+    val widgetCards = remember(prefs.widgets, prefs.hidden, availableIds) {
+        VisibleWidgets.compute(prefs.widgets, prefs.hidden, availableIds)
+    }
+    val widgetLabels = remember(prefs.widgets, widgetRefresh) {
+        prefs.widgets.associate { it.appWidgetId to container.widgetHost.label(it.appWidgetId) }
+    }
+    val providerEntries by produceState(emptyList<ProviderEntry>(), screen) {
+        if (screen == Screen.WIDGET_PICKER) value = withContext(Dispatchers.IO) { container.widgetProviders.entries() }
+    }
+    val pickerGroups = remember(providerEntries, prefs.hidden, pickerQuery) {
+        PickerCatalog.build(providerEntries, prefs.hidden, pickerQuery)
+    }
+    val widgetPreview: @Composable (ProviderEntry) -> Unit = { entry ->
+        val sizePx = with(LocalDensity.current) { 96.dp.roundToPx() }
+        val bitmap by produceState<ImageBitmap?>(null, entry) {
+            value = withContext(Dispatchers.IO) { container.widgetProviders.preview(entry, sizePx) }
+        }
+        bitmap?.let { Image(it, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit) }
     }
 
     fun toast(message: String) {
@@ -144,28 +209,71 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         if (opened && result !is SearchResult.Calc) vm.show(Screen.HOME)
     }
 
+    fun removeWidget(slot: WidgetSlot) {
+        container.widgetHost.deleteId(slot.appWidgetId)
+        vm.removeWidget(slot.appWidgetId)
+    }
+
     BackHandler(enabled = screen != Screen.HOME || mode != ListMode.Favorites) { vm.back() }
-    LaunchedEffect(screen) { if (screen != Screen.SEARCH) searchVm.setQuery("") }
+    LaunchedEffect(screen) {
+        if (screen != Screen.SEARCH) searchVm.setQuery("")
+        if (screen != Screen.WIDGET_PICKER) pickerQuery = ""
+    }
 
     Box(Modifier.fillMaxSize()) {
         // Seul le fond d'écran est visible pendant les quelques millisecondes du chargement
-        if (loaded) HomeScreen(
-            lists = lists,
-            mode = mode,
-            side = prefs.alphabetSide,
-            icon = icon,
-            actions = HomeActions(
-                launch = ::launch,
-                menu = ::onMenu,
-                changeMode = vm::setListMode,
-                openSearch = { vm.show(Screen.SEARCH) },
-                openNotifications = { container.appLauncher.expandNotifications() },
-                openVault = ::openVault,
-                openSettings = { vm.show(Screen.SETTINGS) },
-                openClock = { container.appLauncher.openClock() },
-                openCalendar = { container.appLauncher.openCalendar() },
-                lockScreen = ::lockScreen,
-            ),
+        if (loaded) HomePager(
+            widgetsEnabled = prefs.widgetPageEnabled,
+            homePageRequests = homePageRequests,
+            editMode = widgetEditMode,
+            onExitEdit = { vm.setWidgetEditMode(false) },
+            onWidgetsShown = {
+                widgetRefresh++
+                reloadSummary()
+            },
+            widgetPage = {
+                WidgetPage(
+                    summary = summary,
+                    cards = widgetCards,
+                    editMode = widgetEditMode,
+                    label = { widgetLabels[it.appWidgetId] ?: "Widget" },
+                    isReconfigurable = { container.widgetHost.isReconfigurable(it.appWidgetId) },
+                    widgetView = { slot, modifier -> HostedWidget(slot, container.widgetHost, modifier) },
+                    actions = WidgetPageActions(
+                        openEvent = { event ->
+                            container.resultActions.open(SearchResult.Event(event.eventId, event.title, event.begin, event.end, event.allDay, null))
+                        },
+                        openClock = { container.appLauncher.openClock() },
+                        requestCalendar = { permissionLauncher.launch(SearchPermissions.ALL) },
+                        addWidget = { vm.show(Screen.WIDGET_PICKER) },
+                        setEditMode = vm::setWidgetEditMode,
+                        remove = ::removeWidget,
+                        resize = { slot, size -> vm.setWidgetSize(slot.appWidgetId, size) },
+                        reconfigure = widgetHostActions.reconfigure,
+                        reorder = vm::setWidgetsOrder,
+                    ),
+                )
+            },
+            home = {
+                HomeScreen(
+                    lists = lists,
+                    mode = mode,
+                    side = prefs.alphabetSide,
+                    icon = icon,
+                    actions = HomeActions(
+                        launch = ::launch,
+                        menu = ::onMenu,
+                        changeMode = vm::setListMode,
+                        openSearch = { vm.show(Screen.SEARCH) },
+                        openNotifications = { container.appLauncher.expandNotifications() },
+                        openVault = ::openVault,
+                        openSettings = { vm.show(Screen.SETTINGS) },
+                        openClock = { container.appLauncher.openClock() },
+                        openCalendar = { container.appLauncher.openCalendar() },
+                        lockScreen = ::lockScreen,
+                    ),
+                )
+            },
         )
         AnimatedVisibility(
             visible = screen == Screen.SEARCH,
@@ -185,6 +293,22 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     dismissHint = { vm.dismissPermissionHint { searchVm.refresh() } },
                     close = { vm.show(Screen.HOME) },
                 ),
+            )
+        }
+        AnimatedVisibility(
+            visible = screen == Screen.WIDGET_PICKER,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+        ) {
+            WidgetPicker(
+                groups = pickerGroups,
+                query = pickerQuery,
+                onQueryChange = { pickerQuery = it },
+                preview = widgetPreview,
+                onPick = { entry ->
+                    vm.show(Screen.HOME)
+                    widgetHostActions.add(entry)
+                },
             )
         }
         // Pas d'animation de sortie : le contenu caché disparaît immédiatement au verrouillage
@@ -216,6 +340,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 isDefaultLauncher = isDefault,
                 permissionsGranted = permissionsGranted,
                 lockServiceEnabled = lockServiceEnabled,
+                widgetPageEnabled = prefs.widgetPageEnabled,
                 icon = icon,
                 actions = SettingsActions(
                     setDefault = {
@@ -230,6 +355,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     requestPermissions = { permissionLauncher.launch(SearchPermissions.ALL) },
                     setSide = vm::setAlphabetSide,
                     enableLockService = ::openAccessibilitySettings,
+                    setWidgetPageEnabled = vm::setWidgetPageEnabled,
                 ),
             )
         }
