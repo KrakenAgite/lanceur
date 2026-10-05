@@ -10,6 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.time.LocalDateTime
@@ -23,11 +26,21 @@ private val DATE = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRENCH)
 /** Heure et date. L'appui long sur l'heure est le geste discret du dossier caché. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Clock(onClockTap: () -> Unit, onClockLongPress: () -> Unit, onDateTap: () -> Unit, modifier: Modifier = Modifier) {
-    val now by produceState(LocalDateTime.now()) {
-        while (true) {
-            value = LocalDateTime.now()
-            delay(60_000L - System.currentTimeMillis() % 60_000L)
+fun Clock(
+    onClockTap: () -> Unit,
+    onClockLongPress: () -> Unit,
+    onDateTap: () -> Unit,
+    modifier: Modifier = Modifier,
+    currentTime: () -> LocalDateTime = LocalDateTime::now,
+) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    // Recalée à chaque retour au premier plan : pendant la veille profonde, `delay` est suspendu
+    val now by produceState(currentTime(), lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                value = currentTime()
+                delay(60_000L - System.currentTimeMillis() % 60_000L)
+            }
         }
     }
     Column(modifier.padding(horizontal = 24.dp, vertical = 32.dp)) {
