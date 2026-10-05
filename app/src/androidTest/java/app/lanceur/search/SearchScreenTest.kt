@@ -5,7 +5,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performImeAction
 import app.lanceur.apps.AppEntry
@@ -66,7 +68,8 @@ class SearchScreenTest {
         rule.setContent {
             MaterialTheme { SearchScreen("ba", emptyList(), icon = {}, actions = SearchActions(queryChange = { query = it })) }
         }
-        rule.onNodeWithContentDescription("Effacer").performClick()
+        // Action d'accessibilité : le clavier qui s'ouvre déplace le champ pendant un toucher simulé
+        rule.onNodeWithContentDescription("Effacer").performSemanticsAction(SemanticsActions.OnClick)
         assertEquals("", query)
     }
 
