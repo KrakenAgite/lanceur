@@ -23,6 +23,8 @@ import app.lanceur.builtin.media.NowPlayingSource
 import app.lanceur.builtin.media.NowPlayingState
 import app.lanceur.builtin.note.NoteCard
 import app.lanceur.builtin.note.NoteData
+import app.lanceur.builtin.todo.TodoCard
+import app.lanceur.builtin.todo.TodoList
 import app.lanceur.widgets.WidgetLayout
 import app.lanceur.widgets.WidgetSlot
 import java.time.LocalDate
@@ -91,5 +93,9 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
             onSave = { services.saveData(slot.appWidgetId, NoteData.of(it)) },
             modifier = modifier,
         )
+        BuiltinKind.TODO -> {
+            var list by remember(slot.appWidgetId) { mutableStateOf(TodoList.fromData(services.data(slot.appWidgetId))) }
+            TodoCard(list, onChange = { list = it; services.saveData(slot.appWidgetId, it.toData()) }, modifier = modifier)
+        }
     }
 }
