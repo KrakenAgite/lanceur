@@ -7,6 +7,7 @@ import app.lanceur.builtin.battery.BatterySource
 import app.lanceur.builtin.calendar.CalendarRangeSource
 import app.lanceur.builtin.contacts.FavoriteContactsSource
 import app.lanceur.builtin.media.NowPlayingSource
+import app.lanceur.builtin.rss.RssSource
 import app.lanceur.builtin.shortcuts.TorchController
 import app.lanceur.builtin.storage.StorageSource
 import app.lanceur.builtin.weather.WeatherSource
@@ -63,6 +64,7 @@ class AppContainer(context: Context) {
     val storage = StorageSource(appContext)
     val network = Network()
     val weather = WeatherSource(appContext, network)
+    val rss = RssSource(network)
     val battery = BatterySource(appContext)
     val nowPlaying = NowPlayingSource(appContext)
     val calendarRange = CalendarRangeSource(appContext)

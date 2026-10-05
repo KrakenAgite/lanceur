@@ -303,6 +303,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         openStorageSettings = { container.appLauncher.startSafely(Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)) },
         weather = container.weather,
         openUrl = { url -> container.appLauncher.startSafely(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))) },
+        rss = container.rss,
         refresh = widgetRefresh,
     )
     Box(Modifier.fillMaxSize()) {
@@ -467,6 +468,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     searchPlaces = { container.weather.search(it) },
                     locationGranted = locationGranted,
                     requestLocation = { locationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) },
+                    checkFeed = { container.rss.check(it) },
                 ),
             )
         }

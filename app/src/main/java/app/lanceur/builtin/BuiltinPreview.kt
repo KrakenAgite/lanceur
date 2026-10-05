@@ -36,6 +36,9 @@ import app.lanceur.builtin.media.NowPlayingCard
 import app.lanceur.builtin.media.NowPlayingState
 import app.lanceur.builtin.note.NoteCard
 import app.lanceur.builtin.note.NoteData
+import app.lanceur.builtin.rss.Article
+import app.lanceur.builtin.rss.RssCard
+import app.lanceur.builtin.rss.RssViewState
 import app.lanceur.builtin.shortcuts.ShortcutActions
 import app.lanceur.builtin.shortcuts.ShortcutsCard
 import app.lanceur.builtin.shortcuts.TorchState
@@ -142,5 +145,23 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
             onChooseCity = {},
             modifier = modifier,
         )
+        BuiltinKind.RSS -> {
+            val now = System.currentTimeMillis()
+            RssCard(
+                RssViewState.Ready(
+                    listOf(
+                        Article("Élections : les premiers résultats", "a", "Le Monde", now - 25 * 60_000),
+                        Article("Une astuce Linux pour gagner du temps", "b", "Korben", now - 3 * 3_600_000),
+                        Article("Le budget 2027 présenté", "c", "France Info", now - 5 * 3_600_000),
+                    ),
+                    now,
+                    failed = false,
+                ),
+                kind.defaultSize,
+                now,
+                onOpen = {},
+                modifier = modifier,
+            )
+        }
     }
 }

@@ -37,6 +37,10 @@ import app.lanceur.builtin.media.NowPlayingSource
 import app.lanceur.builtin.media.NowPlayingState
 import app.lanceur.builtin.note.NoteCard
 import app.lanceur.builtin.note.NoteData
+import app.lanceur.builtin.rss.RssCard
+import app.lanceur.builtin.rss.RssData
+import app.lanceur.builtin.rss.RssSource
+import app.lanceur.builtin.rss.RssView
 import app.lanceur.builtin.shortcuts.ShortcutActions
 import app.lanceur.builtin.shortcuts.ShortcutsCard
 import app.lanceur.builtin.shortcuts.TorchController
@@ -83,6 +87,7 @@ class BuiltinServices(
     val openStorageSettings: () -> Unit = {},
     val weather: WeatherSource? = null,
     val openUrl: (String) -> Unit = {},
+    val rss: RssSource? = null,
     val refresh: Int,
 )
 
@@ -210,6 +215,21 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
                 onChooseCity = { services.openSettings(slot) },
                 modifier = modifier,
             )
+        }
+        BuiltinKind.RSS -> {
+            val id = slot.appWidgetId
+            val data = services.data(id)
+            val config = RssData.config(data)
+            val cache = RssData.cache(data)
+            var failed by remember(id) { mutableStateOf(false) }
+            LaunchedEffect(id, services.refresh, config) {
+                val source = services.rss ?: return@LaunchedEffect
+                if (config == null || config.urls.isEmpty()) return@LaunchedEffect
+                val (error, kept) = source.refresh(config, cache, System.currentTimeMillis())
+                failed = error
+                if (!error && kept != null && kept != cache) services.saveData(id, RssData.encode(config, kept))
+            }
+            RssCard(RssView.state(cache, failed), size, rememberMinuteClock(), onOpen = services.openUrl, modifier = modifier)
         }
     }
 }

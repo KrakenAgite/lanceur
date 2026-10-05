@@ -28,6 +28,7 @@ enum class BuiltinKind(
     SHORTCUTS("Raccourcis rapides", "⚡", mapOf(SMALL to 120), SMALL),
     STORAGE("Stockage et mémoire", "💾", mapOf(SMALL to 140), SMALL),
     WEATHER("Météo", "🌤", mapOf(SMALL to 120, MEDIUM to 220, LARGE to 340), MEDIUM, configurable = true),
+    RSS("Flux RSS", "📰", mapOf(SMALL to 160, MEDIUM to 280, LARGE to 420), MEDIUM, configurable = true),
     ;
 
     /** Tailles proposées en mode édition, dans l'ordre S, M, L. */
