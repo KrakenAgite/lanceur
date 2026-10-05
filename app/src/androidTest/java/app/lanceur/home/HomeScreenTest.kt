@@ -7,7 +7,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -19,6 +22,7 @@ import app.lanceur.apps.AppKey
 import app.lanceur.prefs.AlphabetSide
 import app.lanceur.prefs.AppLists
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -112,5 +116,38 @@ class HomeScreenTest {
         }
         rule.waitForIdle()
         assertNull(launched)
+    }
+
+    @Test
+    fun double_tapping_an_empty_area_locks_the_screen() {
+        var locks = 0
+        show { HomeActions(lockScreen = { locks++ }) }
+        rule.onRoot().performTouchInput { doubleClick(Offset(centerX, height * 0.4f)) }
+        rule.waitForIdle()
+        assertEquals(1, locks)
+    }
+
+    @Test
+    fun double_tapping_an_app_does_not_lock() {
+        var locked = false
+        show { HomeActions(lockScreen = { locked = true }) }
+        rule.onNodeWithText("Chrome").performTouchInput { doubleClick() }
+        rule.waitForIdle()
+        assertFalse(locked)
+    }
+
+    @Test
+    fun a_single_tap_on_an_empty_area_still_returns_to_favorites() {
+        var locked = false
+        show { setMode -> HomeActions(changeMode = setMode, lockScreen = { locked = true }) }
+        rule.onNodeWithTag("alphabet").performTouchInput {
+            down(Offset(centerX, height / 27f * 1.5f)) // lettre B
+            up()
+        }
+        rule.onNodeWithText("Chrome").assertDoesNotExist()
+
+        rule.onRoot().performTouchInput { click(Offset(centerX, height * 0.4f)) }
+        rule.waitUntil(timeoutMillis = 2_000) { rule.onAllNodesWithText("Chrome").fetchSemanticsNodes().isNotEmpty() }
+        assertFalse(locked)
     }
 }

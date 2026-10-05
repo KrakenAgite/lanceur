@@ -50,6 +50,16 @@ rôle d'écran d'accueil sont conservés. Espresso est fixé en 3.7.0 : la versi
 | Appui long sur une appli | Favori, cacher, infos, désinstaller |
 | Appui long sur l'heure | Dossier caché (empreinte) |
 | Appui long sur une zone vide | Réglages |
+| Double toucher sur une zone vide | Mise en veille (voir ci-dessous) |
+
+## Double toucher pour verrouiller
+
+Android ne laisse une appli mettre l'écran en veille, sans bloquer ensuite l'empreinte, que par un service
+d'accessibilité. Celui de Lanceur ne reçoit aucun événement et ne lit rien à l'écran.
+
+1. *Paramètres > Accessibilité > Lanceur : double toucher pour verrouiller* → activer (ou *Réglages* de Lanceur > *Activer*).
+2. Si l'option est grisée (« Paramètre restreint », fréquent pour une appli installée hors Play Store) :
+   *Paramètres > Applis > Lanceur > ⋮ > Autoriser les paramètres restreints*, puis recommencer l'étape 1.
 
 ## Limites d'Android
 

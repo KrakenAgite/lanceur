@@ -31,6 +31,7 @@ class SettingsActions(
     val openHidden: () -> Unit = {},
     val requestPermissions: () -> Unit = {},
     val setSide: (AlphabetSide) -> Unit = {},
+    val enableLockService: () -> Unit = {},
 )
 
 @Composable
@@ -39,6 +40,7 @@ fun SettingsScreen(
     side: AlphabetSide,
     isDefaultLauncher: Boolean,
     permissionsGranted: Boolean,
+    lockServiceEnabled: Boolean,
     icon: @Composable (AppKey) -> Unit,
     actions: SettingsActions,
     modifier: Modifier = Modifier,
@@ -64,6 +66,12 @@ fun SettingsScreen(
             subtitle = if (permissionsGranted) "Autorisés" else "Non autorisés",
             actionLabel = if (permissionsGranted) null else "Autoriser",
             onAction = actions.requestPermissions,
+        )
+        SettingRow(
+            title = "Double toucher pour verrouiller",
+            subtitle = if (lockServiceEnabled) "Activé" else "Non activé : à autoriser dans Accessibilité",
+            actionLabel = if (lockServiceEnabled) null else "Activer",
+            onAction = actions.enableLockService,
         )
         SettingRow(
             title = "Applis cachées",

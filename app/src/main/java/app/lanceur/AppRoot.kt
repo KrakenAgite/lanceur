@@ -36,6 +36,7 @@ import app.lanceur.home.HomeScreen
 import app.lanceur.home.LauncherViewModel
 import app.lanceur.home.ListMode
 import app.lanceur.home.Screen
+import app.lanceur.lock.LockScreenService
 import app.lanceur.search.SearchActions
 import app.lanceur.search.SearchPermissions
 import app.lanceur.search.SearchResult
@@ -70,10 +71,12 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     val roleWatcher = remember { HomeRoleWatcher { container.catalog.reload() } }
     var isDefault by remember { mutableStateOf(HomeRole.isHeld(context).also(roleWatcher::update)) }
     var permissionsGranted by remember { mutableStateOf(SearchPermissions.allGranted(context)) }
+    var lockServiceEnabled by remember { mutableStateOf(LockScreenService.isEnabled(context)) }
 
     LifecycleResumeEffect(Unit) {
         isDefault = HomeRole.isHeld(context).also(roleWatcher::update)
         permissionsGranted = SearchPermissions.allGranted(context)
+        lockServiceEnabled = LockScreenService.isEnabled(context)
         onPauseOrDispose { }
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -102,6 +105,17 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
             vm.requestVault() -> authenticator.authenticate("Dossier caché") { ok ->
                 vm.vaultEvent(if (ok) VaultEvent.AuthSucceeded else VaultEvent.AuthFailed)
             }
+        }
+    }
+
+    fun openAccessibilitySettings() {
+        container.appLauncher.startSafely(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    }
+
+    fun lockScreen() {
+        if (!LockScreenService.lock()) {
+            toast("Active « Lanceur » dans Accessibilité pour verrouiller d'un double toucher")
+            openAccessibilitySettings()
         }
     }
 
@@ -150,6 +164,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 openSettings = { vm.show(Screen.SETTINGS) },
                 openClock = { container.appLauncher.openClock() },
                 openCalendar = { container.appLauncher.openCalendar() },
+                lockScreen = ::lockScreen,
             ),
         )
         AnimatedVisibility(
@@ -200,6 +215,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 side = prefs.alphabetSide,
                 isDefaultLauncher = isDefault,
                 permissionsGranted = permissionsGranted,
+                lockServiceEnabled = lockServiceEnabled,
                 icon = icon,
                 actions = SettingsActions(
                     setDefault = {
@@ -213,6 +229,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     openHidden = ::openVault,
                     requestPermissions = { permissionLauncher.launch(SearchPermissions.ALL) },
                     setSide = vm::setAlphabetSide,
+                    enableLockService = ::openAccessibilitySettings,
                 ),
             )
         }
