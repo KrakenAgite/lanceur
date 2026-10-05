@@ -19,6 +19,7 @@ enum class BuiltinKind(
     CALENDAR_WEEK("Agenda · semaine", "🗓️", mapOf(SMALL to 140, MEDIUM to 200, LARGE to 280), MEDIUM),
     BATTERY_RING("Batterie · anneau", "🔋", mapOf(SMALL to 140), SMALL),
     BATTERY_BAR("Batterie · barre", "🔋", mapOf(SMALL to 72), SMALL),
+    NOTE("Note rapide", "📝", mapOf(SMALL to 140, MEDIUM to 220, LARGE to 340), MEDIUM),
     ;
 
     /** Tailles proposées en mode édition, dans l'ordre S, M, L. */

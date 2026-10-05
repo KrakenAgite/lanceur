@@ -21,6 +21,8 @@ import app.lanceur.builtin.media.NowPlayingActions
 import app.lanceur.builtin.media.NowPlayingCard
 import app.lanceur.builtin.media.NowPlayingSource
 import app.lanceur.builtin.media.NowPlayingState
+import app.lanceur.builtin.note.NoteCard
+import app.lanceur.builtin.note.NoteData
 import app.lanceur.widgets.WidgetLayout
 import app.lanceur.widgets.WidgetSlot
 import java.time.LocalDate
@@ -84,5 +86,10 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
             }
             WeekCard(today, weekStart, size, load, onWeekChange = { weekStart = it }, actions = services.calendarActions, modifier = modifier)
         }
+        BuiltinKind.NOTE -> NoteCard(
+            initial = NoteData.text(services.data(slot.appWidgetId)),
+            onSave = { services.saveData(slot.appWidgetId, NoteData.of(it)) },
+            modifier = modifier,
+        )
     }
 }

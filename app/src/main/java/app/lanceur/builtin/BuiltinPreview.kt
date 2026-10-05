@@ -25,6 +25,8 @@ import app.lanceur.builtin.media.MediaSnapshot
 import app.lanceur.builtin.media.NowPlayingActions
 import app.lanceur.builtin.media.NowPlayingCard
 import app.lanceur.builtin.media.NowPlayingState
+import app.lanceur.builtin.note.NoteCard
+import app.lanceur.builtin.note.NoteData
 import app.lanceur.summary.SummaryEvent
 import app.lanceur.ui.blockTouchesBelow
 import java.time.LocalDate
@@ -81,5 +83,6 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
         BuiltinKind.CALENDAR_MONTH -> MonthCard(today, kind.defaultSize, CalendarLoad(true, sampleEvents), {}, CalendarCardActions(), modifier, zone)
         BuiltinKind.CALENDAR_WEEK ->
             WeekCard(today, WeekStrip.weekStart(today), kind.defaultSize, CalendarLoad(true, sampleEvents), {}, CalendarCardActions(), modifier, zone)
+        BuiltinKind.NOTE -> NoteCard("Pain, lait, œufs\nAppeler le garage", onSave = {}, modifier = modifier)
     }
 }
