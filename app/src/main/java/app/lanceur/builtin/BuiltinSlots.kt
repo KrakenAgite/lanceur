@@ -1,5 +1,7 @@
 package app.lanceur.builtin
 
+import app.lanceur.widgets.ProviderEntry
+import app.lanceur.apps.ProfileKind
 import app.lanceur.apps.AppKey
 import app.lanceur.widgets.WidgetSlot
 
@@ -26,4 +28,9 @@ object BuiltinSlots {
 
     fun create(kind: BuiltinKind, slots: List<WidgetSlot>): WidgetSlot =
         WidgetSlot(nextId(slots), provider(kind), kind.defaultSize)
+
+    /** Entrées du groupe « Lanceur » du sélecteur, dans l'ordre de `BuiltinKind`. */
+    fun pickerEntries(): List<ProviderEntry> = BuiltinKind.entries.map { kind ->
+        ProviderEntry(provider(kind), ProfileKind.MAIN, "Lanceur", kind.label, kind.heightDp(kind.defaultSize))
+    }
 }

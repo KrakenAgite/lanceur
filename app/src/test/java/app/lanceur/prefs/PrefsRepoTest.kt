@@ -162,4 +162,15 @@ class PrefsRepoTest {
         repo.addWidget(slot(4))
         assertEquals(listOf(slot(4)), repo.readOrNull()?.widgets)
     }
+
+    @Test
+    fun builtin_widgets_get_decreasing_negative_ids_after_android_ones() = runTest {
+        val repo = PrefsRepo(store())
+        repo.addWidget(slot(4))
+        repo.addBuiltinWidget(app.lanceur.builtin.BuiltinKind.BATTERY_BAR)
+        repo.addBuiltinWidget(app.lanceur.builtin.BuiltinKind.NOW_PLAYING)
+        val widgets = repo.prefs.first().widgets
+        assertEquals(listOf(4, -1, -2), widgets.map { it.appWidgetId })
+        assertEquals(WidgetSize.MEDIUM, widgets.last().size)
+    }
 }

@@ -1,5 +1,7 @@
 package app.lanceur.prefs
 
+import app.lanceur.builtin.BuiltinSlots
+import app.lanceur.builtin.BuiltinKind
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
@@ -57,6 +59,11 @@ class PrefsRepo(
 
     suspend fun addWidget(slot: WidgetSlot) = update { prefs ->
         if (prefs.widgets.any { it.appWidgetId == slot.appWidgetId }) prefs else prefs.copy(widgets = prefs.widgets + slot)
+    }
+
+    /** L'identifiant est choisi dans la même transaction que l'ajout : deux ajouts rapides n'ont jamais le même. */
+    suspend fun addBuiltinWidget(kind: BuiltinKind) = update { prefs ->
+        prefs.copy(widgets = prefs.widgets + BuiltinSlots.create(kind, prefs.widgets))
     }
 
     suspend fun removeWidget(appWidgetId: Int) = update { prefs ->

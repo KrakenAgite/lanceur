@@ -1,5 +1,6 @@
 package app.lanceur.home
 
+import app.lanceur.builtin.BuiltinKind
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -137,6 +138,10 @@ class LauncherViewModel(
 
     fun addWidget(slot: WidgetSlot) {
         viewModelScope.launch { prefsRepo.addWidget(slot) }
+    }
+
+    fun addBuiltinWidget(kind: BuiltinKind) {
+        viewModelScope.launch { prefsRepo.addBuiltinWidget(kind) }
     }
 
     fun removeWidget(appWidgetId: Int) {

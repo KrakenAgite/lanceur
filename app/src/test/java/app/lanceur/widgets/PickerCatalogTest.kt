@@ -45,4 +45,21 @@ class PickerCatalogTest {
         val groups = PickerCatalog.build(listOf(agenda, workAgenda), emptySet(), "")
         assertEquals(listOf(false, true), groups.map { it.isWork })
     }
+
+    @Test
+    fun lanceur_group_comes_first_in_enum_order() {
+        val groups = PickerCatalog.build(all, emptySet(), "", app.lanceur.builtin.BuiltinSlots.pickerEntries())
+        assertEquals(listOf("Lanceur", "Agenda", "Éditions", "Météo"), groups.map { it.appLabel })
+        assertEquals(
+            listOf("Lecture en cours", "Agenda · mois", "Agenda · semaine", "Batterie · anneau", "Batterie · barre"),
+            groups.first().entries.map { it.widgetLabel },
+        )
+    }
+
+    @Test
+    fun lanceur_widgets_follow_the_filter() {
+        val groups = PickerCatalog.build(all, emptySet(), "batterie", app.lanceur.builtin.BuiltinSlots.pickerEntries())
+        assertEquals(listOf("Lanceur"), groups.map { it.appLabel })
+        assertEquals(2, groups.single().entries.size)
+    }
 }

@@ -36,4 +36,13 @@ class VisibleWidgetsTest {
         val cards = VisibleWidgets.compute(listOf(musique, workMusique), hidden = setOf(hiddenApp), available = setOf(2, 4))
         assertEquals(listOf(WidgetCard.Live(workMusique)), cards)
     }
+
+    @Test
+    fun builtin_widgets_are_always_live_and_unknown_kinds_unavailable() {
+        val battery = app.lanceur.builtin.BuiltinSlots.create(app.lanceur.builtin.BuiltinKind.BATTERY_BAR, emptyList())
+        val future = WidgetSlot(-9, AppKey("app.lanceur.builtin", "HOLOGRAM", 0), WidgetSize.SMALL)
+        val hiddenEverything = setOf(AppKey("app.lanceur.builtin", "x", 0), AppKey("app.meteo", "app.meteo.Main", 0))
+        val cards = VisibleWidgets.compute(listOf(battery, meteo, future), hidden = hiddenEverything, available = emptySet())
+        assertEquals(listOf(WidgetCard.Live(battery), WidgetCard.Unavailable(future)), cards)
+    }
 }
