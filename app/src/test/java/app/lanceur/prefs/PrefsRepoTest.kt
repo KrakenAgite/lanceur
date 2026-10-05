@@ -149,4 +149,17 @@ class PrefsRepoTest {
         store.edit { it[stringPreferencesKey("widgets")] = "n'importe quoi\n" + slot(3).encode() + "\n" + slot(3).encode() }
         assertEquals(listOf(slot(3)), PrefsRepo(store).prefs.first().widgets)
     }
+
+    @Test
+    fun read_or_null_reports_an_unreadable_file_instead_of_defaults() = runTest {
+        val folder = File(tmp.root, "illisible.preferences_pb").apply { mkdir() }
+        assertEquals(null, PrefsRepo(LauncherDataStore.create(backgroundScope) { folder }).readOrNull())
+    }
+
+    @Test
+    fun read_or_null_returns_the_saved_prefs() = runTest {
+        val repo = PrefsRepo(store())
+        repo.addWidget(slot(4))
+        assertEquals(listOf(slot(4)), repo.readOrNull()?.widgets)
+    }
 }

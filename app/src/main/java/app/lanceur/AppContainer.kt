@@ -54,7 +54,8 @@ class AppContainer(context: Context) {
     /** Libère les identifiants réservés par un ajout interrompu (Lanceur tué pendant la configuration). */
     fun cleanUpWidgetIds() {
         appScope.launch {
-            val slots = prefsRepo.prefs.first().widgets
+            // Réglages illisibles : surtout ne rien supprimer (on perdrait tous les widgets)
+            val slots = prefsRepo.readOrNull()?.widgets ?: return@launch
             WidgetIds.orphans(widgetHost.hostIds(), slots).forEach(widgetHost::deleteId)
         }
     }

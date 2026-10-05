@@ -22,6 +22,9 @@ import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
 import app.lanceur.prefs.AlphabetSide
 import app.lanceur.prefs.AppLists
+import androidx.activity.compose.BackHandler
+import androidx.test.espresso.Espresso
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -98,6 +101,45 @@ class HomePagerTest {
             repeat(20) { moveBy(Offset(40f, 0f)) }
             up()
         }
+        rule.onNodeWithText("PAGE WIDGETS").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun back_belongs_to_an_overlay_opened_from_the_widget_page() {
+        var overlayBack = false
+        var backEnabled by mutableStateOf(true)
+        rule.setContent {
+            MaterialTheme {
+                // Comme AppRoot : le gestionnaire de l'écran superposé est déclaré avant le défilement
+                BackHandler(enabled = !backEnabled) { overlayBack = true }
+                HomePager(true, 0, false, {}, {}, widgetPage = { Text("PAGE WIDGETS") }, home = simpleHome(), backEnabled = backEnabled)
+            }
+        }
+        rule.onNodeWithTag("pager").performTouchInput { swipeRight() }
+        rule.onNodeWithText("PAGE WIDGETS").assertIsDisplayed()
+        backEnabled = false // le sélecteur s'ouvre par-dessus
+        rule.waitForIdle()
+        Espresso.pressBack()
+        rule.waitForIdle()
+        assertTrue(overlayBack)
+        rule.onNodeWithText("PAGE WIDGETS").assertIsDisplayed()
+    }
+
+    @Test
+    fun home_during_a_fling_toward_widgets_still_returns_home() {
+        var requests by mutableIntStateOf(0)
+        rule.setContent {
+            MaterialTheme {
+                HomePager(true, requests, false, {}, {}, widgetPage = { Text("PAGE WIDGETS") }, home = simpleHome())
+            }
+        }
+        rule.mainClock.autoAdvance = false
+        // Glissement court et rapide : la page est encore plus près de l'accueil, mais son élan l'emporte vers les widgets
+        rule.onNodeWithTag("pager").performTouchInput { swipeRight(startX = 0f, endX = width * 0.3f, durationMillis = 40) }
+        requests++ // Accueil pressé pendant cet élan
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+        rule.onNodeWithText("ACCUEIL").assertIsDisplayed()
         rule.onNodeWithText("PAGE WIDGETS").assertIsNotDisplayed()
     }
 }

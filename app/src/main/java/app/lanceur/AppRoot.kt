@@ -225,6 +225,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         if (loaded) HomePager(
             widgetsEnabled = prefs.widgetPageEnabled,
             homePageRequests = homePageRequests,
+            backEnabled = screen == Screen.HOME,
             editMode = widgetEditMode,
             onExitEdit = { vm.setWidgetEditMode(false) },
             onWidgetsShown = {

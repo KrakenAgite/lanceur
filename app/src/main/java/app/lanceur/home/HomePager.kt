@@ -8,6 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -28,6 +32,8 @@ fun HomePager(
     onWidgetsShown: () -> Unit,
     widgetPage: @Composable () -> Unit,
     home: @Composable () -> Unit,
+    /** `false` quand un écran est superposé (sélecteur…) : le geste retour lui appartient. */
+    backEnabled: Boolean = true,
 ) {
     // Changer le nombre de pages recrée l'état : on repart toujours de l'accueil
     key(widgetsEnabled) {
@@ -37,13 +43,24 @@ fun HomePager(
         val scope = rememberCoroutineScope()
         val latestShown by rememberUpdatedState(onWidgetsShown)
 
+        // Seules les nouvelles demandes comptent (pas la valeur présente à la création), et toujours exécutées :
+        // `currentPage` peut encore valoir l'accueil pendant un élan qui part vers les widgets
+        var handledRequest by remember { mutableIntStateOf(homePageRequests) }
+        var returningHome by remember { mutableStateOf(false) }
         LaunchedEffect(homePageRequests) {
-            if (state.currentPage != homeIndex) state.animateScrollToPage(homeIndex)
+            if (homePageRequests == handledRequest) return@LaunchedEffect
+            handledRequest = homePageRequests
+            returningHome = true
+            try {
+                state.animateScrollToPage(homeIndex)
+            } finally {
+                returningHome = false
+            }
         }
         LaunchedEffect(state) {
             snapshotFlow { state.settledPage }.collect { if (widgetsEnabled && it == 0) latestShown() }
         }
-        BackHandler(enabled = widgetsEnabled && state.currentPage == 0) {
+        BackHandler(enabled = backEnabled && widgetsEnabled && state.currentPage == 0) {
             if (editMode) onExitEdit() else scope.launch { state.animateScrollToPage(homeIndex) }
         }
 
@@ -51,7 +68,8 @@ fun HomePager(
             state = state,
             modifier = Modifier.fillMaxSize().testTag("pager"),
             beyondViewportPageCount = 1,
-            userScrollEnabled = !editMode,
+            // Pas de doigt pour interrompre le retour à l'accueil
+            userScrollEnabled = !editMode && !returningHome,
             key = { page -> if (widgetsEnabled && page == 0) "widgets" else "home" },
         ) { page ->
             if (widgetsEnabled && page == 0) widgetPage() else home()

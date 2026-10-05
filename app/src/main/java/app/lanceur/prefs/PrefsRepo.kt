@@ -15,6 +15,7 @@ import app.lanceur.widgets.WidgetSlot
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class PrefsRepo(
@@ -25,6 +26,14 @@ class PrefsRepo(
     val prefs: Flow<LauncherPrefs> = store.data
         .catch { e -> if (e is IOException) { onError(e); emit(emptyPreferences()) } else throw e }
         .map { decode(it) }
+
+    /** Réglages actuels, ou `null` si le fichier est illisible (et non des valeurs par défaut). */
+    suspend fun readOrNull(): LauncherPrefs? = try {
+        decode(store.data.first())
+    } catch (e: IOException) {
+        onError(e)
+        null
+    }
 
     suspend fun addFavorite(key: AppKey) = update {
         if (key in it.favorites) it else it.copy(favorites = it.favorites + key)
