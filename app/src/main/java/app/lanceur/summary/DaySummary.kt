@@ -1,5 +1,6 @@
 package app.lanceur.summary
 
+import app.lanceur.text.TextNormalizer
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -25,6 +26,8 @@ data class SummaryLine(
     val timeLabel: String,
     val title: String,
     val tomorrow: Boolean,
+    /** Anniversaire « toute la journée » : affiché avec 🎁 et un titre allégé. */
+    val birthday: Boolean = false,
 )
 
 data class DaySummaryState(
@@ -86,14 +89,27 @@ object DaySummary {
     private fun line(tomorrow: Boolean, event: SummaryEvent, zone: ZoneId): SummaryLine {
         val time = if (event.allDay) null else TIME.format(Instant.ofEpochMilli(event.begin).atZone(zone))
         val title = event.title.ifBlank { "(Sans titre)" }
+        val birthday = event.allDay && BIRTHDAY_WORDS.any { TextNormalizer.fold(title).contains(it) }
         return SummaryLine(
             event = event,
             text = listOfNotNull(if (tomorrow) "Demain" else null, time, title).joinToString(" "),
-            timeLabel = time ?: "Journée",
-            title = title,
+            timeLabel = if (birthday) "🎁" else time ?: "Journée",
+            title = if (birthday) shortBirthdayTitle(title) else title,
             tomorrow = tomorrow,
+            birthday = birthday,
         )
     }
+
+    private val BIRTHDAY_WORDS = listOf("ANNIVERSAIRE", "BIRTHDAY")
+    private val BIRTHDAY_PATTERNS = listOf(
+        Regex("\\s*[-–]\\s*anniversaire\\s*$", RegexOption.IGNORE_CASE), // « Jean - Anniversaire » (Google)
+        Regex("^\\s*anniversaire\\s+(de\\s+|d['’]\\s*)", RegexOption.IGNORE_CASE), // « Anniversaire de Léa »
+        Regex("(['’]s)?\\s*birthday\\s*$", RegexOption.IGNORE_CASE), // « Paul's birthday »
+    )
+
+    /** Ne garde que le nom de la personne ; si rien ne reste, le titre d'origine. */
+    private fun shortBirthdayTitle(title: String): String =
+        BIRTHDAY_PATTERNS.fold(title) { acc, pattern -> pattern.replace(acc, "") }.trim().ifBlank { title }
 
     private fun utcDate(millis: Long): LocalDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
 }

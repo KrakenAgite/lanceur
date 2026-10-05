@@ -79,4 +79,28 @@ class DaySummaryTest {
         assertEquals(listOf(false, true), lines.map { it.tomorrow })
         assertEquals(0xFF3366CC.toInt(), lines[1].event.color)
     }
+
+    @Test
+    fun all_day_birthdays_get_a_gift_and_a_short_title() {
+        val events = listOf(
+            allDay(1, "Jean-Côme Chopin - Anniversaire", 5),
+            allDay(2, "Anniversaire de Léa", 5),
+            allDay(3, "ANNIVERSAIRE d'Inès", 5),
+            allDay(4, "Paul's birthday", 6),
+        )
+        val lines = DaySummary.build(now, events, null, true).events
+        assertEquals(listOf(true, true, true), lines.map { it.birthday })
+        assertEquals(listOf("Jean-Côme Chopin", "Léa", "Inès"), lines.map { it.title })
+        assertEquals(listOf("🎁", "🎁", "🎁"), lines.map { it.timeLabel })
+        val paul = DaySummary.build(now, listOf(allDay(4, "Paul's birthday", 6)), null, true).events.single()
+        assertEquals("Paul", paul.title)
+    }
+
+    @Test
+    fun only_all_day_events_count_as_birthdays() {
+        val lines = DaySummary.build(now, listOf(timed(1, "Repas d'anniversaire", 5, 19), allDay(2, "Férié", 5)), null, true).events
+        assertEquals(listOf(false, false), lines.map { it.birthday })
+        assertEquals(listOf("Journée", "19:00"), lines.map { it.timeLabel })
+        assertEquals("Repas d'anniversaire", lines[1].title)
+    }
 }

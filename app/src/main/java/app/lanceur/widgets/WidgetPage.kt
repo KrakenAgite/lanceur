@@ -1,6 +1,20 @@
 package app.lanceur.widgets
 
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.animation.core.animateFloatAsState
 import java.util.Locale
 import app.lanceur.summary.SummaryLine
 import androidx.compose.ui.unit.sp
@@ -31,7 +45,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,7 +73,6 @@ import androidx.compose.ui.zIndex
 import app.lanceur.settings.Reorder
 import app.lanceur.summary.DaySummaryState
 import app.lanceur.summary.SummaryEvent
-import app.lanceur.ui.HintText
 import app.lanceur.ui.blockTouchesBelow
 
 class WidgetPageActions(
@@ -76,7 +88,8 @@ class WidgetPageActions(
 )
 
 private val TOOLBAR_HEIGHT = 48.dp
-private val GAP = 12.dp
+private val GAP = 14.dp
+private val FRAME_PADDING = 8.dp
 
 @Composable
 fun WidgetPage(
@@ -92,21 +105,33 @@ fun WidgetPage(
     Column(
         modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f))
+            // Dégradé : le haut laisse voir le fond d'écran, le bas reste lisible
+            .background(
+                Brush.verticalGradient(
+                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.15f),
+                    1f to MaterialTheme.colorScheme.surface.copy(alpha = 0.65f),
+                ),
+            )
             .systemBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(GAP),
     ) {
         if (summary != null) SummaryCard(summary, actions)
-        if (cards.isEmpty()) HintText("Ajoute ton premier widget")
-        WidgetList(cards, editMode, label, isReconfigurable, widgetView, actions)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-            if (editMode) {
-                Button(onClick = { actions.setEditMode(false) }) { Text("Terminé") }
-            } else {
-                FilledTonalButton(onClick = actions.addWidget) { Text("+ Ajouter un widget") }
-                if (cards.isNotEmpty()) OutlinedButton(onClick = { actions.setEditMode(true) }) { Text("Modifier") }
+        if (cards.isEmpty()) {
+            EmptyWidgetsCard(onAdd = actions.addWidget)
+        } else {
+            WidgetList(cards, editMode, label, isReconfigurable, widgetView, actions)
+            Row(
+                Modifier.fillMaxWidth().padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            ) {
+                if (editMode) {
+                    Button(onClick = { actions.setEditMode(false) }) { ButtonContent(Icons.Default.Check, "Terminé") }
+                } else {
+                    FilledTonalButton(onClick = actions.addWidget) { ButtonContent(Icons.Default.Add, "Ajouter") }
+                    OutlinedButton(onClick = { actions.setEditMode(true) }) { ButtonContent(Icons.Default.Edit, "Modifier") }
+                }
             }
         }
     }
@@ -170,7 +195,8 @@ private fun SummaryCard(summary: DaySummaryState, actions: WidgetPageActions) {
 @Composable
 private fun TimelineRow(line: SummaryLine, isLast: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val dot = line.event.color?.let { Color(it) } ?: colors.primary
+    // Anniversaire : pastille aux couleurs festives de Material You
+    val dot = if (line.birthday) colors.tertiary else line.event.color?.let { Color(it) } ?: colors.primary
     Row(
         Modifier
             .fillMaxWidth()
@@ -220,17 +246,26 @@ private fun WidgetList(
     val latestReorder by rememberUpdatedState(actions.reorder)
     LaunchedEffect(cards) { if (draggingId == null) working = cards }
     val density = LocalDensity.current
-    val heightPx = { card: WidgetCard -> with(density) { (card.slot.size.heightDp.dp + TOOLBAR_HEIGHT + GAP).toPx() } }
+    val heightPx = { card: WidgetCard -> with(density) { (card.slot.size.heightDp.dp + TOOLBAR_HEIGHT + FRAME_PADDING * 2 + GAP).toPx() } }
 
     Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
         working.forEach { card ->
             key(card.slot.appWidgetId) {
                 val dragging = card.slot.appWidgetId == draggingId
+                val frameScale by animateFloatAsState(if (editMode) 0.97f else 1f, label = "édition")
+                // Chaque widget est posé dans un cadre arrondi translucide, comme sur l'accueil du Pixel
                 Column(
                     Modifier
                         .fillMaxWidth()
                         .zIndex(if (dragging) 1f else 0f)
-                        .graphicsLayer { translationY = if (dragging) dragOffset else 0f },
+                        .graphicsLayer {
+                            translationY = if (dragging) dragOffset else 0f
+                            scaleX = frameScale
+                            scaleY = frameScale
+                        }
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = if (dragging) 0.85f else 0.55f))
+                        .padding(FRAME_PADDING),
                 ) {
                     if (editMode) {
                         EditToolbar(
@@ -264,7 +299,7 @@ private fun WidgetList(
                         Modifier
                             .fillMaxWidth()
                             .height(card.slot.size.heightDp.dp)
-                            .clip(RoundedCornerShape(16.dp)),
+                            .clip(RoundedCornerShape(18.dp)),
                     ) {
                         when (card) {
                             is WidgetCard.Live -> widgetView(card.slot, Modifier.fillMaxSize())
@@ -281,18 +316,22 @@ private fun WidgetList(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditToolbar(card: WidgetCard, label: String, reconfigurable: Boolean, actions: WidgetPageActions, handle: Modifier) {
     Row(Modifier.fillMaxWidth().height(TOOLBAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.Menu, contentDescription = "Déplacer $label", modifier = handle.padding(12.dp))
         Text(label, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
-        WidgetSize.entries.forEach { size ->
-            FilterChip(
-                selected = card.slot.size == size,
-                onClick = { actions.resize(card.slot, size) },
-                label = { Text(size.shortLabel) },
-                modifier = Modifier.padding(horizontal = 2.dp),
-            )
+        SingleChoiceSegmentedButtonRow(Modifier.padding(horizontal = 4.dp)) {
+            WidgetSize.entries.forEachIndexed { index, size ->
+                SegmentedButton(
+                    selected = card.slot.size == size,
+                    onClick = { actions.resize(card.slot, size) },
+                    shape = SegmentedButtonDefaults.itemShape(index, WidgetSize.entries.size),
+                    icon = {},
+                    label = { Text(size.shortLabel) },
+                )
+            }
         }
         if (reconfigurable) {
             IconButton(onClick = { actions.reconfigure(card.slot) }) { Icon(Icons.Default.Settings, contentDescription = "Reconfigurer") }
@@ -311,5 +350,42 @@ private fun UnavailableCard(label: String, onRemove: () -> Unit) {
         Text("Widget indisponible", style = MaterialTheme.typography.titleMedium)
         Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(onClick = onRemove) { Text("Retirer") }
+    }
+}
+
+@Composable
+private fun ButtonContent(icon: ImageVector, text: String) {
+    Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+    Spacer(Modifier.width(8.dp))
+    Text(text)
+}
+
+/** Aucun widget : une grande carte en pointillés qu'on touche pour en ajouter un. */
+@Composable
+private fun EmptyWidgetsCard(onAdd: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val outline = colors.outline
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(colors.surfaceContainer.copy(alpha = 0.35f))
+            .drawBehind {
+                drawRoundRect(
+                    color = outline,
+                    style = Stroke(width = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(18f, 12f))),
+                    cornerRadius = CornerRadius(24.dp.toPx()),
+                )
+            }
+            .clickable(onClick = onAdd)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(Icons.Default.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(32.dp))
+        Spacer(Modifier.height(6.dp))
+        Text("Ajoute ton premier widget", style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+        Text("Météo, agenda, musique…", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
     }
 }

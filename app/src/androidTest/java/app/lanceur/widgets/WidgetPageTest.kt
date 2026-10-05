@@ -25,6 +25,7 @@ class WidgetPageTest {
     private val summary = DaySummaryState(
         dateLabel = "Lundi 5 octobre",
         events = listOf(
+            SummaryLine(SummaryEvent(9, "Jean-Côme Chopin - Anniversaire", 0, 0, true), "Jean-Côme Chopin - Anniversaire", "🎁", "Jean-Côme Chopin", tomorrow = false, birthday = true),
             SummaryLine(SummaryEvent(1, "Dentiste", 0, 0, false), "14:00 Dentiste", "14:00", "Dentiste", tomorrow = false),
             SummaryLine(SummaryEvent(2, "Algorithmique", 0, 0, false, color = 0xFF3366CC.toInt()), "Demain 08:00 Algorithmique", "08:00", "Algorithmique", tomorrow = true),
         ),
@@ -52,6 +53,8 @@ class WidgetPageTest {
     fun shows_the_summary_and_the_widgets() {
         show(listOf(WidgetCard.Live(slot)), editMode = false, actions = WidgetPageActions())
         rule.onNodeWithText("LUNDI").assertIsDisplayed()
+        rule.onNodeWithText("🎁").assertIsDisplayed()
+        rule.onNodeWithText("Jean-Côme Chopin").assertIsDisplayed()
         rule.onNodeWithText("5 octobre").assertIsDisplayed()
         rule.onNodeWithText("14:00").assertIsDisplayed()
         rule.onNodeWithText("Dentiste").assertIsDisplayed()
@@ -66,8 +69,8 @@ class WidgetPageTest {
     fun without_widget_it_invites_to_add_one() {
         var added = false
         show(emptyList(), editMode = false, actions = WidgetPageActions(addWidget = { added = true }))
-        rule.onNodeWithText("Ajoute ton premier widget").assertIsDisplayed()
-        rule.onNodeWithText("+ Ajouter un widget").performScrollTo().performClick()
+        // La grande carte vide se touche directement
+        rule.onNodeWithText("Ajoute ton premier widget").performScrollTo().performClick()
         assertTrue(added)
     }
 
