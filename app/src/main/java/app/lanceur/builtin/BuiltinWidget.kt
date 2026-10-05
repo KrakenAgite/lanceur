@@ -33,6 +33,10 @@ import app.lanceur.builtin.media.NowPlayingSource
 import app.lanceur.builtin.media.NowPlayingState
 import app.lanceur.builtin.note.NoteCard
 import app.lanceur.builtin.note.NoteData
+import app.lanceur.builtin.shortcuts.ShortcutActions
+import app.lanceur.builtin.shortcuts.ShortcutsCard
+import app.lanceur.builtin.shortcuts.TorchController
+import app.lanceur.builtin.shortcuts.TorchState
 import app.lanceur.builtin.timer.StopwatchState
 import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
@@ -58,6 +62,8 @@ class BuiltinServices(
     val openTimers: () -> Unit = {},
     val contacts: FavoriteContactsSource? = null,
     val favoritesActions: FavoritesActions = FavoritesActions(),
+    val torch: TorchController? = null,
+    val shortcutActions: ShortcutActions = ShortcutActions(),
     val refresh: Int,
 )
 
@@ -147,6 +153,11 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
             val flow = remember(source, services.refresh) { source?.favorites() ?: kotlinx.coroutines.flow.flowOf(FavoritesState.Loaded(emptyList())) }
             val state by flow.collectAsStateWithLifecycle(FavoritesState.Loaded(emptyList()))
             FavoritesCard(state, size, services.favoritesActions, modifier)
+        }
+        BuiltinKind.SHORTCUTS -> {
+            val torchFlow = remember(services.torch) { services.torch?.state ?: kotlinx.coroutines.flow.flowOf(TorchState(false, false)) }
+            val torch by torchFlow.collectAsStateWithLifecycle(TorchState(available = true, on = false))
+            ShortcutsCard(torch, services.shortcutActions, modifier)
         }
     }
 }

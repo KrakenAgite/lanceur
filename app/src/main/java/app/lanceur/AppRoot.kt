@@ -50,6 +50,7 @@ import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.builtin.BuiltinWidget
 import app.lanceur.builtin.calendar.CalendarCardActions
 import app.lanceur.builtin.contacts.FavoritesActions
+import app.lanceur.builtin.shortcuts.ShortcutActions
 import app.lanceur.home.HomeActions
 import app.lanceur.home.HomePager
 import app.lanceur.home.HomeScreen
@@ -283,6 +284,17 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
             sms = container.resultActions::sms,
             open = { uri -> container.resultActions.open(SearchResult.Contact(uri, "", null)) },
             requestPermission = { permissionLauncher.launch(SearchPermissions.ALL) },
+        ),
+        torch = container.torch,
+        shortcutActions = ShortcutActions(
+            toggleTorch = { on -> if (!container.torch.set(on)) toast("Lampe indisponible") },
+            internet = { container.appLauncher.startSafely(Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY)) },
+            bluetooth = { container.appLauncher.startSafely(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
+            sound = { container.appLauncher.startSafely(Intent(Settings.Panel.ACTION_VOLUME)) },
+            doNotDisturb = {
+                container.appLauncher.startSafely(Intent("android.settings.ZEN_MODE_SETTINGS")) ||
+                    container.appLauncher.startSafely(Intent(Settings.ACTION_SOUND_SETTINGS))
+            },
         ),
         refresh = widgetRefresh,
     )

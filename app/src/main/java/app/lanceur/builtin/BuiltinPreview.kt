@@ -36,6 +36,9 @@ import app.lanceur.builtin.media.NowPlayingCard
 import app.lanceur.builtin.media.NowPlayingState
 import app.lanceur.builtin.note.NoteCard
 import app.lanceur.builtin.note.NoteData
+import app.lanceur.builtin.shortcuts.ShortcutActions
+import app.lanceur.builtin.shortcuts.ShortcutsCard
+import app.lanceur.builtin.shortcuts.TorchState
 import app.lanceur.builtin.timer.StopwatchState
 import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
@@ -115,5 +118,6 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
             FavoritesActions(),
             modifier,
         )
+        BuiltinKind.SHORTCUTS -> ShortcutsCard(TorchState(available = true, on = true), ShortcutActions(), modifier)
     }
 }

@@ -25,6 +25,7 @@ enum class BuiltinKind(
     WORLD_CLOCKS("Horloges du monde", "🌍", mapOf(SMALL to 120, MEDIUM to 200), MEDIUM, configurable = true),
     TIMER("Minuteur / chrono", "⏱", mapOf(MEDIUM to 200), MEDIUM),
     FAVORITE_CONTACTS("Contacts favoris", "⭐", mapOf(SMALL to 120, MEDIUM to 220), SMALL),
+    SHORTCUTS("Raccourcis rapides", "⚡", mapOf(SMALL to 120), SMALL),
     ;
 
     /** Tailles proposées en mode édition, dans l'ordre S, M, L. */

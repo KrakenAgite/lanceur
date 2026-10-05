@@ -7,6 +7,7 @@ import app.lanceur.builtin.battery.BatterySource
 import app.lanceur.builtin.calendar.CalendarRangeSource
 import app.lanceur.builtin.contacts.FavoriteContactsSource
 import app.lanceur.builtin.media.NowPlayingSource
+import app.lanceur.builtin.shortcuts.TorchController
 import app.lanceur.search.AppSearchProvider
 import app.lanceur.search.CalcProvider
 import app.lanceur.search.CalendarProvider
@@ -55,6 +56,7 @@ class AppContainer(context: Context) {
     val widgetProviders = WidgetProviderSource(appContext)
     val daySummary = DaySummarySource(appContext)
     val favoriteContacts = FavoriteContactsSource(appContext)
+    val torch = TorchController(appContext)
     val battery = BatterySource(appContext)
     val nowPlaying = NowPlayingSource(appContext)
     val calendarRange = CalendarRangeSource(appContext)
