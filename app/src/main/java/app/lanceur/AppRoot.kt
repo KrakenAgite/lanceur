@@ -18,7 +18,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +34,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lanceur.apps.AppEntry
@@ -43,6 +41,7 @@ import app.lanceur.apps.AppIcon
 import app.lanceur.apps.AppKey
 import app.lanceur.apps.HomeRole
 import app.lanceur.apps.HomeRoleWatcher
+import app.lanceur.builtin.BuiltinPreview
 import app.lanceur.builtin.BuiltinServices
 import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.builtin.BuiltinWidget
@@ -161,7 +160,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     val widgetPreview: @Composable (ProviderEntry) -> Unit = { entry ->
         val kind = BuiltinSlots.kindOf(entry.provider)
         if (kind != null) {
-            Text(kind.emoji, fontSize = 34.sp)
+            BuiltinPreview(kind)
         } else {
             val sizePx = with(LocalDensity.current) { 96.dp.roundToPx() }
             val bitmap by produceState<ImageBitmap?>(null, entry) {

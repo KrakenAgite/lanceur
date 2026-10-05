@@ -1,5 +1,6 @@
 package app.lanceur.widgets
 
+import app.lanceur.builtin.BuiltinSlots
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -84,7 +85,7 @@ fun WidgetPicker(
                         Column(Modifier.weight(1f)) {
                             Text(entry.widgetLabel, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             Text(
-                                "Taille de départ : ${WidgetSize.fromMinHeightDp(entry.minHeightDp).shortLabel}",
+                                "Taille de départ : ${startingSize(entry).shortLabel}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -95,3 +96,7 @@ fun WidgetPicker(
         }
     }
 }
+
+/** Un widget intégré part de sa taille par défaut ; un widget Android, de celle que sa hauteur minimale suggère. */
+private fun startingSize(entry: ProviderEntry): WidgetSize =
+    BuiltinSlots.kindOf(entry.provider)?.defaultSize ?: WidgetSize.fromMinHeightDp(entry.minHeightDp)

@@ -3,6 +3,8 @@ package app.lanceur.widgets
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -34,5 +36,14 @@ class WidgetPickerTest {
         rule.setContent { MaterialTheme { WidgetPicker(groups, query, { query = it }, preview = {}, onPick = {}) } }
         rule.onNodeWithTag("picker-filter").performTextInput("cal")
         assertEquals("cal", query)
+    }
+
+    @Test
+    fun builtin_widgets_show_their_own_starting_size() {
+        val lanceur = app.lanceur.builtin.BuiltinSlots.pickerEntries()
+        val groups = listOf(PickerGroup("Lanceur", "app.lanceur.builtin", isWork = false, entries = lanceur))
+        rule.setContent { MaterialTheme { WidgetPicker(groups, "", {}, preview = {}, onPick = {}) } }
+        rule.onAllNodesWithText("Taille de départ : M").assertCountEquals(3)
+        rule.onAllNodesWithText("Taille de départ : S").assertCountEquals(2)
     }
 }
