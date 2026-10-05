@@ -45,7 +45,7 @@ d'attente et paroles dans le lecteur, création ou modification d'événements, 
 | Lecteur | `NotificationListenerService` déclaré (aucune notification n'est lue) ; `MediaSessionManager.getActiveSessions` + `addOnActiveSessionsChangedListener` ; `MediaController.TransportControls` pour ⏮ ⏯ ⏭ et `seekTo` |
 | Agenda | `CalendarContract.Instances` (avec `DISPLAY_COLOR`) sur la période affichée, lecture partagée avec le résumé du jour |
 | Batterie | Diffusion collante `ACTION_BATTERY_CHANGED`, `BatteryManager.computeChargeTimeRemaining()`, `PowerManager.isPowerSaveMode` + `ACTION_POWER_SAVE_MODE_CHANGED` ; aucune permission |
-| Mise à jour | Les sources n'écoutent que si la page de widgets est affichée (lifecycle `RESUMED`) et que le widget est dans la pile |
+| Mise à jour | Les flux sont collectés tant que Lanceur est au premier plan et que la carte est composée (la page de widgets reste composée à côté de l'accueil) ; rien en arrière-plan |
 | Flou de la pochette | `Modifier.blur` (Android 12+, donc toujours disponible avec minSdk 35) |
 
 ### Hauteurs (dp, hors barre d'édition)

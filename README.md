@@ -69,6 +69,18 @@ d'accessibilité. Celui de Lanceur ne reçoit aucun événement et ne lit rien �
 *Modifier* permet de les déplacer (poignée), de choisir leur hauteur (S, M, L), de les reconfigurer ou de les retirer.
 Les widgets d'une appli cachée ou de l'Espace privé ne sont jamais proposés ni affichés.
 
+### Widgets intégrés
+
+Le sélecteur propose en tête un groupe « Lanceur » : Lecture en cours, Agenda · mois, Agenda · semaine,
+Batterie · anneau et Batterie · barre. Ils s'ajoutent sans autorisation et se déplacent, se redimensionnent
+et se retirent comme les autres.
+
+- **Lecture en cours** : la première fois, toucher « Autoriser l'accès aux lecteurs » et activer Lanceur dans
+  l'accès aux notifications (Lanceur ne lit aucune notification). Si l'option est grisée : Infos de l'appli ›
+  ⋮ › Autoriser les paramètres restreints, comme pour le double toucher.
+- **Agendas** : utilisent la même autorisation que le résumé du jour ; glisser sur le mois change de mois.
+- **Batterie** : aucune autorisation ; le niveau des accessoires Bluetooth n'est pas disponible pour les applis.
+
 ## Limites d'Android
 
 Une appli seulement masquée dans le launcher reste visible dans le multitâche, dans *Paramètres > Applis*,
