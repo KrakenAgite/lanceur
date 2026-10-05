@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Afficher l'Espace privé (accordée quand Lanceur est l'écran d'accueil par défaut) -->
+    <!-- Météo et RSS uniquement, par net/Network (voir NetworkGuardTest) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Demandée seulement si « Ma position » est choisie pour la météo -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
