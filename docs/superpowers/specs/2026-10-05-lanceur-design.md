@@ -34,13 +34,13 @@ sont listées comme les autres avec le badge système), choix du moteur de reche
 | Élément | Choix |
 |---|---|
 | Langage / UI | Kotlin, Jetpack Compose, Material 3 avec couleurs dynamiques (Material You) |
-| SDK | `minSdk 35` (Android 15, nécessaire pour l'Espace privé) ; `compileSdk` / `targetSdk 35` (plateforme installée ; passage à 37 possible plus tard) |
-| Build | Gradle (wrapper), JDK fourni par Android Studio (`/opt/android-studio/jbr`) |
-| Persistance | Preferences DataStore, valeurs sérialisées en JSON (kotlinx.serialization) |
+| SDK | `minSdk 35` (Android 15, nécessaire pour l'Espace privé) ; `compileSdk` / `targetSdk 37` (comme `~/Projets/tradeterm`) |
+| Build | Gradle 9.5.0 (wrapper), AGP 9.3.3, Kotlin 2.4.20, Compose BOM 2026.09.00 ; JDK d'Android Studio (`/opt/android-studio/jbr`) |
+| Persistance | Preferences DataStore 1.2.1 ; les clés d'applis sont stockées en texte simple (pas de kotlinx.serialization) |
 | Injection | Manuelle (un `AppContainer` créé dans `Application`), pas de Hilt |
 | Navigation | État d'écran dans un ViewModel (`Home`, `Search`, `Vault`, `Settings`), pas de bibliothèque de navigation |
 | Identifiant d'appli | `package/activité`, ex. `fr.exemple.app/fr.exemple.app.Main` |
-| Tests | JUnit 4 pour la logique pure, Compose UI Test sur émulateur |
+| Tests | JUnit 4 pour la logique pure ; Compose UI Test exécutés sur le Pixel 9 branché en USB (aucun émulateur installé) |
 
 ### Manifeste
 
@@ -48,6 +48,8 @@ sont listées comme les autres avec le badge système), choix du moteur de reche
   `excludeFromRecents="true"`.
 - `android:allowBackup="false"` : la liste des applis cachées ne part pas dans la sauvegarde Google.
 - `<queries>` sur l'intent `MAIN`/`LAUNCHER` (pas besoin de `QUERY_ALL_PACKAGES`).
+- Aucune permission `INTERNET` : le launcher n'envoie rien sur le réseau, la recherche web ouvre le navigateur.
+- `dataExtractionRules` excluant tout, pour bloquer aussi le transfert d'appareil à appareil.
 - Permissions :
   - `ACCESS_HIDDEN_PROFILES` : affichage de l'Espace privé (accordée quand l'appli tient le rôle HOME) ;
   - `USE_BIOMETRIC` ;
@@ -128,7 +130,7 @@ Les clés qui ne correspondent plus à aucune appli installée sont retirées de
   l'intérieur de l'écran (`décalage = 28 dp · f`). Les transitions utilisent un ressort (`spring`,
   amortissement moyen) et la vague retombe en ressort quand on lâche.
 - Une bulle de grande taille, à côté du doigt, affiche la lettre active.
-- Vibration `SEGMENT_FREQUENT_TICK` (repli sur `CLOCK_TICK`) à chaque changement de lettre.
+- Vibration `SEGMENT_FREQUENT_TICK` (disponible dès Android 14) à chaque changement de lettre.
 - Événements émis : `onLetterChanged(letter)`, `onRelease()`.
 
 ### 4.4 `home`
@@ -175,7 +177,9 @@ L'ouverture d'une appli passe par `LauncherApps.startMainActivity` (gère aussi 
 
 - Ouverture en glissement depuis le bas.
 - Champ de saisie en bas de l'écran, au-dessus du clavier, avec le focus et le clavier déjà ouverts.
-- Résultats au-dessus du champ, mis à jour à chaque frappe (anti-rebond de 80 ms pour l'agenda et les contacts).
+- Résultats au-dessus du champ, affichés de bas en haut : le meilleur résultat est juste au-dessus du champ, la ligne web
+  tout en haut. Ils se mettent à jour à chaque frappe, chaque source s'affichant dès qu'elle répond (attente de 80 ms
+  avant d'interroger l'agenda et les contacts).
 - Fermeture : glisser vers le bas, geste retour, ou ouverture d'un résultat.
 - La touche Entrée ouvre le premier résultat.
 
@@ -192,7 +196,8 @@ en parallèle et l'écran fusionne les résultats dans cet ordre fixe :
 
    La comparaison ignore les accents et la casse.
 2. **Calcul** (`CalcProvider`) : uniquement si la requête est une expression arithmétique valide.
-   - Analyseur maison à descente récursive, sans aucun `eval`.
+   - Analyseur maison à descente récursive, sans aucun `eval`. Entrée limitée à 200 caractères et 20 niveaux de
+     parenthèses, chiffres latins uniquement.
    - Gère `+ - * / % ^`, les parenthèses, la virgule comme le point décimal, et `×`, `÷`.
    - Résultat arrondi à 10 chiffres significatifs ; division par zéro affichée « — ».
    - Toucher le résultat le copie dans le presse-papiers.
@@ -202,7 +207,9 @@ en parallèle et l'écran fusionne les résultats dans cet ordre fixe :
    - Toucher la ligne ouvre la fiche du contact.
 4. **Agenda** (`CalendarProvider`, si la permission est accordée), au plus 5 résultats.
    - Instances de maintenant à J+90 via `CalendarContract.Instances`, dont le titre ou le lieu correspond.
-   - Triées par date ; toucher une ligne ouvre l'événement.
+   - Correspondance sans accents ni casse, faite dans le launcher (pas en SQL).
+   - Triées par date ; les événements « toute la journée » affichent la date sans heure ; toucher une ligne ouvre
+     l'événement.
 5. **Réglages** (`SettingsProvider`), au plus 3 résultats.
    - Liste statique de raccourcis `Settings.ACTION_*` avec des mots-clés français : Wi-Fi, Bluetooth, Affichage,
      Batterie, Son, Applis, Notifications, Localisation, Sécurité, Stockage, Réseau, Date et heure, Accessibilité,
@@ -214,7 +221,7 @@ en parallèle et l'écran fusionne les résultats dans cet ordre fixe :
 **Permissions refusées**
 
 Si l'agenda ou les contacts ne sont pas autorisés, une seule ligne « Autoriser l'accès à l'agenda et aux contacts »
-apparaît en bas des résultats tant que l'utilisateur ne l'a pas écartée. Le fait de l'avoir écartée est enregistré
+apparaît juste avant la ligne web tant que l'utilisateur ne l'a pas écartée. Le fait de l'avoir écartée est enregistré
 dans `PrefsRepo`.
 
 **Erreurs**
@@ -238,7 +245,10 @@ L'état n'existe qu'en mémoire.
 
 **Authentification**
 
-- `BiometricPrompt` avec `BIOMETRIC_STRONG or DEVICE_CREDENTIAL`.
+- `BiometricPrompt` du système (`android.hardware.biometrics`) avec `BIOMETRIC_STRONG or DEVICE_CREDENTIAL`.
+- Si le code du téléphone s'affiche (repli), l'activité passe en arrière-plan : l'état `Authenticating` l'ignore.
+- Avant de déverrouiller l'Espace privé, le dossier note qu'un écran système va passer devant : la mise en
+  arrière-plan qui suit ne le referme pas (une seule fois).
 - Si `BiometricManager.canAuthenticate(...)` signale l'absence de tout verrouillage d'écran, le dossier ne s'ouvre
   pas et un message invite à configurer un verrouillage d'écran.
 
