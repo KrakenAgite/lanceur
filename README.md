@@ -22,8 +22,9 @@ JAVA_HOME=/opt/android-studio/jbr ./gradlew :app:testDebugUnitTest
 JAVA_HOME=/opt/android-studio/jbr ./gradlew :app:connectedDebugAndroidTest
 ```
 
-Les tests d'interface tournent sur le téléphone branché (USB ou débogage sans fil) et désinstallent l'app à la fin :
-relancer `installDebug` ensuite. Espresso est fixé en 3.7.0 : la version tirée par Compose ne marche pas sous Android 17.
+Les tests d'interface tournent sur le téléphone branché (USB ou débogage sans fil). L'app reste installée
+ensuite (`android.injected.androidTest.leaveApksInstalledAfterRun` dans `gradle.properties`) : ses réglages et son
+rôle d'écran d'accueil sont conservés. Espresso est fixé en 3.7.0 : la version tirée par Compose ne marche pas sous Android 17.
 
 ## Gestes
 
