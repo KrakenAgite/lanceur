@@ -89,13 +89,17 @@ class AppCatalog(
         }
     }
 
-    /** Le système peut afficher son propre verrou ; le catalogue se met à jour via `profileReceiver`. */
-    fun setPrivateSpaceLocked(locked: Boolean) {
-        val user = launcherApps.profiles.firstOrNull(::isPrivate) ?: return
-        try {
-            userManager.requestQuietModeEnabled(locked, user)
+    /**
+     * Le catalogue se met à jour via `profileReceiver`. Renvoie `true` si le système va afficher
+     * son propre verrou (le déverrouillage attend alors la confirmation de l'utilisateur).
+     */
+    fun setPrivateSpaceLocked(locked: Boolean): Boolean {
+        val user = launcherApps.profiles.firstOrNull(::isPrivate) ?: return false
+        return try {
+            !userManager.requestQuietModeEnabled(locked, user) && !locked
         } catch (e: SecurityException) {
             Log.w(TAG, "Espace privé : demande refusée", e)
+            false
         }
     }
 

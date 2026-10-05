@@ -7,6 +7,7 @@ import app.lanceur.vault.VaultEvent.Closed
 import app.lanceur.vault.VaultEvent.ExternalPromptStarted
 import app.lanceur.vault.VaultEvent.HomePressed
 import app.lanceur.vault.VaultEvent.OpenRequested
+import app.lanceur.vault.VaultEvent.Resumed
 import app.lanceur.vault.VaultEvent.ScreenOff
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -63,5 +64,22 @@ class VaultStateMachineTest {
         val afterPrompt = VaultState.Unlocked(keepOnNextBackground = true)
         assertEquals(VaultState.Locked, run(ScreenOff, from = afterPrompt))
         assertEquals(VaultState.Locked, run(HomePressed, from = afterPrompt))
+    }
+
+    @Test
+    fun translucent_prompt_grant_is_cleared_on_resume() {
+        // Le verrou de l'Espace privé est translucide : le launcher repasse par onResume sans jamais passer en onStop
+        assertEquals(VaultState.Locked, run(ExternalPromptStarted, Resumed, Backgrounded, from = VaultState.Unlocked()))
+    }
+
+    @Test
+    fun opaque_prompt_keeps_the_vault_open_once() {
+        assertEquals(VaultState.Unlocked(), run(ExternalPromptStarted, Backgrounded, Resumed, from = VaultState.Unlocked()))
+    }
+
+    @Test
+    fun resume_changes_nothing_else() {
+        assertEquals(VaultState.Locked, run(Resumed))
+        assertEquals(VaultState.Authenticating, run(OpenRequested, Resumed))
     }
 }

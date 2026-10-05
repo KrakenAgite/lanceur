@@ -183,8 +183,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     launch = ::launch,
                     menu = ::onMenu,
                     unlockPrivateSpace = {
-                        vm.vaultEvent(VaultEvent.ExternalPromptStarted)
-                        container.catalog.setPrivateSpaceLocked(false)
+                        // L'écran du système s'ouvre après ce callback : l'événement arrive avant la mise en arrière-plan
+                        if (container.catalog.setPrivateSpaceLocked(false)) vm.vaultEvent(VaultEvent.ExternalPromptStarted)
                     },
                     lockPrivateSpace = { container.catalog.setPrivateSpaceLocked(true) },
                 ),

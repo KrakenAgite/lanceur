@@ -8,7 +8,7 @@ sealed interface VaultState {
     data class Unlocked(val keepOnNextBackground: Boolean = false) : VaultState
 }
 
-enum class VaultEvent { OpenRequested, AuthSucceeded, AuthFailed, Backgrounded, ScreenOff, HomePressed, Closed, ExternalPromptStarted }
+enum class VaultEvent { OpenRequested, AuthSucceeded, AuthFailed, Backgrounded, Resumed, ScreenOff, HomePressed, Closed, ExternalPromptStarted }
 
 /** L'état n'existe qu'en mémoire : un redémarrage du launcher repart toujours de `Locked`. */
 object VaultStateMachine {
@@ -25,6 +25,8 @@ object VaultStateMachine {
         is VaultState.Unlocked -> when (event) {
             VaultEvent.ExternalPromptStarted -> VaultState.Unlocked(keepOnNextBackground = true)
             VaultEvent.Backgrounded -> if (state.keepOnNextBackground) VaultState.Unlocked() else VaultState.Locked
+            // Un écran système translucide ne fait que mettre le launcher en pause : la permission expire au retour
+            VaultEvent.Resumed -> VaultState.Unlocked()
             VaultEvent.ScreenOff, VaultEvent.HomePressed, VaultEvent.Closed -> VaultState.Locked
             else -> state
         }

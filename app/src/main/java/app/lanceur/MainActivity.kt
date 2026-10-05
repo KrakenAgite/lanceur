@@ -59,6 +59,11 @@ class MainActivity : ComponentActivity() {
         if (intent.hasCategory(Intent.CATEGORY_HOME)) launcherVm.goHome()
     }
 
+    override fun onResume() {
+        super.onResume()
+        launcherVm.vaultEvent(VaultEvent.Resumed)
+    }
+
     override fun onStop() {
         super.onStop()
         launcherVm.vaultEvent(VaultEvent.Backgrounded)
