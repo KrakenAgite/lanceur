@@ -29,6 +29,8 @@ import app.lanceur.builtin.media.NowPlayingSource
 import app.lanceur.builtin.media.NowPlayingState
 import app.lanceur.builtin.note.NoteCard
 import app.lanceur.builtin.note.NoteData
+import app.lanceur.builtin.timer.StopwatchState
+import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
 import app.lanceur.builtin.todo.TodoList
 import app.lanceur.widgets.WidgetLayout
@@ -48,6 +50,8 @@ class BuiltinServices(
     val data: (Int) -> String? = { null },
     val saveData: (Int, String) -> Unit = { _, _ -> },
     val openSettings: (WidgetSlot) -> Unit = {},
+    val startTimer: (Int) -> Boolean = { false },
+    val openTimers: () -> Unit = {},
     val refresh: Int,
 )
 
@@ -120,6 +124,16 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
             val cities = WorldClocksConfig.fromData(services.data(slot.appWidgetId)).cityIds.mapNotNull(Cities::byId)
                 .ifEmpty { listOf(Cities.home(home, now)) }
             WorldClocksCard(cities.map { WorldClock.of(it, now, home) }, size, modifier)
+        }
+        BuiltinKind.TIMER -> {
+            var stopwatch by remember(slot.appWidgetId) { mutableStateOf(StopwatchState.fromData(services.data(slot.appWidgetId))) }
+            TimerCard(
+                stopwatch,
+                onStopwatch = { stopwatch = it; services.saveData(slot.appWidgetId, it.toData()) },
+                onTimer = services.startTimer,
+                onOtherTimer = services.openTimers,
+                modifier = modifier,
+            )
         }
     }
 }

@@ -23,6 +23,7 @@ enum class BuiltinKind(
     TODO("To-do", "✅", mapOf(SMALL to 160, MEDIUM to 260, LARGE to 380), MEDIUM),
     COUNTDOWN("Compte à rebours", "⏳", mapOf(SMALL to 120, MEDIUM to 200), SMALL, configurable = true),
     WORLD_CLOCKS("Horloges du monde", "🌍", mapOf(SMALL to 120, MEDIUM to 200), MEDIUM, configurable = true),
+    TIMER("Minuteur / chrono", "⏱", mapOf(MEDIUM to 200), MEDIUM),
     ;
 
     /** Tailles proposées en mode édition, dans l'ordre S, M, L. */

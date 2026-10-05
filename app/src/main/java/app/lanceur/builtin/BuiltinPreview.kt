@@ -32,6 +32,8 @@ import app.lanceur.builtin.media.NowPlayingCard
 import app.lanceur.builtin.media.NowPlayingState
 import app.lanceur.builtin.note.NoteCard
 import app.lanceur.builtin.note.NoteData
+import app.lanceur.builtin.timer.StopwatchState
+import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
 import app.lanceur.builtin.todo.TodoList
 import app.lanceur.summary.SummaryEvent
@@ -102,5 +104,6 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
             val now = java.time.Instant.now()
             WorldClocksCard(listOf("paris", "new-york", "tokyo", "sydney").mapNotNull(Cities::byId).map { WorldClock.of(it, now, zone) }, kind.defaultSize, modifier)
         }
+        BuiltinKind.TIMER -> TimerCard(StopwatchState(), onStopwatch = {}, onTimer = { false }, onOtherTimer = {}, modifier = modifier)
     }
 }

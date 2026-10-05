@@ -2,6 +2,7 @@ package app.lanceur
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.provider.AlarmClock
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -266,6 +267,15 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         data = { prefs.widgetData[it] },
         saveData = vm::setWidgetData,
         openSettings = { slot -> BuiltinSlots.kindOf(slot)?.let { settingsRequest = it to slot.appWidgetId } },
+        startTimer = { seconds ->
+            val direct = Intent(AlarmClock.ACTION_SET_TIMER)
+                .putExtra(AlarmClock.EXTRA_LENGTH, seconds)
+                .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+            container.appLauncher.startSafely(direct).also { started ->
+                if (!started) container.appLauncher.startSafely(Intent(AlarmClock.ACTION_SHOW_TIMERS))
+            }
+        },
+        openTimers = { container.appLauncher.startSafely(Intent(AlarmClock.ACTION_SHOW_TIMERS)) },
         refresh = widgetRefresh,
     )
     Box(Modifier.fillMaxSize()) {
