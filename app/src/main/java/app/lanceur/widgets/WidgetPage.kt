@@ -246,7 +246,7 @@ private fun WidgetList(
     val latestReorder by rememberUpdatedState(actions.reorder)
     LaunchedEffect(cards) { if (draggingId == null) working = cards }
     val density = LocalDensity.current
-    val heightPx = { card: WidgetCard -> with(density) { (card.slot.size.heightDp.dp + TOOLBAR_HEIGHT + FRAME_PADDING * 2 + GAP).toPx() } }
+    val heightPx = { card: WidgetCard -> with(density) { (WidgetLayout.heightDp(card.slot).dp + TOOLBAR_HEIGHT + FRAME_PADDING * 2 + GAP).toPx() } }
 
     Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
         working.forEach { card ->
@@ -298,7 +298,7 @@ private fun WidgetList(
                     Box(
                         Modifier
                             .fillMaxWidth()
-                            .height(card.slot.size.heightDp.dp)
+                            .height(WidgetLayout.heightDp(card.slot).dp)
                             .clip(RoundedCornerShape(18.dp)),
                     ) {
                         when (card) {
@@ -322,15 +322,19 @@ private fun EditToolbar(card: WidgetCard, label: String, reconfigurable: Boolean
     Row(Modifier.fillMaxWidth().height(TOOLBAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.Menu, contentDescription = "Déplacer $label", modifier = handle.padding(12.dp))
         Text(label, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
-        SingleChoiceSegmentedButtonRow(Modifier.padding(horizontal = 4.dp)) {
-            WidgetSize.entries.forEachIndexed { index, size ->
-                SegmentedButton(
-                    selected = card.slot.size == size,
-                    onClick = { actions.resize(card.slot, size) },
-                    shape = SegmentedButtonDefaults.itemShape(index, WidgetSize.entries.size),
-                    icon = {},
-                    label = { Text(size.shortLabel) },
-                )
+        val sizes = WidgetLayout.sizes(card.slot)
+        // Une seule taille possible (batterie) : rien à choisir
+        if (sizes.size > 1) {
+            SingleChoiceSegmentedButtonRow(Modifier.padding(horizontal = 4.dp)) {
+                sizes.forEachIndexed { index, size ->
+                    SegmentedButton(
+                        selected = WidgetLayout.displaySize(card.slot) == size,
+                        onClick = { actions.resize(card.slot, size) },
+                        shape = SegmentedButtonDefaults.itemShape(index, sizes.size),
+                        icon = {},
+                        label = { Text(size.shortLabel) },
+                    )
+                }
             }
         }
         if (reconfigurable) {

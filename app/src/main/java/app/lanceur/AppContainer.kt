@@ -3,6 +3,9 @@ package app.lanceur
 import android.content.Context
 import android.util.Log
 import app.lanceur.apps.AppEntry
+import app.lanceur.builtin.battery.BatterySource
+import app.lanceur.builtin.calendar.CalendarRangeSource
+import app.lanceur.builtin.media.NowPlayingSource
 import app.lanceur.search.AppSearchProvider
 import app.lanceur.search.CalcProvider
 import app.lanceur.search.CalendarProvider
@@ -50,6 +53,9 @@ class AppContainer(context: Context) {
     val widgetHost = WidgetHost(appContext)
     val widgetProviders = WidgetProviderSource(appContext)
     val daySummary = DaySummarySource(appContext)
+    val battery = BatterySource(appContext)
+    val nowPlaying = NowPlayingSource(appContext)
+    val calendarRange = CalendarRangeSource(appContext)
 
     /** Libère les identifiants réservés par un ajout interrompu (Lanceur tué pendant la configuration). */
     fun cleanUpWidgetIds() {

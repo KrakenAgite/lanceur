@@ -18,6 +18,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,6 +35,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lanceur.apps.AppEntry
@@ -41,6 +43,10 @@ import app.lanceur.apps.AppIcon
 import app.lanceur.apps.AppKey
 import app.lanceur.apps.HomeRole
 import app.lanceur.apps.HomeRoleWatcher
+import app.lanceur.builtin.BuiltinServices
+import app.lanceur.builtin.BuiltinSlots
+import app.lanceur.builtin.BuiltinWidget
+import app.lanceur.builtin.calendar.CalendarCardActions
 import app.lanceur.home.HomeActions
 import app.lanceur.home.HomePager
 import app.lanceur.home.HomeScreen
@@ -70,6 +76,7 @@ import app.lanceur.widgets.WidgetPage
 import app.lanceur.widgets.WidgetPageActions
 import app.lanceur.widgets.WidgetPicker
 import app.lanceur.widgets.WidgetSlot
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -138,20 +145,30 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         VisibleWidgets.compute(prefs.widgets, prefs.hidden, availableIds)
     }
     val widgetLabels = remember(prefs.widgets, widgetRefresh) {
-        prefs.widgets.associate { it.appWidgetId to container.widgetHost.label(it.appWidgetId) }
+        prefs.widgets.associate { slot ->
+            slot.appWidgetId to when {
+                BuiltinSlots.isBuiltin(slot) -> BuiltinSlots.kindOf(slot)?.label ?: "Widget Lanceur"
+                else -> container.widgetHost.label(slot.appWidgetId)
+            }
+        }
     }
     val providerEntries by produceState(emptyList<ProviderEntry>(), screen) {
         if (screen == Screen.WIDGET_PICKER) value = withContext(Dispatchers.IO) { container.widgetProviders.entries() }
     }
     val pickerGroups = remember(providerEntries, prefs.hidden, pickerQuery) {
-        PickerCatalog.build(providerEntries, prefs.hidden, pickerQuery)
+        PickerCatalog.build(providerEntries, prefs.hidden, pickerQuery, BuiltinSlots.pickerEntries())
     }
     val widgetPreview: @Composable (ProviderEntry) -> Unit = { entry ->
-        val sizePx = with(LocalDensity.current) { 96.dp.roundToPx() }
-        val bitmap by produceState<ImageBitmap?>(null, entry) {
-            value = withContext(Dispatchers.IO) { container.widgetProviders.preview(entry, sizePx) }
+        val kind = BuiltinSlots.kindOf(entry.provider)
+        if (kind != null) {
+            Text(kind.emoji, fontSize = 34.sp)
+        } else {
+            val sizePx = with(LocalDensity.current) { 96.dp.roundToPx() }
+            val bitmap by produceState<ImageBitmap?>(null, entry) {
+                value = withContext(Dispatchers.IO) { container.widgetProviders.preview(entry, sizePx) }
+            }
+            bitmap?.let { Image(it, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit) }
         }
-        bitmap?.let { Image(it, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit) }
     }
 
     fun toast(message: String) {
@@ -212,7 +229,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     }
 
     fun removeWidget(slot: WidgetSlot) {
-        container.widgetHost.deleteId(slot.appWidgetId)
+        // Un widget intégré n'existe pas pour Android : rien à libérer
+        if (!BuiltinSlots.isBuiltin(slot)) container.widgetHost.deleteId(slot.appWidgetId)
         vm.removeWidget(slot.appWidgetId)
     }
 
@@ -224,6 +242,26 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
 
     // Sous la recherche translucide, seul le fond d'écran doit transparaître
     val homeAlpha by animateFloatAsState(if (screen == Screen.SEARCH) 0f else 1f, label = "homeAlpha")
+    val builtinServices = BuiltinServices(
+        battery = container.battery,
+        nowPlaying = container.nowPlaying,
+        calendar = container.calendarRange,
+        calendarActions = CalendarCardActions(
+            openEvent = { event ->
+                container.resultActions.open(SearchResult.Event(event.eventId, event.title, event.begin, event.end, event.allDay, null))
+            },
+            openDay = { day -> container.appLauncher.openCalendar(day.atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()) },
+            requestCalendar = { permissionLauncher.launch(SearchPermissions.ALL) },
+        ),
+        openBatterySettings = { container.appLauncher.startSafely(Intent(Intent.ACTION_POWER_USAGE_SUMMARY)) },
+        openPlayer = { container.nowPlaying.openIntent()?.let(container.appLauncher::startSafely) },
+        grantMediaAccess = {
+            if (!container.appLauncher.startSafely(container.nowPlaying.accessSettingsIntent())) {
+                container.appLauncher.startSafely(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            }
+        },
+        refresh = widgetRefresh,
+    )
     Box(Modifier.fillMaxSize()) {
         // Seul le fond d'écran est visible pendant les quelques millisecondes du chargement
         if (loaded) HomePager(
@@ -243,8 +281,11 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     cards = widgetCards,
                     editMode = widgetEditMode,
                     label = { widgetLabels[it.appWidgetId] ?: "Widget" },
-                    isReconfigurable = { container.widgetHost.isReconfigurable(it.appWidgetId) },
-                    widgetView = { slot, modifier -> HostedWidget(slot, container.widgetHost, modifier) },
+                    isReconfigurable = { !BuiltinSlots.isBuiltin(it) && container.widgetHost.isReconfigurable(it.appWidgetId) },
+                    widgetView = { slot, modifier ->
+                        if (BuiltinSlots.isBuiltin(slot)) BuiltinWidget(slot, builtinServices, modifier)
+                        else HostedWidget(slot, container.widgetHost, modifier)
+                    },
                     actions = WidgetPageActions(
                         openEvent = { event ->
                             container.resultActions.open(SearchResult.Event(event.eventId, event.title, event.begin, event.end, event.allDay, null))
@@ -313,7 +354,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 preview = widgetPreview,
                 onPick = { entry ->
                     vm.show(Screen.HOME)
-                    widgetHostActions.add(entry)
+                    val kind = BuiltinSlots.kindOf(entry.provider)
+                    if (kind != null) vm.addBuiltinWidget(kind) else widgetHostActions.add(entry)
                 },
             )
         }

@@ -1,8 +1,8 @@
 package app.lanceur.widgets
 
-import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.apps.AppKey
 import app.lanceur.apps.ProfileKind
+import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.prefs.VisibleApps
 import app.lanceur.text.TextNormalizer
 import java.text.Collator

@@ -4,12 +4,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import app.lanceur.apps.AppKey
+import app.lanceur.builtin.BuiltinKind
+import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.summary.DaySummaryState
 import app.lanceur.summary.SummaryEvent
 import app.lanceur.summary.SummaryLine
@@ -104,5 +108,22 @@ class WidgetPageTest {
         rule.onNodeWithText("Widget indisponible").assertIsDisplayed()
         rule.onNodeWithText("Retirer").performClick()
         assertEquals(slot, removed)
+    }
+
+    @Test
+    fun edit_mode_hides_sizes_for_single_size_builtin_widgets() {
+        val battery = BuiltinSlots.create(BuiltinKind.BATTERY_RING, emptyList())
+        show(listOf(WidgetCard.Live(battery)), editMode = true, actions = WidgetPageActions())
+        rule.onAllNodesWithText("S").assertCountEquals(0)
+        rule.onAllNodesWithText("M").assertCountEquals(0)
+    }
+
+    @Test
+    fun edit_mode_offers_the_builtin_sizes() {
+        val month = BuiltinSlots.create(BuiltinKind.CALENDAR_MONTH, emptyList())
+        var resized: WidgetSize? = null
+        show(listOf(WidgetCard.Live(month)), editMode = true, actions = WidgetPageActions(resize = { _, size -> resized = size }))
+        rule.onNodeWithText("L").performClick()
+        assertEquals(WidgetSize.LARGE, resized)
     }
 }

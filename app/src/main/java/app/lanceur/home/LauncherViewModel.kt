@@ -1,6 +1,5 @@
 package app.lanceur.home
 
-import app.lanceur.builtin.BuiltinKind
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -9,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.lanceur.AppContainer
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
+import app.lanceur.builtin.BuiltinKind
 import app.lanceur.prefs.AlphabetSide
 import app.lanceur.prefs.AppLists
 import app.lanceur.prefs.LauncherPrefs

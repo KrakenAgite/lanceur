@@ -45,9 +45,9 @@ class AppLauncher(private val context: Context) {
         startSafely(Intent(AlarmClock.ACTION_SHOW_ALARMS))
     }
 
-    fun openCalendar() {
+    fun openCalendar(atMillis: Long = System.currentTimeMillis()) {
         val uri = CalendarContract.CONTENT_URI.buildUpon().appendPath("time")
-            .also { ContentUris.appendId(it, System.currentTimeMillis()) }
+            .also { ContentUris.appendId(it, atMillis) }
             .build()
         startSafely(Intent(Intent.ACTION_VIEW, uri))
     }

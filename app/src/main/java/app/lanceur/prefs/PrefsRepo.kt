@@ -1,7 +1,5 @@
 package app.lanceur.prefs
 
-import app.lanceur.builtin.BuiltinSlots
-import app.lanceur.builtin.BuiltinKind
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
@@ -12,6 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
+import app.lanceur.builtin.BuiltinKind
+import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.widgets.WidgetSize
 import app.lanceur.widgets.WidgetSlot
 import java.io.IOException
