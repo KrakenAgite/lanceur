@@ -191,6 +191,7 @@ fun HomeScreen(
                     .pointerInput(Unit) {
                         detectTapGestures(
                             onTap = { if (currentMode != ListMode.Favorites) act.changeMode(ListMode.Favorites) },
+                            onDoubleTap = { act.lockScreen() },
                             onLongPress = { act.openSettings() },
                         )
                     }
