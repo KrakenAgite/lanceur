@@ -21,6 +21,9 @@ import app.lanceur.builtin.calendar.CalendarLoad
 import app.lanceur.builtin.calendar.MonthCard
 import app.lanceur.builtin.calendar.WeekCard
 import app.lanceur.builtin.calendar.WeekStrip
+import app.lanceur.builtin.clocks.Cities
+import app.lanceur.builtin.clocks.WorldClock
+import app.lanceur.builtin.clocks.WorldClocksCard
 import app.lanceur.builtin.countdown.CountdownCard
 import app.lanceur.builtin.countdown.CountdownConfig
 import app.lanceur.builtin.media.MediaSnapshot
@@ -95,5 +98,9 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
             onSetUp = {},
             modifier = modifier,
         )
+        BuiltinKind.WORLD_CLOCKS -> {
+            val now = java.time.Instant.now()
+            WorldClocksCard(listOf("paris", "new-york", "tokyo", "sydney").mapNotNull(Cities::byId).map { WorldClock.of(it, now, zone) }, kind.defaultSize, modifier)
+        }
     }
 }

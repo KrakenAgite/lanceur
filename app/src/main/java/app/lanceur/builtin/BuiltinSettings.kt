@@ -4,6 +4,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import app.lanceur.builtin.clocks.Cities
+import app.lanceur.builtin.clocks.WorldClocksConfig
+import app.lanceur.builtin.clocks.WorldClocksSettings
 import app.lanceur.builtin.countdown.CountdownConfig
 import app.lanceur.builtin.countdown.CountdownSettings
 
@@ -14,6 +17,7 @@ fun BuiltinSettingsSheet(kind: BuiltinKind, initial: String?, onSave: (String) -
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         when (kind) {
             BuiltinKind.COUNTDOWN -> CountdownSettings(CountdownConfig.fromData(initial), onSave)
+            BuiltinKind.WORLD_CLOCKS -> WorldClocksSettings(WorldClocksConfig.fromData(initial), Cities.home(), onSave)
             else -> Unit
         }
     }

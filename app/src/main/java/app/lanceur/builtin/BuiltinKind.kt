@@ -22,6 +22,7 @@ enum class BuiltinKind(
     NOTE("Note rapide", "📝", mapOf(SMALL to 140, MEDIUM to 220, LARGE to 340), MEDIUM),
     TODO("To-do", "✅", mapOf(SMALL to 160, MEDIUM to 260, LARGE to 380), MEDIUM),
     COUNTDOWN("Compte à rebours", "⏳", mapOf(SMALL to 120, MEDIUM to 200), SMALL, configurable = true),
+    WORLD_CLOCKS("Horloges du monde", "🌍", mapOf(SMALL to 120, MEDIUM to 200), MEDIUM, configurable = true),
     ;
 
     /** Tailles proposées en mode édition, dans l'ordre S, M, L. */

@@ -17,6 +17,10 @@ import app.lanceur.builtin.calendar.CalendarRangeSource
 import app.lanceur.builtin.calendar.MonthCard
 import app.lanceur.builtin.calendar.WeekCard
 import app.lanceur.builtin.calendar.WeekStrip
+import app.lanceur.builtin.clocks.Cities
+import app.lanceur.builtin.clocks.WorldClock
+import app.lanceur.builtin.clocks.WorldClocksCard
+import app.lanceur.builtin.clocks.WorldClocksConfig
 import app.lanceur.builtin.countdown.CountdownCard
 import app.lanceur.builtin.countdown.CountdownConfig
 import app.lanceur.builtin.media.NowPlayingActions
@@ -109,6 +113,13 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
                 modifier = modifier,
                 now = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()),
             )
+        }
+        BuiltinKind.WORLD_CLOCKS -> {
+            val now = java.time.Instant.ofEpochMilli(rememberMinuteClock())
+            val home = java.time.ZoneId.systemDefault()
+            val cities = WorldClocksConfig.fromData(services.data(slot.appWidgetId)).cityIds.mapNotNull(Cities::byId)
+                .ifEmpty { listOf(Cities.home(home, now)) }
+            WorldClocksCard(cities.map { WorldClock.of(it, now, home) }, size, modifier)
         }
     }
 }
