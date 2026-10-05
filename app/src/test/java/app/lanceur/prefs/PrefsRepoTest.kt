@@ -8,7 +8,11 @@ import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import app.lanceur.apps.AppKey
+import app.lanceur.widgets.WidgetSize
+import app.lanceur.widgets.WidgetSlot
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -110,5 +114,39 @@ class PrefsRepoTest {
         assertEquals(LauncherPrefs(), repo.prefs.first())
         repo.addFavorite(chrome.key)
         assertTrue(errors.isNotEmpty())
+    }
+
+    private fun slot(id: Int, size: WidgetSize = WidgetSize.MEDIUM) =
+        WidgetSlot(id, AppKey("app.meteo", "app.meteo.Widget$id", 0), size)
+
+    @Test
+    fun widgets_keep_their_order_and_size_and_can_be_removed() = runTest {
+        val repo = PrefsRepo(store())
+        repo.addWidget(slot(1))
+        repo.addWidget(slot(2, WidgetSize.SMALL))
+        repo.addWidget(slot(1))
+        assertEquals(listOf(slot(1), slot(2, WidgetSize.SMALL)), repo.prefs.first().widgets)
+
+        repo.setWidgetSize(1, WidgetSize.LARGE)
+        repo.setWidgetsOrder(listOf(2, 1))
+        assertEquals(listOf(slot(2, WidgetSize.SMALL), slot(1, WidgetSize.LARGE)), repo.prefs.first().widgets)
+
+        repo.removeWidget(2)
+        assertEquals(listOf(slot(1, WidgetSize.LARGE)), repo.prefs.first().widgets)
+    }
+
+    @Test
+    fun widget_page_is_enabled_by_default_and_can_be_disabled() = runTest {
+        val repo = PrefsRepo(store())
+        assertTrue(repo.prefs.first().widgetPageEnabled)
+        repo.setWidgetPageEnabled(false)
+        assertFalse(repo.prefs.first().widgetPageEnabled)
+    }
+
+    @Test
+    fun malformed_or_duplicated_widget_lines_are_ignored() = runTest {
+        val store = store()
+        store.edit { it[stringPreferencesKey("widgets")] = "n'importe quoi\n" + slot(3).encode() + "\n" + slot(3).encode() }
+        assertEquals(listOf(slot(3)), PrefsRepo(store).prefs.first().widgets)
     }
 }
