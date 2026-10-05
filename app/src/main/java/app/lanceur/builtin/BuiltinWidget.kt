@@ -37,6 +37,8 @@ import app.lanceur.builtin.shortcuts.ShortcutActions
 import app.lanceur.builtin.shortcuts.ShortcutsCard
 import app.lanceur.builtin.shortcuts.TorchController
 import app.lanceur.builtin.shortcuts.TorchState
+import app.lanceur.builtin.storage.StorageCard
+import app.lanceur.builtin.storage.StorageSource
 import app.lanceur.builtin.timer.StopwatchState
 import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
@@ -64,6 +66,8 @@ class BuiltinServices(
     val favoritesActions: FavoritesActions = FavoritesActions(),
     val torch: TorchController? = null,
     val shortcutActions: ShortcutActions = ShortcutActions(),
+    val storage: StorageSource? = null,
+    val openStorageSettings: () -> Unit = {},
     val refresh: Int,
 )
 
@@ -158,6 +162,14 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
             val torchFlow = remember(services.torch) { services.torch?.state ?: kotlinx.coroutines.flow.flowOf(TorchState(false, false)) }
             val torch by torchFlow.collectAsStateWithLifecycle(TorchState(available = true, on = false))
             ShortcutsCard(torch, services.shortcutActions, modifier)
+        }
+        BuiltinKind.STORAGE -> {
+            val source = services.storage
+            if (source != null) {
+                val initial = remember { source.read() }
+                val reading by source.readings.collectAsStateWithLifecycle(initial)
+                StorageCard(reading, services.openStorageSettings, modifier)
+            }
         }
     }
 }

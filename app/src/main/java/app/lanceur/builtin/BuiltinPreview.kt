@@ -39,6 +39,9 @@ import app.lanceur.builtin.note.NoteData
 import app.lanceur.builtin.shortcuts.ShortcutActions
 import app.lanceur.builtin.shortcuts.ShortcutsCard
 import app.lanceur.builtin.shortcuts.TorchState
+import app.lanceur.builtin.storage.Gauge
+import app.lanceur.builtin.storage.StorageCard
+import app.lanceur.builtin.storage.StorageReading
 import app.lanceur.builtin.timer.StopwatchState
 import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
@@ -119,5 +122,10 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
             modifier,
         )
         BuiltinKind.SHORTCUTS -> ShortcutsCard(TorchState(available = true, on = true), ShortcutActions(), modifier)
+        BuiltinKind.STORAGE -> StorageCard(
+            StorageReading(Gauge(87_000_000_000, 128_000_000_000), Gauge(7_100_000_000, 12_000_000_000)),
+            onClick = {},
+            modifier = modifier,
+        )
     }
 }

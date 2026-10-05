@@ -296,6 +296,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     container.appLauncher.startSafely(Intent(Settings.ACTION_SOUND_SETTINGS))
             },
         ),
+        storage = container.storage,
+        openStorageSettings = { container.appLauncher.startSafely(Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)) },
         refresh = widgetRefresh,
     )
     Box(Modifier.fillMaxSize()) {
