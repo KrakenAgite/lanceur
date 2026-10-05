@@ -73,7 +73,7 @@ Les widgets d'une appli cachée ou de l'Espace privé ne sont jamais proposés n
 
 Le sélecteur propose en tête un groupe « Lanceur » : Lecture en cours, Agenda · mois, Agenda · semaine,
 Batterie · anneau, Batterie · barre, Note rapide, To-do, Compte à rebours, Horloges du monde,
-Minuteur / chrono, Contacts favoris, Raccourcis rapides et Stockage et mémoire. Ils s'ajoutent sans
+Minuteur / chrono, Contacts favoris, Raccourcis rapides, Stockage et mémoire, Météo et Flux RSS. Ils s'ajoutent sans
 autorisation et se déplacent, se redimensionnent et se retirent comme les autres.
 
 - **Note rapide / To-do** : on écrit directement sur la carte ; chaque widget a son propre contenu, gardé dans les
@@ -83,6 +83,10 @@ autorisation et se déplacent, se redimensionnent et se retirent comme les autre
 - **Contacts favoris** : ceux marqués d'une étoile dans Contacts ; toucher appelle, appui long envoie un SMS.
 - **Raccourcis** : la lampe s'allume depuis le widget ; Internet, Bluetooth, Son et Ne pas déranger ouvrent le
   panneau d'Android (une appli ne peut pas les changer elle-même).
+- **Météo / Flux RSS** : les seuls widgets qui utilisent Internet, par un point de sortie unique (HTTPS seulement,
+  vérifié par un test). Ils se connectent quand la page de widgets s'affiche, au plus toutes les 30 minutes, jamais en
+  arrière-plan. La météo (Open-Meteo, sans compte) ne reçoit que des coordonnées arrondies au kilomètre ; la position
+  approximative n'est demandée que si tu choisis « Ma position ». Sans réseau, les dernières données restent affichées.
 
 - **Lecture en cours** : la première fois, toucher « Autoriser l'accès aux lecteurs » et activer Lanceur dans
   l'accès aux notifications (Lanceur ne lit aucune notification). Si l'option est grisée : Infos de l'appli ›
