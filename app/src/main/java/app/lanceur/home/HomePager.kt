@@ -34,6 +34,7 @@ fun HomePager(
     home: @Composable () -> Unit,
     /** `false` quand un écran est superposé (sélecteur…) : le geste retour lui appartient. */
     backEnabled: Boolean = true,
+    modifier: Modifier = Modifier,
 ) {
     // Changer le nombre de pages recrée l'état : on repart toujours de l'accueil
     key(widgetsEnabled) {
@@ -66,7 +67,7 @@ fun HomePager(
 
         HorizontalPager(
             state = state,
-            modifier = Modifier.fillMaxSize().testTag("pager"),
+            modifier = modifier.fillMaxSize().testTag("pager"),
             beyondViewportPageCount = 1,
             // Pas de doigt pour interrompre le retour à l'accueil
             userScrollEnabled = !editMode && !returningHome,

@@ -133,8 +133,8 @@ fun SearchScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    0f to MaterialTheme.colorScheme.surface,
-                    1f to MaterialTheme.colorScheme.surfaceContainerLow,
+                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
+                    1f to MaterialTheme.colorScheme.surface.copy(alpha = 0.75f),
                 ),
             )
             .pointerInput(swipe) {

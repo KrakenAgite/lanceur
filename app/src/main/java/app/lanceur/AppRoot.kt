@@ -9,6 +9,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -28,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -220,9 +222,12 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         if (screen != Screen.WIDGET_PICKER) pickerQuery = ""
     }
 
+    // Sous la recherche translucide, seul le fond d'écran doit transparaître
+    val homeAlpha by animateFloatAsState(if (screen == Screen.SEARCH) 0f else 1f, label = "homeAlpha")
     Box(Modifier.fillMaxSize()) {
         // Seul le fond d'écran est visible pendant les quelques millisecondes du chargement
         if (loaded) HomePager(
+            modifier = Modifier.graphicsLayer { alpha = homeAlpha },
             widgetsEnabled = prefs.widgetPageEnabled,
             homePageRequests = homePageRequests,
             backEnabled = screen == Screen.HOME,
