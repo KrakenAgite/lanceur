@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -90,5 +91,24 @@ class PrefsRepoTest {
         repo.hide(chrome.key)
         repo.unhide(chrome.key.copy(className = "app.chrome.Other"))
         assertEquals(emptySet<Any>(), repo.prefs.first().hidden)
+    }
+
+    @Test
+    fun a_corrupted_file_starts_over_instead_of_crashing() = runTest {
+        val file = File(tmp.root, "corrompu.preferences_pb").apply { writeBytes(byteArrayOf(0x7f, 0x13, 0x00, 0x42, 0x99.toByte())) }
+        val repo = PrefsRepo(LauncherDataStore.create(backgroundScope) { file })
+        assertEquals(LauncherPrefs(), repo.prefs.first())
+        repo.addFavorite(chrome.key)
+        assertEquals(listOf(chrome.key), repo.prefs.first().favorites)
+    }
+
+    @Test
+    fun an_unreadable_file_gives_defaults_and_writes_do_not_throw() = runTest {
+        val errors = mutableListOf<Throwable>()
+        val folder = File(tmp.root, "dossier.preferences_pb").apply { mkdir() }
+        val repo = PrefsRepo(LauncherDataStore.create(backgroundScope) { folder }, onError = { errors += it })
+        assertEquals(LauncherPrefs(), repo.prefs.first())
+        repo.addFavorite(chrome.key)
+        assertTrue(errors.isNotEmpty())
     }
 }

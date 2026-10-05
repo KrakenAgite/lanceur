@@ -17,7 +17,8 @@ import app.lanceur.apps.AppLauncher
 import app.lanceur.apps.IconLoader
 import app.lanceur.apps.LauncherAppsSource
 import app.lanceur.prefs.PrefsRepo
-import app.lanceur.prefs.launcherDataStore
+import androidx.datastore.preferences.preferencesDataStoreFile
+import app.lanceur.prefs.LauncherDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,7 +34,11 @@ class AppContainer(context: Context) {
         onPackageChanged = iconLoader::evict,
         onError = { Log.w("Lanceur", "Lecture des applis impossible", it) },
     )
-    val prefsRepo = PrefsRepo(appContext.launcherDataStore)
+    // Même fichier que l'ancien `preferencesDataStore(name = "lanceur")` : les réglages déjà enregistrés sont conservés
+    val prefsRepo = PrefsRepo(
+        store = LauncherDataStore.create { appContext.preferencesDataStoreFile("lanceur") },
+        onError = { Log.w("Lanceur", "Réglages illisibles ou impossibles à enregistrer", it) },
+    )
     val appLauncher = AppLauncher(appContext)
     val resultActions = ResultActions(appContext, appLauncher)
 

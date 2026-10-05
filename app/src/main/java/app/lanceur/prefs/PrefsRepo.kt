@@ -1,23 +1,28 @@
 package app.lanceur.prefs
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
-val Context.launcherDataStore: DataStore<Preferences> by preferencesDataStore(name = "lanceur")
-
-class PrefsRepo(private val store: DataStore<Preferences>) {
-    val prefs: Flow<LauncherPrefs> = store.data.map { decode(it) }
+class PrefsRepo(
+    private val store: DataStore<Preferences>,
+    private val onError: (Throwable) -> Unit = {},
+) {
+    /** Fichier illisible : réglages par défaut, sans planter. */
+    val prefs: Flow<LauncherPrefs> = store.data
+        .catch { e -> if (e is IOException) { onError(e); emit(emptyPreferences()) } else throw e }
+        .map { decode(it) }
 
     suspend fun addFavorite(key: AppKey) = update {
         if (key in it.favorites) it else it.copy(favorites = it.favorites + key)
@@ -41,8 +46,13 @@ class PrefsRepo(private val store: DataStore<Preferences>) {
 
     suspend fun prune(catalog: List<AppEntry>) = update { VisibleApps.prune(catalog, it) }
 
+    /** Une écriture impossible est signalée, pas propagée : le changement est simplement perdu. */
     private suspend fun update(transform: (LauncherPrefs) -> LauncherPrefs) {
-        store.edit { stored -> encode(transform(decode(stored)), stored) }
+        try {
+            store.edit { stored -> encode(transform(decode(stored)), stored) }
+        } catch (e: IOException) {
+            onError(e)
+        }
     }
 
     private companion object {
