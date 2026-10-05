@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,11 @@ fun NoteCard(initial: String, onSave: (String) -> Unit, modifier: Modifier = Mod
             delay(saveDelayMs)
             latestSave(text)
         }
+    }
+    // Carte qui disparaît avant la fin du délai (Accueil, mode édition) : on enregistre tout de suite
+    val latestText by rememberUpdatedState(text)
+    DisposableEffect(Unit) {
+        onDispose { if (latestText != initial) latestSave(latestText) }
     }
     val colors = MaterialTheme.colorScheme
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 22.dp, vertical = 18.dp)) {

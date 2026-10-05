@@ -1,5 +1,8 @@
 package app.lanceur.builtin
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,11 +41,13 @@ import app.lanceur.builtin.shortcuts.ShortcutsCard
 import app.lanceur.builtin.shortcuts.TorchController
 import app.lanceur.builtin.shortcuts.TorchState
 import app.lanceur.builtin.storage.StorageCard
+import app.lanceur.builtin.storage.StorageReading
 import app.lanceur.builtin.storage.StorageSource
 import app.lanceur.builtin.timer.StopwatchState
 import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
 import app.lanceur.builtin.todo.TodoList
+import app.lanceur.ui.cardBackground
 import app.lanceur.widgets.WidgetLayout
 import app.lanceur.widgets.WidgetSlot
 import java.time.LocalDate
@@ -166,9 +171,10 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
         BuiltinKind.STORAGE -> {
             val source = services.storage
             if (source != null) {
-                val initial = remember { source.read() }
-                val reading by source.readings.collectAsStateWithLifecycle(initial)
-                StorageCard(reading, services.openStorageSettings, modifier)
+                // Première lecture sur le fil d'arrière-plan aussi (appels système) : carte vide un instant
+                val reading by source.readings.collectAsStateWithLifecycle<StorageReading?>(null)
+                reading?.let { StorageCard(it, services.openStorageSettings, modifier) }
+                    ?: Box(modifier.fillMaxSize().background(cardBackground()))
             }
         }
     }
