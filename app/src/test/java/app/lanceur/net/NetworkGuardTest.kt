@@ -11,9 +11,15 @@ class NetworkGuardTest {
     private fun relative(file: File) = file.relativeTo(root).invariantSeparatorsPath
 
     @Test
+    fun sources_are_found() {
+        // Sinon les autres tests passeraient sans rien vérifier (mauvais dossier de travail)
+        org.junit.Assert.assertTrue(sources.size > 50)
+    }
+
+    @Test
     fun connections_are_opened_only_in_network() {
         val offenders = sources.filter { relative(it) != "net/Network.kt" }
-            .filter { file -> listOf("HttpURLConnection", "openConnection", "URL(", "Socket(").any { it in file.readText() } }
+            .filter { file -> listOf("HttpURLConnection", "openConnection", "openStream", "URL(", "toURL(", "Socket(", "WebView", "DownloadManager", "okhttp", "ktor").any { it in file.readText() } }
             .map(::relative)
         assertEquals(emptyList<String>(), offenders)
     }

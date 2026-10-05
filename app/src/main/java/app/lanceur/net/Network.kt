@@ -44,7 +44,12 @@ class Network {
         var current = start
         repeat(NetRules.MAX_REDIRECTS + 1) {
             if (!NetRules.allowed(current)) return NetResult.Failed("Adresse HTTPS requise")
-            val connection = (URL(current).openConnection() as HttpURLConnection).apply {
+            val connection = try {
+                URL(current).openConnection() as HttpURLConnection
+            } catch (e: Exception) {
+                return NetResult.Failed("Adresse invalide")
+            }
+            connection.apply {
                 connectTimeout = NetRules.TIMEOUT_MS
                 readTimeout = NetRules.TIMEOUT_MS
                 instanceFollowRedirects = false
@@ -60,6 +65,9 @@ class Network {
                 }
             } catch (e: IOException) {
                 return NetResult.Failed(e.message ?: "Réseau indisponible")
+            } catch (e: RuntimeException) {
+                // Hôte ou port étrange, refus du système… : jamais une raison de faire planter le launcher
+                return NetResult.Failed("Adresse invalide")
             } finally {
                 connection.disconnect()
             }

@@ -302,7 +302,11 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         storage = container.storage,
         openStorageSettings = { container.appLauncher.startSafely(Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)) },
         weather = container.weather,
-        openUrl = { url -> container.appLauncher.startSafely(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))) },
+        // Seconde barrière : seuls les liens web s'ouvrent depuis un widget
+        openUrl = { url ->
+            val uri = android.net.Uri.parse(url)
+            if (uri.scheme == "https" || uri.scheme == "http") container.appLauncher.startSafely(Intent(Intent.ACTION_VIEW, uri))
+        },
         rss = container.rss,
         refresh = widgetRefresh,
     )

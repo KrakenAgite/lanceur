@@ -20,6 +20,8 @@ sealed interface FeedCheck {
 /** RSS 2.0 (et RDF) et Atom, sans réseau. Les DTD et entités externes sont refusées. */
 object Feed {
     fun parse(bytes: ByteArray, fallbackTitle: String): FeedResult? = runCatching {
+        // Le parseur d'Android ignore les options de sécurité : toute déclaration de DTD ou d'entité est refusée d'emblée
+        if (declaresEntities(bytes)) return null
         val factory = DocumentBuilderFactory.newInstance().apply {
             isNamespaceAware = true
             isExpandEntityReferences = false
@@ -38,12 +40,20 @@ object Feed {
         }
     }.getOrNull()
 
+    private fun declaresEntities(bytes: ByteArray): Boolean {
+        val head = String(bytes, 0, minOf(bytes.size, 4096), Charsets.ISO_8859_1)
+        return head.contains("<!DOCTYPE", ignoreCase = true) || head.contains("<!ENTITY", ignoreCase = true)
+    }
+
+    /** Seuls les liens web s'ouvrent : un flux ne doit pas pouvoir lancer `tel:`, `file:` ou une autre appli. */
+    private fun webLink(link: String): Boolean = link.startsWith("https://", ignoreCase = true) || link.startsWith("http://", ignoreCase = true)
+
     private fun rss(root: Element, fallback: String): FeedResult {
         val channel = root.children("channel").firstOrNull() ?: root
         val title = clean(channel.childText("title")).ifBlank { fallback }
         val items = (channel.children("item") + root.children("item")).mapNotNull { item ->
             val link = item.childText("link").trim()
-            if (link.isEmpty()) null
+            if (!webLink(link)) null
             else Article(clean(item.childText("title")).ifBlank { link }, link, title, date(item.childText("pubDate")) ?: date(item.childText("date")))
         }
         return FeedResult(title, items)
@@ -55,7 +65,7 @@ object Feed {
             val links = entry.children("link")
             val link = (links.firstOrNull { it.getAttribute("rel").let { r -> r.isEmpty() || r == "alternate" } } ?: links.firstOrNull())
                 ?.getAttribute("href")?.trim().orEmpty()
-            if (link.isEmpty()) null
+            if (!webLink(link)) null
             else Article(clean(entry.childText("title")).ifBlank { link }, link, title, date(entry.childText("published")) ?: date(entry.childText("updated")))
         }
         return FeedResult(title, entries)
@@ -74,13 +84,19 @@ object Feed {
         val decoded = Regex("&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);").replace(noTags) { m ->
             val e = m.groupValues[1]
             when {
-                e.startsWith("#x") -> e.substring(2).toIntOrNull(16)?.let { String(Character.toChars(it)) } ?: m.value
-                e.startsWith("#") -> e.substring(1).toIntOrNull()?.let { String(Character.toChars(it)) } ?: m.value
+                e.startsWith("#x") -> codePoint(e.substring(2).toIntOrNull(16))
+                e.startsWith("#") -> codePoint(e.substring(1).toIntOrNull())
                 else -> ENTITIES[e] ?: m.value
             }
         }
-        return decoded.replace(Regex("\\s+"), " ").trim()
+        // Caractères de contrôle retirés : ils casseraient l'enregistrement du cache
+        return decoded.replace(Regex("[\\p{Cntrl}&&[^\\s]]"), "").replace(Regex("\\s+"), " ").trim()
     }
+
+    /** Code de caractère invalide (trop grand) : remplacé par un espace, sans perdre l'article. */
+    private fun codePoint(value: Int?): String =
+        if (value != null && Character.isValidCodePoint(value)) String(Character.toChars(value)) else " "
+
 
     private val ENTITIES = mapOf("amp" to "&", "lt" to "<", "gt" to ">", "quot" to "\"", "apos" to "'", "nbsp" to " ", "rsquo" to "’", "lsquo" to "‘", "hellip" to "…", "laquo" to "«", "raquo" to "»")
 

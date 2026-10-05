@@ -79,4 +79,27 @@ class FeedTest {
         assertEquals(RssViewState.Loading, RssView.state(null, failed = false))
         assertEquals(RssViewState.Unavailable, RssView.state(null, failed = true))
     }
+
+    @Test
+    fun only_web_links_are_kept() {
+        val feed = """<rss><channel><title>T</title>
+            <item><title>Piège</title><link>tel:0899000000</link></item>
+            <item><title>Fichier</title><link>file:///sdcard/x</link></item>
+            <item><title>Bon</title><link>https://ok.fr/a</link></item></channel></rss>""".toByteArray()
+        assertEquals(listOf("Bon"), Feed.parse(feed, "")!!.articles.map { it.title })
+    }
+
+    @Test
+    fun documents_declaring_entities_are_refused_before_parsing() {
+        val laughs = """<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY lol "lol"><!ENTITY lol2 "&lol;&lol;&lol;&lol;">]>
+            <rss><channel><title>&lol2;</title></channel></rss>"""
+        assertNull(Feed.parse(laughs.toByteArray(), "x"))
+        assertNull(Feed.parse("<!doctype rss><rss/>".toByteArray(), "x"))
+    }
+
+    @Test
+    fun huge_numeric_entity_does_not_drop_the_feed() {
+        assertEquals("a b", Feed.clean("a &#99999999; b"))
+        assertEquals("ab", Feed.clean("a\u001Fb"))
+    }
 }

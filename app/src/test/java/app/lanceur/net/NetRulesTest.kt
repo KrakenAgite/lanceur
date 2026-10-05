@@ -27,4 +27,10 @@ class NetRulesTest {
         assertNull(NetRules.next("https://example.org/a", "http://example.org/a"))
         assertNull(NetRules.next("https://example.org/a", null))
     }
+
+    @Test
+    fun odd_addresses_fail_without_crashing() = kotlinx.coroutines.test.runTest {
+        val result = Network().get("https://:99999/")
+        assertTrue(result is NetResult.Failed)
+    }
 }

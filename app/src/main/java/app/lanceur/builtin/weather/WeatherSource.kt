@@ -9,7 +9,9 @@ import app.lanceur.net.NetResult
 import app.lanceur.net.Network
 import app.lanceur.search.SearchPermissions
 import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 class WeatherSource(private val context: Context, private val network: Network) {
@@ -27,7 +29,8 @@ class WeatherSource(private val context: Context, private val network: Network) 
         return when (val result = network.get(WeatherQuery.forecastUrl(coords.first, coords.second))) {
             is NetResult.Ok -> {
                 val raw = result.text()
-                if (Forecast.parse(raw, java.time.Instant.ofEpochMilli(now)) != null) WeatherOutcome.FRESH to WeatherCache(raw, now)
+                val readable = withContext(Dispatchers.Default) { Forecast.parse(raw, java.time.Instant.ofEpochMilli(now)) != null }
+                if (readable) WeatherOutcome.FRESH to WeatherCache(raw, now)
                 else WeatherOutcome.FAILED to cache
             }
             is NetResult.Failed -> WeatherOutcome.FAILED to cache
