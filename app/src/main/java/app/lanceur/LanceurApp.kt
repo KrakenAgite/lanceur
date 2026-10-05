@@ -10,5 +10,6 @@ class LanceurApp : Application() {
         super.onCreate()
         container = AppContainer(this)
         container.catalog.start()
+        container.cleanUpWidgetIds()
     }
 }

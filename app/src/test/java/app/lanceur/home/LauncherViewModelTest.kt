@@ -4,6 +4,9 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import app.lanceur.MainDispatcherRule
 import app.lanceur.app
 import app.lanceur.apps.AppEntry
+import app.lanceur.apps.AppKey
+import app.lanceur.widgets.WidgetSize
+import app.lanceur.widgets.WidgetSlot
 import app.lanceur.prefs.PrefsRepo
 import app.lanceur.vault.VaultEvent
 import app.lanceur.vault.VaultState
@@ -104,5 +107,29 @@ class LauncherViewModelTest {
 
         catalog.value = listOf(chrome)
         vm.loaded.first { it }
+    }
+
+    @Test
+    fun going_home_leaves_widget_edit_mode_and_asks_for_the_home_page() = runTest(main.dispatcher) {
+        val vm = viewModel()
+        vm.setWidgetEditMode(true)
+        val before = vm.homePageRequests.value
+        vm.goHome()
+        assertFalse(vm.widgetEditMode.value)
+        assertEquals(before + 1, vm.homePageRequests.value)
+    }
+
+    @Test
+    fun widget_changes_reach_the_prefs() = runTest(main.dispatcher) {
+        val vm = viewModel()
+        val slot = WidgetSlot(5, AppKey("app.meteo", "app.meteo.Widget", 0), WidgetSize.SMALL)
+        vm.addWidget(slot)
+        vm.prefs.first { it.widgets == listOf(slot) }
+        vm.setWidgetSize(5, WidgetSize.LARGE)
+        vm.prefs.first { it.widgets.singleOrNull()?.size == WidgetSize.LARGE }
+        vm.setWidgetPageEnabled(false)
+        vm.prefs.first { !it.widgetPageEnabled }
+        vm.removeWidget(5)
+        vm.prefs.first { it.widgets.isEmpty() }
     }
 }

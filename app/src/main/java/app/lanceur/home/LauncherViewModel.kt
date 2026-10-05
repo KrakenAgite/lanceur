@@ -16,6 +16,9 @@ import app.lanceur.prefs.VisibleApps
 import app.lanceur.vault.VaultEvent
 import app.lanceur.vault.VaultState
 import app.lanceur.vault.VaultStateMachine
+import app.lanceur.widgets.WidgetAddFlow
+import app.lanceur.widgets.WidgetSize
+import app.lanceur.widgets.WidgetSlot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +52,17 @@ class LauncherViewModel(
     private val _vault = MutableStateFlow<VaultState>(VaultState.Locked)
     val vault: StateFlow<VaultState> = _vault.asStateFlow()
 
+    private val _widgetEditMode = MutableStateFlow(false)
+    val widgetEditMode: StateFlow<Boolean> = _widgetEditMode.asStateFlow()
+
+    private val _homePageRequests = MutableStateFlow(0)
+
+    /** Incrémenté par `goHome()` : l'écran ramène alors le défilement sur la page d'accueil. */
+    val homePageRequests: StateFlow<Int> = _homePageRequests.asStateFlow()
+
+    /** Ajout de widget en cours ; vit dans le ViewModel pour survivre à une recréation de l'activité. */
+    var widgetAddState: WidgetAddFlow.State = WidgetAddFlow.State.Idle
+
     init {
         // Nettoyage seulement une fois le catalogue chargé (jamais sur la valeur initiale null)
         viewModelScope.launch { catalogApps.filterNotNull().collect { prefsRepo.prune(it) } }
@@ -70,11 +84,13 @@ class LauncherViewModel(
         }
     }
 
-    /** Bouton Accueil : retour aux favoris, recherche fermée, dossier reverrouillé. */
+    /** Bouton Accueil : retour aux favoris, recherche fermée, dossier reverrouillé, page d'accueil. */
     fun goHome() {
         vaultEvent(VaultEvent.HomePressed)
         _screen.value = Screen.HOME
         _listMode.value = ListMode.Favorites
+        _widgetEditMode.value = false
+        _homePageRequests.value++
     }
 
     /** `true` si l'écran doit lancer l'authentification (le dossier était verrouillé). */
@@ -113,6 +129,30 @@ class LauncherViewModel(
 
     fun setAlphabetSide(side: AlphabetSide) {
         viewModelScope.launch { prefsRepo.setAlphabetSide(side) }
+    }
+
+    fun setWidgetEditMode(on: Boolean) {
+        _widgetEditMode.value = on
+    }
+
+    fun addWidget(slot: WidgetSlot) {
+        viewModelScope.launch { prefsRepo.addWidget(slot) }
+    }
+
+    fun removeWidget(appWidgetId: Int) {
+        viewModelScope.launch { prefsRepo.removeWidget(appWidgetId) }
+    }
+
+    fun setWidgetSize(appWidgetId: Int, size: WidgetSize) {
+        viewModelScope.launch { prefsRepo.setWidgetSize(appWidgetId, size) }
+    }
+
+    fun setWidgetsOrder(ids: List<Int>) {
+        viewModelScope.launch { prefsRepo.setWidgetsOrder(ids) }
+    }
+
+    fun setWidgetPageEnabled(enabled: Boolean) {
+        viewModelScope.launch { prefsRepo.setWidgetPageEnabled(enabled) }
     }
 
     /** `onDone` est appelé une fois la préférence visible dans `prefs`. */

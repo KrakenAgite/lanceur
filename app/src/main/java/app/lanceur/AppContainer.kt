@@ -22,6 +22,12 @@ import app.lanceur.prefs.LauncherDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import app.lanceur.summary.DaySummarySource
+import app.lanceur.widgets.WidgetHost
+import app.lanceur.widgets.WidgetIds
+import app.lanceur.widgets.WidgetProviderSource
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /** Un seul exemplaire de chaque service pour toute l'app. */
 class AppContainer(context: Context) {
@@ -41,6 +47,17 @@ class AppContainer(context: Context) {
     )
     val appLauncher = AppLauncher(appContext)
     val resultActions = ResultActions(appContext, appLauncher)
+    val widgetHost = WidgetHost(appContext)
+    val widgetProviders = WidgetProviderSource(appContext)
+    val daySummary = DaySummarySource(appContext)
+
+    /** Libère les identifiants réservés par un ajout interrompu (Lanceur tué pendant la configuration). */
+    fun cleanUpWidgetIds() {
+        appScope.launch {
+            val slots = prefsRepo.prefs.first().widgets
+            WidgetIds.orphans(widgetHost.hostIds(), slots).forEach(widgetHost::deleteId)
+        }
+    }
 
     /** L'ordre de la liste est l'ordre d'affichage des résultats. */
     fun searchEngine(visibleApps: () -> List<AppEntry>, showPermissionHint: () -> Boolean) = SearchEngine(

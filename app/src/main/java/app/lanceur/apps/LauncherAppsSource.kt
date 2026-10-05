@@ -71,18 +71,7 @@ class LauncherAppsSource(private val context: Context) : CatalogSource {
         }
     }
 
-    private fun kindOf(user: UserHandle): ProfileKind {
-        if (user == me) return ProfileKind.MAIN
-        return try {
-            when (launcherApps.getLauncherUserInfo(user)?.userType) {
-                null -> ProfileKind.UNKNOWN
-                UserManager.USER_TYPE_PROFILE_PRIVATE -> ProfileKind.PRIVATE
-                else -> ProfileKind.OTHER
-            }
-        } catch (e: SecurityException) {
-            ProfileKind.UNKNOWN
-        }
-    }
+    private fun kindOf(user: UserHandle): ProfileKind = ProfileKinds.of(launcherApps, user, me)
 
     private companion object {
         const val TAG = "Lanceur"
