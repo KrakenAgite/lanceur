@@ -72,8 +72,17 @@ Les widgets d'une appli cachée ou de l'Espace privé ne sont jamais proposés n
 ### Widgets intégrés
 
 Le sélecteur propose en tête un groupe « Lanceur » : Lecture en cours, Agenda · mois, Agenda · semaine,
-Batterie · anneau et Batterie · barre. Ils s'ajoutent sans autorisation et se déplacent, se redimensionnent
-et se retirent comme les autres.
+Batterie · anneau, Batterie · barre, Note rapide, To-do, Compte à rebours, Horloges du monde,
+Minuteur / chrono, Contacts favoris, Raccourcis rapides et Stockage et mémoire. Ils s'ajoutent sans
+autorisation et se déplacent, se redimensionnent et se retirent comme les autres.
+
+- **Note rapide / To-do** : on écrit directement sur la carte ; chaque widget a son propre contenu, gardé dans les
+  réglages de Lanceur (jamais envoyé ailleurs) et effacé quand on retire le widget.
+- **Compte à rebours / Horloges du monde** : une feuille de réglages s'ouvre à l'ajout ; ⚙ en mode Modifier la rouvre.
+- **Minuteur** : les pastilles lancent un minuteur de l'Horloge, qui sonne même Lanceur fermé.
+- **Contacts favoris** : ceux marqués d'une étoile dans Contacts ; toucher appelle, appui long envoie un SMS.
+- **Raccourcis** : la lampe s'allume depuis le widget ; Internet, Bluetooth, Son et Ne pas déranger ouvrent le
+  panneau d'Android (une appli ne peut pas les changer elle-même).
 
 - **Lecture en cours** : la première fois, toucher « Autoriser l'accès aux lecteurs » et activer Lanceur dans
   l'accès aux notifications (Lanceur ne lit aucune notification). Si l'option est grisée : Infos de l'appli ›
