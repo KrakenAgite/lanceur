@@ -67,6 +67,9 @@ class CalendarCardActions(
 private const val MONTH_PAGES = 2401
 private const val CENTER_PAGE = MONTH_PAGES / 2
 private val CELL_HEIGHT = 34.dp
+/** Coins concentriques : rayon de la carte (28 dp) moins sa marge intérieure (10 dp). */
+private val CARD_PADDING = 10.dp
+private val INNER_RADIUS = 28.dp - CARD_PADDING
 private val WEEKDAYS = listOf("L", "M", "M", "J", "V", "S", "D")
 
 @Composable
@@ -103,7 +106,7 @@ fun MonthCard(
         androidx.compose.runtime.snapshotFlow { pager.settledPage }.collect { latestShown(monthAt(it)) }
     }
     val events = load?.events.orEmpty()
-    Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 10.dp, vertical = 8.dp)) {
+    Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = CARD_PADDING, vertical = CARD_PADDING)) {
         CardHeader(
             title = MonthGrid.title(monthAt(pager.currentPage)),
             previous = "Mois précédent",
@@ -150,7 +153,7 @@ private fun RowScope.DayCell(day: GridDay, selected: Boolean, onClick: () -> Uni
         Modifier
             .weight(1f)
             .fillMaxHeight()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .testTag("day-${day.date}"),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -197,7 +200,7 @@ fun WeekCard(
 ) {
     val colors = MaterialTheme.colorScheme
     val strip = WeekStrip.build(WeekStrip.weekStart(weekStart), today, load?.events.orEmpty(), zone, WeekStrip.perDay(size))
-    Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 10.dp, vertical = 8.dp)) {
+    Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = CARD_PADDING, vertical = CARD_PADDING)) {
         CardHeader(
             title = strip.title,
             previous = "Semaine précédente",
@@ -215,7 +218,7 @@ fun WeekCard(
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(INNER_RADIUS))
                         .background(if (day.isToday) colors.primaryContainer.copy(alpha = 0.6f) else Color.Transparent)
                         .clickable { actions.openDay(day.date) }
                         .testTag("week-${day.date}")
@@ -237,7 +240,7 @@ fun WeekCard(
                             item.title,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(6.dp))
                                 .background(chip)
                                 .padding(horizontal = 2.dp),
                             style = MaterialTheme.typography.labelSmall,
