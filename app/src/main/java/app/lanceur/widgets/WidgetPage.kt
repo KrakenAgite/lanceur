@@ -193,7 +193,7 @@ private fun SummaryCard(summary: DaySummaryState, actions: WidgetPageActions) {
 
 /** Une étape de la chronologie : pastille de la couleur de l'agenda, fil vers la suivante, heure, titre. */
 @Composable
-private fun TimelineRow(line: SummaryLine, isLast: Boolean, onClick: () -> Unit) {
+internal fun TimelineRow(line: SummaryLine, isLast: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     // Anniversaire : pastille aux couleurs festives de Material You
     val dot = if (line.birthday) colors.tertiary else line.event.color?.let { Color(it) } ?: colors.primary
