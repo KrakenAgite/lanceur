@@ -25,6 +25,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.ui.draw.rotate
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
@@ -164,7 +169,7 @@ fun SearchScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.weight(1f).fillMaxWidth().fadeTopEdge(64.dp),
                 reverseLayout = true,
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
@@ -212,6 +217,24 @@ fun SearchScreen(
         }
     }
 }
+
+/** Les cartes s'évanouissent sous la barre d'état au lieu d'y être coupées net. */
+private fun Modifier.fadeTopEdge(height: Dp): Modifier = this
+    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val stop = (height.toPx() / size.height).coerceAtMost(1f)
+        // Courbe douce : quasi invisible tout en haut, pour qu'aucun bord ne se devine
+        drawRect(
+            Brush.verticalGradient(
+                0f to Color.Transparent,
+                stop * 0.35f to Color.Black.copy(alpha = 0.08f),
+                stop * 0.7f to Color.Black.copy(alpha = 0.45f),
+                stop to Color.Black,
+            ),
+            blendMode = BlendMode.DstIn,
+        )
+    }
 
 @Composable
 private fun SectionCard(section: ResultSection, modifier: Modifier, content: @Composable () -> Unit) {
