@@ -142,11 +142,11 @@ fun HomeScreen(
         phase = next
     }
 
-    val onRelease: () -> Unit = {
+    val onRelease: (Boolean) -> Unit = { cancelled ->
         val target = highlighted?.let { key -> shown.firstOrNull { it.key == key } }
         phase = ScrubPhase.Idle
         highlighted = null
-        if (target != null) act.launch(target)
+        if (target != null && !cancelled) act.launch(target)
     }
 
     val bar: @Composable () -> Unit = {

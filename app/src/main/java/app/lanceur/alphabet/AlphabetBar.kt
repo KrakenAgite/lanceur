@@ -37,7 +37,8 @@ fun AlphabetBar(
     phase: ScrubPhase,
     side: AlphabetSide,
     onScrub: (ScrubInput) -> Unit,
-    onRelease: () -> Unit,
+    /** `cancelled` : le geste a été annulé par le système (écran éteint, appel…), rien ne doit s'ouvrir. */
+    onRelease: (cancelled: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -68,13 +69,18 @@ fun AlphabetBar(
                     fun input(x: Float, y: Float) =
                         ScrubInput(x, y, size.width.toFloat(), size.height.toFloat(), latestSide, threshold)
                     latestScrub(input(down.position.x, down.position.y))
+                    var cancelled = true
                     while (true) {
                         val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed) break
+                        if (!change.pressed) {
+                            // Une annulation arrive comme un lever déjà consommé
+                            cancelled = change.isConsumed
+                            break
+                        }
                         change.consume()
                         latestScrub(input(change.position.x, change.position.y))
                     }
-                    latestRelease()
+                    latestRelease(cancelled)
                 }
             },
         horizontalAlignment = Alignment.CenterHorizontally,

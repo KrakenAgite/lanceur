@@ -1,7 +1,6 @@
 package app.lanceur.apps
 
 import android.app.StatusBarManager
-import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.ContentUris
 import android.content.Context
@@ -32,7 +31,14 @@ class AppLauncher(private val context: Context) {
     }
 
     fun uninstall(key: AppKey) {
-        startSafely(Intent(Intent.ACTION_DELETE, Uri.fromParts("package", key.packageName, null)))
+        uninstallIntent(key)?.let(::startSafely)
+    }
+
+    /** Désinstalle la copie du bon profil (perso, pro…), pas forcément celle du profil principal. */
+    fun uninstallIntent(key: AppKey): Intent? {
+        val user = userManager.getUserForSerialNumber(key.userSerial) ?: return null
+        return Intent(Intent.ACTION_DELETE, Uri.fromParts("package", key.packageName, null))
+            .putExtra(Intent.EXTRA_USER, user)
     }
 
     fun openClock() {
@@ -59,8 +65,10 @@ class AppLauncher(private val context: Context) {
     fun startSafely(intent: Intent): Boolean = try {
         context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         true
-    } catch (e: ActivityNotFoundException) {
-        Log.w(TAG, "Aucune appli pour $intent", e)
+    } catch (e: RuntimeException) {
+        // Aucune appli (ActivityNotFoundException), autorisation refusée (SecurityException),
+        // intent trop gros pour le système… : jamais une raison de faire planter l'écran d'accueil
+        Log.w(TAG, "Impossible d'ouvrir $intent", e)
         false
     }
 

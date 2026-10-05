@@ -19,6 +19,7 @@ import app.lanceur.apps.AppKey
 import app.lanceur.prefs.AlphabetSide
 import app.lanceur.prefs.AppLists
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -93,5 +94,23 @@ class HomeScreenTest {
         rule.onRoot().performTouchInput { swipeUp(startY = height * 0.7f, endY = height * 0.2f) }
         rule.waitForIdle()
         assertTrue(opened)
+    }
+
+    @Test
+    fun a_cancelled_slide_launches_nothing() {
+        // Écran éteint ou appel entrant au milieu du geste : Android annule le toucher
+        var launched: AppEntry? = null
+        show { setMode -> HomeActions(launch = { launched = it }, changeMode = setMode) }
+
+        rule.onNodeWithTag("alphabet").performTouchInput { down(Offset(centerX, height / 27f * 1.5f)) }
+        rule.waitForIdle()
+        val row = rule.onNodeWithText("Banque").fetchSemanticsNode().boundsInRoot
+        val bar = rule.onNodeWithTag("alphabet").fetchSemanticsNode().boundsInRoot
+        rule.onNodeWithTag("alphabet").performTouchInput {
+            moveTo(Offset(row.center.x - bar.left, row.center.y - bar.top))
+            cancel()
+        }
+        rule.waitForIdle()
+        assertNull(launched)
     }
 }
