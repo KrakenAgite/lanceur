@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -47,6 +48,13 @@ import app.lanceur.builtin.timer.StopwatchState
 import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
 import app.lanceur.builtin.todo.TodoList
+import app.lanceur.builtin.weather.WeatherCard
+import app.lanceur.builtin.weather.WeatherData
+import app.lanceur.builtin.weather.WeatherOutcome
+import app.lanceur.builtin.weather.WeatherQuery
+import app.lanceur.builtin.weather.WeatherSource
+import app.lanceur.builtin.weather.WeatherView
+import app.lanceur.builtin.weather.WeatherViewState
 import app.lanceur.ui.cardBackground
 import app.lanceur.widgets.WidgetLayout
 import app.lanceur.widgets.WidgetSlot
@@ -73,6 +81,8 @@ class BuiltinServices(
     val shortcutActions: ShortcutActions = ShortcutActions(),
     val storage: StorageSource? = null,
     val openStorageSettings: () -> Unit = {},
+    val weather: WeatherSource? = null,
+    val openUrl: (String) -> Unit = {},
     val refresh: Int,
 )
 
@@ -176,6 +186,30 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
                 reading?.let { StorageCard(it, services.openStorageSettings, modifier) }
                     ?: Box(modifier.fillMaxSize().background(cardBackground()))
             }
+        }
+        BuiltinKind.WEATHER -> {
+            val id = slot.appWidgetId
+            val data = services.data(id)
+            val config = WeatherData.config(data)
+            val cache = WeatherData.cache(data)
+            var outcome by remember(id) { mutableStateOf<WeatherOutcome?>(null) }
+            // Relancé au retour sur la page (`refresh`) ou quand les réglages changent ; enregistrer le cache ne relance rien
+            LaunchedEffect(id, services.refresh, config) {
+                val source = services.weather ?: return@LaunchedEffect
+                if (config == null) return@LaunchedEffect
+                val (result, kept) = source.refresh(config, cache, System.currentTimeMillis())
+                outcome = result
+                if (result == WeatherOutcome.FRESH && kept != null) services.saveData(id, WeatherData.encode(config, kept))
+            }
+            val now = rememberMinuteClock()
+            val state = WeatherView.state(config, cache, outcome, now, java.time.ZoneId.systemDefault())
+            WeatherCard(
+                state,
+                size,
+                onOpen = { (state as? WeatherViewState.Ready)?.let { services.openUrl(WeatherQuery.searchUrl(it.placeName.takeUnless { n -> n == "Ma position" } ?: "")) } },
+                onChooseCity = { services.openSettings(slot) },
+                modifier = modifier,
+            )
         }
     }
 }

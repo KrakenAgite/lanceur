@@ -46,6 +46,10 @@ import app.lanceur.builtin.timer.StopwatchState
 import app.lanceur.builtin.timer.TimerCard
 import app.lanceur.builtin.todo.TodoCard
 import app.lanceur.builtin.todo.TodoList
+import app.lanceur.builtin.weather.Forecast
+import app.lanceur.builtin.weather.HourForecast
+import app.lanceur.builtin.weather.WeatherCard
+import app.lanceur.builtin.weather.WeatherViewState
 import app.lanceur.summary.SummaryEvent
 import app.lanceur.ui.blockTouchesBelow
 import java.time.LocalDate
@@ -125,6 +129,17 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
         BuiltinKind.STORAGE -> StorageCard(
             StorageReading(Gauge(87_000_000_000, 128_000_000_000), Gauge(7_100_000_000, 12_000_000_000)),
             onClick = {},
+            modifier = modifier,
+        )
+        BuiltinKind.WEATHER -> WeatherCard(
+            WeatherViewState.Ready(
+                "Nantes",
+                Forecast(16, 15, "⛅", "Éclaircies", 12, 20, 9, 17, (15..20).map { HourForecast("$it h", if (it < 18) "⛅" else "🌧", it) }, emptyList()),
+                "Mis à jour à 14:05",
+            ),
+            kind.defaultSize,
+            onOpen = {},
+            onChooseCity = {},
             modifier = modifier,
         )
     }

@@ -45,6 +45,7 @@ import app.lanceur.apps.HomeRoleWatcher
 import app.lanceur.builtin.BuiltinKind
 import app.lanceur.builtin.BuiltinPreview
 import app.lanceur.builtin.BuiltinServices
+import app.lanceur.builtin.BuiltinSettingsServices
 import app.lanceur.builtin.BuiltinSettingsSheet
 import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.builtin.BuiltinWidget
@@ -138,6 +139,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         searchVm.refresh()
         reloadSummary()
     }
+    var locationGranted by remember { mutableStateOf(SearchPermissions.granted(context, android.Manifest.permission.ACCESS_COARSE_LOCATION)) }
+    val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { locationGranted = it }
     val roleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         isDefault = HomeRole.isHeld(context).also(roleWatcher::update)
     }
@@ -298,6 +301,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         ),
         storage = container.storage,
         openStorageSettings = { container.appLauncher.startSafely(Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)) },
+        weather = container.weather,
+        openUrl = { url -> container.appLauncher.startSafely(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))) },
         refresh = widgetRefresh,
     )
     Box(Modifier.fillMaxSize()) {
@@ -458,6 +463,11 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     settingsRequest = null
                 },
                 onDismiss = { settingsRequest = null },
+                services = BuiltinSettingsServices(
+                    searchPlaces = { container.weather.search(it) },
+                    locationGranted = locationGranted,
+                    requestLocation = { locationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) },
+                ),
             )
         }
     }
