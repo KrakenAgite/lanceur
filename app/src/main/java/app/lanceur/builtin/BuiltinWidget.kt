@@ -17,6 +17,8 @@ import app.lanceur.builtin.calendar.CalendarRangeSource
 import app.lanceur.builtin.calendar.MonthCard
 import app.lanceur.builtin.calendar.WeekCard
 import app.lanceur.builtin.calendar.WeekStrip
+import app.lanceur.builtin.countdown.CountdownCard
+import app.lanceur.builtin.countdown.CountdownConfig
 import app.lanceur.builtin.media.NowPlayingActions
 import app.lanceur.builtin.media.NowPlayingCard
 import app.lanceur.builtin.media.NowPlayingSource
@@ -41,6 +43,7 @@ class BuiltinServices(
     val grantMediaAccess: () -> Unit,
     val data: (Int) -> String? = { null },
     val saveData: (Int, String) -> Unit = { _, _ -> },
+    val openSettings: (WidgetSlot) -> Unit = {},
     val refresh: Int,
 )
 
@@ -96,6 +99,16 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
         BuiltinKind.TODO -> {
             var list by remember(slot.appWidgetId) { mutableStateOf(TodoList.fromData(services.data(slot.appWidgetId))) }
             TodoCard(list, onChange = { list = it; services.saveData(slot.appWidgetId, it.toData()) }, modifier = modifier)
+        }
+        BuiltinKind.COUNTDOWN -> {
+            val now = rememberMinuteClock()
+            CountdownCard(
+                config = CountdownConfig.fromData(services.data(slot.appWidgetId)),
+                size = size,
+                onSetUp = { services.openSettings(slot) },
+                modifier = modifier,
+                now = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()),
+            )
         }
     }
 }

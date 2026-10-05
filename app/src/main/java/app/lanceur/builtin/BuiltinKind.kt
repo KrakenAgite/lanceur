@@ -21,6 +21,7 @@ enum class BuiltinKind(
     BATTERY_BAR("Batterie · barre", "🔋", mapOf(SMALL to 72), SMALL),
     NOTE("Note rapide", "📝", mapOf(SMALL to 140, MEDIUM to 220, LARGE to 340), MEDIUM),
     TODO("To-do", "✅", mapOf(SMALL to 160, MEDIUM to 260, LARGE to 380), MEDIUM),
+    COUNTDOWN("Compte à rebours", "⏳", mapOf(SMALL to 120, MEDIUM to 200), SMALL, configurable = true),
     ;
 
     /** Tailles proposées en mode édition, dans l'ordre S, M, L. */

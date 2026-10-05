@@ -21,6 +21,8 @@ import app.lanceur.builtin.calendar.CalendarLoad
 import app.lanceur.builtin.calendar.MonthCard
 import app.lanceur.builtin.calendar.WeekCard
 import app.lanceur.builtin.calendar.WeekStrip
+import app.lanceur.builtin.countdown.CountdownCard
+import app.lanceur.builtin.countdown.CountdownConfig
 import app.lanceur.builtin.media.MediaSnapshot
 import app.lanceur.builtin.media.NowPlayingActions
 import app.lanceur.builtin.media.NowPlayingCard
@@ -87,5 +89,11 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
             WeekCard(today, WeekStrip.weekStart(today), kind.defaultSize, CalendarLoad(true, sampleEvents), {}, CalendarCardActions(), modifier, zone)
         BuiltinKind.NOTE -> NoteCard("Pain, lait, œufs\nAppeler le garage", onSave = {}, modifier = modifier)
         BuiltinKind.TODO -> TodoCard(TodoList().add("Pain").add("Rendre le livre").add("Réserver le train").toggle(2), onChange = {}, modifier = modifier)
+        BuiltinKind.COUNTDOWN -> CountdownCard(
+            CountdownConfig("Vacances", today.plusDays(12), null, 0),
+            kind.defaultSize,
+            onSetUp = {},
+            modifier = modifier,
+        )
     }
 }

@@ -41,8 +41,10 @@ import app.lanceur.apps.AppIcon
 import app.lanceur.apps.AppKey
 import app.lanceur.apps.HomeRole
 import app.lanceur.apps.HomeRoleWatcher
+import app.lanceur.builtin.BuiltinKind
 import app.lanceur.builtin.BuiltinPreview
 import app.lanceur.builtin.BuiltinServices
+import app.lanceur.builtin.BuiltinSettingsSheet
 import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.builtin.BuiltinWidget
 import app.lanceur.builtin.calendar.CalendarCardActions
@@ -113,6 +115,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     var summary by remember { mutableStateOf<DaySummaryState?>(null) }
     var widgetRefresh by remember { mutableIntStateOf(0) }
     var pickerQuery by remember { mutableStateOf("") }
+    // Feuille de réglages d'un widget intégré : à l'ajout (`appWidgetId` nul) ou par ⚙
+    var settingsRequest by remember { mutableStateOf<Pair<BuiltinKind, Int?>?>(null) }
 
     fun reloadSummary() {
         scope.launch { summary = container.daySummary.load() }
@@ -261,6 +265,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         },
         data = { prefs.widgetData[it] },
         saveData = vm::setWidgetData,
+        openSettings = { slot -> BuiltinSlots.kindOf(slot)?.let { settingsRequest = it to slot.appWidgetId } },
         refresh = widgetRefresh,
     )
     Box(Modifier.fillMaxSize()) {
@@ -282,7 +287,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     cards = widgetCards,
                     editMode = widgetEditMode,
                     label = { widgetLabels[it.appWidgetId] ?: "Widget" },
-                    isReconfigurable = { !BuiltinSlots.isBuiltin(it) && container.widgetHost.isReconfigurable(it.appWidgetId) },
+                    isReconfigurable = { if (BuiltinSlots.isBuiltin(it)) BuiltinSlots.kindOf(it)?.configurable == true else container.widgetHost.isReconfigurable(it.appWidgetId) },
                     widgetView = { slot, modifier ->
                         if (BuiltinSlots.isBuiltin(slot)) BuiltinWidget(slot, builtinServices, modifier)
                         else HostedWidget(slot, container.widgetHost, modifier)
@@ -297,7 +302,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                         setEditMode = vm::setWidgetEditMode,
                         remove = ::removeWidget,
                         resize = { slot, size -> vm.setWidgetSize(slot.appWidgetId, size) },
-                        reconfigure = widgetHostActions.reconfigure,
+                        reconfigure = { slot -> BuiltinSlots.kindOf(slot)?.let { settingsRequest = it to slot.appWidgetId } ?: widgetHostActions.reconfigure(slot) },
                         reorder = vm::setWidgetsOrder,
                     ),
                 )
@@ -356,7 +361,11 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 onPick = { entry ->
                     vm.show(Screen.HOME)
                     val kind = BuiltinSlots.kindOf(entry.provider)
-                    if (kind != null) vm.addBuiltinWidget(kind) else widgetHostActions.add(entry)
+                    if (kind != null) {
+                        if (kind.configurable) settingsRequest = kind to null else vm.addBuiltinWidget(kind)
+                    } else {
+                        widgetHostActions.add(entry)
+                    }
                 },
             )
         }
@@ -406,6 +415,17 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     enableLockService = ::openAccessibilitySettings,
                     setWidgetPageEnabled = vm::setWidgetPageEnabled,
                 ),
+            )
+        }
+        settingsRequest?.let { (kind, id) ->
+            BuiltinSettingsSheet(
+                kind = kind,
+                initial = id?.let { prefs.widgetData[it] },
+                onSave = { data ->
+                    if (id == null) vm.addBuiltinWidget(kind, data) else vm.setWidgetData(id, data)
+                    settingsRequest = null
+                },
+                onDismiss = { settingsRequest = null },
             )
         }
     }
