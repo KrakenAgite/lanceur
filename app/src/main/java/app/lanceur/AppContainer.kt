@@ -5,6 +5,7 @@ import android.util.Log
 import app.lanceur.apps.AppEntry
 import app.lanceur.builtin.battery.BatterySource
 import app.lanceur.builtin.calendar.CalendarRangeSource
+import app.lanceur.builtin.contacts.FavoriteContactsSource
 import app.lanceur.builtin.media.NowPlayingSource
 import app.lanceur.search.AppSearchProvider
 import app.lanceur.search.CalcProvider
@@ -53,6 +54,7 @@ class AppContainer(context: Context) {
     val widgetHost = WidgetHost(appContext)
     val widgetProviders = WidgetProviderSource(appContext)
     val daySummary = DaySummarySource(appContext)
+    val favoriteContacts = FavoriteContactsSource(appContext)
     val battery = BatterySource(appContext)
     val nowPlaying = NowPlayingSource(appContext)
     val calendarRange = CalendarRangeSource(appContext)

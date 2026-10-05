@@ -21,6 +21,10 @@ import app.lanceur.builtin.clocks.Cities
 import app.lanceur.builtin.clocks.WorldClock
 import app.lanceur.builtin.clocks.WorldClocksCard
 import app.lanceur.builtin.clocks.WorldClocksConfig
+import app.lanceur.builtin.contacts.FavoriteContactsSource
+import app.lanceur.builtin.contacts.FavoritesActions
+import app.lanceur.builtin.contacts.FavoritesCard
+import app.lanceur.builtin.contacts.FavoritesState
 import app.lanceur.builtin.countdown.CountdownCard
 import app.lanceur.builtin.countdown.CountdownConfig
 import app.lanceur.builtin.media.NowPlayingActions
@@ -52,6 +56,8 @@ class BuiltinServices(
     val openSettings: (WidgetSlot) -> Unit = {},
     val startTimer: (Int) -> Boolean = { false },
     val openTimers: () -> Unit = {},
+    val contacts: FavoriteContactsSource? = null,
+    val favoritesActions: FavoritesActions = FavoritesActions(),
     val refresh: Int,
 )
 
@@ -134,6 +140,13 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
                 onOtherTimer = services.openTimers,
                 modifier = modifier,
             )
+        }
+        BuiltinKind.FAVORITE_CONTACTS -> {
+            val source = services.contacts
+            // Nouveau flux à chaque retour au premier plan : une permission accordée entre-temps est prise en compte
+            val flow = remember(source, services.refresh) { source?.favorites() ?: kotlinx.coroutines.flow.flowOf(FavoritesState.Loaded(emptyList())) }
+            val state by flow.collectAsStateWithLifecycle(FavoritesState.Loaded(emptyList()))
+            FavoritesCard(state, size, services.favoritesActions, modifier)
         }
     }
 }

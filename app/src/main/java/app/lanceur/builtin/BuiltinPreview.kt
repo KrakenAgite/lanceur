@@ -24,6 +24,10 @@ import app.lanceur.builtin.calendar.WeekStrip
 import app.lanceur.builtin.clocks.Cities
 import app.lanceur.builtin.clocks.WorldClock
 import app.lanceur.builtin.clocks.WorldClocksCard
+import app.lanceur.builtin.contacts.FavoriteContact
+import app.lanceur.builtin.contacts.FavoritesActions
+import app.lanceur.builtin.contacts.FavoritesCard
+import app.lanceur.builtin.contacts.FavoritesState
 import app.lanceur.builtin.countdown.CountdownCard
 import app.lanceur.builtin.countdown.CountdownConfig
 import app.lanceur.builtin.media.MediaSnapshot
@@ -105,5 +109,11 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
             WorldClocksCard(listOf("paris", "new-york", "tokyo", "sydney").mapNotNull(Cities::byId).map { WorldClock.of(it, now, zone) }, kind.defaultSize, modifier)
         }
         BuiltinKind.TIMER -> TimerCard(StopwatchState(), onStopwatch = {}, onTimer = { false }, onOtherTimer = {}, modifier = modifier)
+        BuiltinKind.FAVORITE_CONTACTS -> FavoritesCard(
+            FavoritesState.Loaded(listOf("Maman", "Léa", "Hugo", "Inès").map { FavoriteContact(it, it, "0", null) }),
+            kind.defaultSize,
+            FavoritesActions(),
+            modifier,
+        )
     }
 }

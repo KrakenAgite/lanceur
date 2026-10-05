@@ -49,6 +49,7 @@ import app.lanceur.builtin.BuiltinSettingsSheet
 import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.builtin.BuiltinWidget
 import app.lanceur.builtin.calendar.CalendarCardActions
+import app.lanceur.builtin.contacts.FavoritesActions
 import app.lanceur.home.HomeActions
 import app.lanceur.home.HomePager
 import app.lanceur.home.HomeScreen
@@ -276,6 +277,13 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
             }
         },
         openTimers = { container.appLauncher.startSafely(Intent(AlarmClock.ACTION_SHOW_TIMERS)) },
+        contacts = container.favoriteContacts,
+        favoritesActions = FavoritesActions(
+            call = container.resultActions::call,
+            sms = container.resultActions::sms,
+            open = { uri -> container.resultActions.open(SearchResult.Contact(uri, "", null)) },
+            requestPermission = { permissionLauncher.launch(SearchPermissions.ALL) },
+        ),
         refresh = widgetRefresh,
     )
     Box(Modifier.fillMaxSize()) {
