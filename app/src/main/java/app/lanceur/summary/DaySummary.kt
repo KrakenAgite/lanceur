@@ -100,6 +100,9 @@ object DaySummary {
         )
     }
 
+    /** Une ligne de chronologie hors résumé (agendas intégrés) : mêmes libellés, 🎁 et nom court. */
+    fun lineFor(event: SummaryEvent, zone: ZoneId): SummaryLine = line(tomorrow = false, event = event, zone = zone)
+
     private val BIRTHDAY_WORDS = listOf("ANNIVERSAIRE", "BIRTHDAY")
     private val BIRTHDAY_PATTERNS = listOf(
         Regex("\\s*[-–]\\s*anniversaire\\s*$", RegexOption.IGNORE_CASE), // « Jean - Anniversaire » (Google)
