@@ -3,7 +3,9 @@ package app.lanceur.search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performImeAction
 import app.lanceur.apps.AppEntry
@@ -47,5 +49,32 @@ class SearchScreenTest {
         }
         rule.onNodeWithTag("search-field").performImeAction()
         assertEquals(SearchResult.Web("ba"), opened)
+    }
+
+    @Test
+    fun results_are_grouped_under_section_titles() {
+        val results = listOf(SearchResult.App(banque), SearchResult.Setting("android.settings.SETTINGS", "Paramètres"), SearchResult.Web("ba"))
+        rule.setContent { MaterialTheme { SearchScreen("ba", results, icon = {}, actions = SearchActions()) } }
+        rule.onNodeWithText("APPLIS").assertIsDisplayed()
+        rule.onNodeWithText("RÉGLAGES").assertIsDisplayed()
+        rule.onNodeWithText("WEB").assertIsDisplayed()
+    }
+
+    @Test
+    fun clear_button_empties_the_query() {
+        var query: String? = null
+        rule.setContent {
+            MaterialTheme { SearchScreen("ba", emptyList(), icon = {}, actions = SearchActions(queryChange = { query = it })) }
+        }
+        rule.onNodeWithContentDescription("Effacer").performClick()
+        assertEquals("", query)
+    }
+
+    @Test
+    fun birthdays_show_a_gift_and_the_short_name() {
+        val birthday = SearchResult.Event(1, "Léa - Anniversaire", 0, 86_400_000, true, null)
+        rule.setContent { MaterialTheme { SearchScreen("léa", listOf(birthday), icon = {}, actions = SearchActions()) } }
+        rule.onNodeWithText("🎁").assertIsDisplayed()
+        rule.onNodeWithText("Léa").assertIsDisplayed()
     }
 }

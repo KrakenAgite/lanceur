@@ -89,7 +89,7 @@ object DaySummary {
     private fun line(tomorrow: Boolean, event: SummaryEvent, zone: ZoneId): SummaryLine {
         val time = if (event.allDay) null else TIME.format(Instant.ofEpochMilli(event.begin).atZone(zone))
         val title = event.title.ifBlank { "(Sans titre)" }
-        val birthday = event.allDay && BIRTHDAY_WORDS.any { TextNormalizer.fold(title).contains(it) }
+        val birthday = isBirthday(title, event.allDay)
         return SummaryLine(
             event = event,
             text = listOfNotNull(if (tomorrow) "Demain" else null, time, title).joinToString(" "),
@@ -107,8 +107,12 @@ object DaySummary {
         Regex("(['’]s)?\\s*birthday\\s*$", RegexOption.IGNORE_CASE), // « Paul's birthday »
     )
 
+    /** Un anniversaire est un événement « journée entière » dont le titre le dit. */
+    fun isBirthday(title: String, allDay: Boolean): Boolean =
+        allDay && BIRTHDAY_WORDS.any { TextNormalizer.fold(title).contains(it) }
+
     /** Ne garde que le nom de la personne ; si rien ne reste, le titre d'origine. */
-    private fun shortBirthdayTitle(title: String): String =
+    fun shortBirthdayTitle(title: String): String =
         BIRTHDAY_PATTERNS.fold(title) { acc, pattern -> pattern.replace(acc, "") }.trim().ifBlank { title }
 
     private fun utcDate(millis: Long): LocalDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()

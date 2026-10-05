@@ -20,6 +20,15 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.ui.draw.rotate
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import app.lanceur.summary.DaySummary
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -40,6 +49,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -121,7 +131,12 @@ fun SearchScreen(
     Column(
         modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(
+                Brush.verticalGradient(
+                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
+                    1f to MaterialTheme.colorScheme.surface,
+                ),
+            )
             .pointerInput(swipe) {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -136,34 +151,100 @@ fun SearchScreen(
             .imePadding()
             .padding(horizontal = 12.dp),
     ) {
-        LazyColumn(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            reverseLayout = true,
-            contentPadding = PaddingValues(vertical = 8.dp),
-        ) {
-            items(results, key = ::resultKey) { result -> ResultRow(result, icon, act) }
+        val sections = remember(results) { ResultSections.of(results) }
+        if (query.isBlank()) {
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+                Text(
+                    "Applis · calcul · contacts · agenda · réglages · web",
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                reverseLayout = true,
+                contentPadding = PaddingValues(vertical = 8.dp),
+            ) {
+                items(sections, key = { it.key }) { section ->
+                    SectionCard(section, Modifier.animateItem().padding(vertical = 5.dp)) {
+                        section.items.forEach { result -> key(resultKey(result)) { ResultRow(result, icon, act) } }
+                    }
+                }
+            }
         }
-        TextField(
-            value = query,
-            onValueChange = { act.queryChange(it) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .focusRequester(focus)
-                .testTag("search-field"),
-            placeholder = { Text("Applis, web, agenda, contacts…") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            singleLine = true,
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 10.dp),
             shape = RoundedCornerShape(28.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-            keyboardActions = KeyboardActions(onGo = {
-                results.firstOrNull { it != SearchResult.PermissionHint }?.let { act.open(it) }
-            }),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-            ),
-        )
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shadowElevation = 4.dp,
+        ) {
+            TextField(
+                value = query,
+                onValueChange = { act.queryChange(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .focusRequester(focus)
+                    .testTag("search-field"),
+                placeholder = { Text("Applis, web, agenda, contacts…") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { act.queryChange("") }) { Icon(Icons.Default.Clear, contentDescription = "Effacer") }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(28.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+                keyboardActions = KeyboardActions(onGo = {
+                    results.firstOrNull { it != SearchResult.PermissionHint }?.let { act.open(it) }
+                }),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionCard(section: ResultSection, modifier: Modifier, content: @Composable () -> Unit) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f))
+            .padding(vertical = 6.dp),
+    ) {
+        section.title?.let {
+            Text(
+                it.uppercase(Locale.FRENCH),
+                modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 2.dp),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        content()
+    }
+}
+
+private enum class Tone { PRIMARY, SECONDARY, TERTIARY, NEUTRAL }
+
+@Composable
+private fun Tone.colors(): Pair<Color, Color> = with(MaterialTheme.colorScheme) {
+    when (this@colors) {
+        Tone.PRIMARY -> primaryContainer to onPrimaryContainer
+        Tone.SECONDARY -> secondaryContainer to onSecondaryContainer
+        Tone.TERTIARY -> tertiaryContainer to onTertiaryContainer
+        Tone.NEUTRAL -> surfaceContainerHighest to onSurfaceVariant
     }
 }
 
@@ -183,13 +264,14 @@ private fun ResultRow(result: SearchResult, icon: @Composable (AppKey) -> Unit, 
         is SearchResult.App ->
             AppRow(result.entry, icon, menuItems = emptyList(), onClick = { actions.open(result) }, onMenu = {})
         is SearchResult.Calc -> ResultLine(
-            badge = { TextBadge("=") },
+            badge = { TextBadge("=", Tone.PRIMARY) },
             title = "= ${result.value}",
+            titleStyle = MaterialTheme.typography.headlineSmall,
             subtitle = "${result.expression} · toucher pour copier",
             onClick = { actions.open(result) },
         )
         is SearchResult.Contact -> ResultLine(
-            badge = { TextBadge(result.name.take(1).uppercase()) },
+            badge = { TextBadge(result.name.take(1).uppercase(), Tone.SECONDARY) },
             title = result.name,
             subtitle = result.phone,
             onClick = { actions.open(result) },
@@ -201,27 +283,36 @@ private fun ResultRow(result: SearchResult, icon: @Composable (AppKey) -> Unit, 
         }
         is SearchResult.Event -> {
             val start = Instant.ofEpochMilli(result.begin).atZone(if (result.allDay) ZoneOffset.UTC else ZoneId.systemDefault())
+            val title = result.title.ifBlank { "(Sans titre)" }
+            val birthday = DaySummary.isBirthday(title, result.allDay)
             ResultLine(
-                badge = { TextBadge(DAY.format(start)) },
-                title = result.title.ifBlank { "(Sans titre)" },
+                badge = { TextBadge(if (birthday) "🎁" else DAY.format(start), Tone.TERTIARY) },
+                title = if (birthday) DaySummary.shortBirthdayTitle(title) else title,
                 subtitle = listOfNotNull((if (result.allDay) DATE_ONLY else DATE_TIME).format(start), result.location).joinToString(" · "),
                 onClick = { actions.open(result) },
             )
         }
         is SearchResult.Setting -> ResultLine(
-            badge = { IconBadge(Icons.Default.Settings) },
+            badge = { IconBadge(Icons.Default.Settings, Tone.NEUTRAL) },
             title = result.label,
             subtitle = "Réglages",
             onClick = { actions.open(result) },
         )
         is SearchResult.Web -> ResultLine(
-            badge = { IconBadge(Icons.Default.Search) },
+            badge = { IconBadge(Icons.Default.Search, Tone.NEUTRAL) },
             title = "Rechercher « ${result.query} » sur le web",
             subtitle = null,
             onClick = { actions.open(result) },
-        )
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                modifier = Modifier.padding(end = 4.dp).size(20.dp).rotate(-45f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         SearchResult.PermissionHint -> ResultLine(
-            badge = { IconBadge(Icons.Default.Lock) },
+            badge = { IconBadge(Icons.Default.Lock, Tone.PRIMARY) },
             title = "Autoriser l'accès à l'agenda et aux contacts",
             subtitle = "Pour les retrouver dans la recherche",
             onClick = actions.requestPermissions,
@@ -237,20 +328,21 @@ private fun ResultLine(
     title: String,
     subtitle: String?,
     onClick: () -> Unit,
+    titleStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleMedium,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         badge()
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, style = titleStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (subtitle != null) {
                 Text(
                     subtitle,
@@ -266,21 +358,17 @@ private fun ResultLine(
 }
 
 @Composable
-private fun TextBadge(text: String) {
-    Box(
-        Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+private fun TextBadge(text: String, tone: Tone) {
+    val (container, content) = tone.colors()
+    Box(Modifier.size(40.dp).clip(CircleShape).background(container), contentAlignment = Alignment.Center) {
+        Text(text, style = MaterialTheme.typography.titleMedium, color = content)
     }
 }
 
 @Composable
-private fun IconBadge(icon: ImageVector) {
-    Box(
-        Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+private fun IconBadge(icon: ImageVector, tone: Tone) {
+    val (container, content) = tone.colors()
+    Box(Modifier.size(40.dp).clip(CircleShape).background(container), contentAlignment = Alignment.Center) {
+        Icon(icon, contentDescription = null, tint = content)
     }
 }
