@@ -133,8 +133,8 @@ fun SearchScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
-                    1f to MaterialTheme.colorScheme.surface,
+                    0f to MaterialTheme.colorScheme.surface,
+                    1f to MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
             )
             .pointerInput(swipe) {
@@ -178,7 +178,7 @@ fun SearchScreen(
         Surface(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 10.dp),
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
             shadowElevation = 4.dp,
         ) {
             TextField(
@@ -219,7 +219,7 @@ private fun SectionCard(section: ResultSection, modifier: Modifier, content: @Co
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(vertical = 6.dp),
     ) {
         section.title?.let {
