@@ -1,0 +1,97 @@
+package app.lanceur.home
+
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
+import app.lanceur.apps.AppEntry
+import app.lanceur.apps.AppKey
+import app.lanceur.prefs.AlphabetSide
+import app.lanceur.prefs.AppLists
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+class HomeScreenTest {
+    @get:Rule val rule = createComposeRule()
+
+    private fun app(label: String): AppEntry {
+        val id = label.lowercase().filter { it.isLetter() }
+        return AppEntry(AppKey("app.$id", "app.$id.Main", 0), label, false)
+    }
+
+    private val agenda = app("Agenda")
+    private val banque = app("Banque")
+    private val bloc = app("Bloc-notes")
+    private val chrome = app("Chrome")
+    private val lists = AppLists(
+        allVisible = listOf(agenda, banque, bloc, chrome),
+        favorites = listOf(chrome),
+        hiddenApps = emptyList(),
+        privateApps = emptyList(),
+    )
+
+    private fun show(actions: (setMode: (ListMode) -> Unit) -> HomeActions) {
+        rule.setContent {
+            var mode by remember { mutableStateOf<ListMode>(ListMode.Favorites) }
+            MaterialTheme {
+                HomeScreen(lists = lists, mode = mode, side = AlphabetSide.RIGHT, actions = actions { mode = it }, icon = {})
+            }
+        }
+    }
+
+    @Test
+    fun touching_a_letter_shows_its_apps_and_tapping_one_launches_it() {
+        var launched: AppEntry? = null
+        show { setMode -> HomeActions(launch = { launched = it }, changeMode = setMode) }
+        rule.onNodeWithText("Chrome").assertIsDisplayed()
+
+        rule.onNodeWithTag("alphabet").performTouchInput {
+            down(Offset(centerX, height / 27f * 1.5f)) // lettre B
+            up()
+        }
+        rule.onNodeWithText("Banque").assertIsDisplayed()
+        rule.onNodeWithText("Bloc-notes").assertIsDisplayed()
+        rule.onNodeWithText("Chrome").assertDoesNotExist()
+
+        rule.onNodeWithText("Bloc-notes").performClick()
+        assertEquals(bloc, launched)
+    }
+
+    @Test
+    fun sliding_from_the_alphabet_onto_a_row_launches_it() {
+        var launched: AppEntry? = null
+        show { setMode -> HomeActions(launch = { launched = it }, changeMode = setMode) }
+
+        rule.onNodeWithTag("alphabet").performTouchInput { down(Offset(centerX, height / 27f * 1.5f)) }
+        rule.waitForIdle()
+        val row = rule.onNodeWithText("Banque").fetchSemanticsNode().boundsInRoot
+        val bar = rule.onNodeWithTag("alphabet").fetchSemanticsNode().boundsInRoot
+        rule.onNodeWithTag("alphabet").performTouchInput {
+            moveTo(Offset(row.center.x - bar.left, row.center.y - bar.top))
+            up()
+        }
+        rule.waitForIdle()
+        assertEquals(banque, launched)
+    }
+
+    @Test
+    fun swiping_up_on_favorites_opens_search() {
+        var opened = false
+        show { HomeActions(openSearch = { opened = true }) }
+        rule.onRoot().performTouchInput { swipeUp(startY = height * 0.7f, endY = height * 0.2f) }
+        rule.waitForIdle()
+        assertTrue(opened)
+    }
+}
