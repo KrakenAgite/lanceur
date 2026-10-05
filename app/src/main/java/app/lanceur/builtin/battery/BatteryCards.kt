@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.lanceur.ui.CardLabel
+import app.lanceur.ui.cardBackground
 
 internal fun BatteryTone.color(): Color = when (this) {
     BatteryTone.GOOD -> Color(0xFF5BB974)
@@ -62,9 +64,9 @@ fun BatteryRingCard(info: BatteryInfo, onClick: () -> Unit, modifier: Modifier =
     Row(
         modifier
             .fillMaxSize()
-            .background(colors.surfaceContainerHigh)
+            .background(cardBackground())
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -87,6 +89,7 @@ fun BatteryRingCard(info: BatteryInfo, onClick: () -> Unit, modifier: Modifier =
         }
         Spacer(Modifier.width(20.dp))
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            CardLabel("Batterie")
             Text(info.statusText, style = MaterialTheme.typography.titleMedium)
             info.temperatureText?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant) }
             Text(info.powerSaveText, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
@@ -102,9 +105,9 @@ fun BatteryBarCard(info: BatteryInfo, onClick: () -> Unit, modifier: Modifier = 
     Row(
         modifier
             .fillMaxSize()
-            .background(colors.surfaceContainerHigh)
+            .background(cardBackground())
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Pile dessinée : corps bordé, remplissage à la couleur du niveau, petit téton à droite

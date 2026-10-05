@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -41,12 +42,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.lanceur.summary.SummaryEvent
+import app.lanceur.ui.CardLabel
+import app.lanceur.ui.cardBackground
 import app.lanceur.widgets.TimelineRow
 import app.lanceur.widgets.WidgetSize
 import java.time.LocalDate
@@ -69,13 +73,7 @@ private val WEEKDAYS = listOf("L", "M", "M", "J", "V", "S", "D")
 private fun CardHeader(title: String, previous: String, next: String, onPrevious: () -> Unit, onNext: () -> Unit) {
     Row(Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onPrevious) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = previous) }
-        Text(
-            title,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
+        CardLabel(title, Modifier.weight(1f).wrapContentWidth())
         IconButton(onClick = onNext) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = next) }
     }
 }
@@ -105,7 +103,7 @@ fun MonthCard(
         androidx.compose.runtime.snapshotFlow { pager.settledPage }.collect { latestShown(monthAt(it)) }
     }
     val events = load?.events.orEmpty()
-    Column(modifier.fillMaxSize().background(colors.surfaceContainerHigh).padding(horizontal = 8.dp, vertical = 6.dp)) {
+    Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 10.dp, vertical = 8.dp)) {
         CardHeader(
             title = MonthGrid.title(monthAt(pager.currentPage)),
             previous = "Mois précédent",
@@ -199,7 +197,7 @@ fun WeekCard(
 ) {
     val colors = MaterialTheme.colorScheme
     val strip = WeekStrip.build(WeekStrip.weekStart(weekStart), today, load?.events.orEmpty(), zone, WeekStrip.perDay(size))
-    Column(modifier.fillMaxSize().background(colors.surfaceContainerHigh).padding(horizontal = 8.dp, vertical = 6.dp)) {
+    Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 10.dp, vertical = 8.dp)) {
         CardHeader(
             title = strip.title,
             previous = "Semaine précédente",
@@ -234,15 +232,17 @@ fun WeekCard(
                     )
                     if (day.birthdays.isNotEmpty()) Text("🎁", style = MaterialTheme.typography.labelSmall)
                     day.items.forEach { item ->
+                        val chip = item.color?.let { Color(it) } ?: colors.primary
                         Text(
                             item.title,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(4.dp))
-                                .background((item.color?.let { Color(it) } ?: colors.primary).copy(alpha = 0.85f))
+                                .background(chip)
                                 .padding(horizontal = 2.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White,
+                            // Texte foncé sur les couleurs claires (turquoise, jaune…), blanc sur les autres
+                            color = if (chip.luminance() > 0.5f) Color.Black else Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Clip,
                         )

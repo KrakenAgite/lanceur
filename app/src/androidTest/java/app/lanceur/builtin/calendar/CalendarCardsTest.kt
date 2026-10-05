@@ -42,13 +42,13 @@ class CalendarCardsTest {
                 }
             }
         }
-        rule.onNodeWithText("octobre 2026").assertIsDisplayed()
+        rule.onNodeWithText("OCTOBRE 2026").assertIsDisplayed()
         rule.onNodeWithTag("day-2026-10-14").performClick()
         rule.onNodeWithText("Dentiste").performClick()
         assertEquals(dentiste, opened)
         rule.onNodeWithContentDescription("Mois suivant").performClick()
         rule.waitForIdle()
-        rule.onNodeWithText("novembre 2026").assertIsDisplayed()
+        rule.onNodeWithText("NOVEMBRE 2026").assertIsDisplayed()
         assertEquals(YearMonth.of(2026, 11), shown)
     }
 
@@ -77,7 +77,7 @@ class CalendarCardsTest {
                 }
             }
         }
-        rule.onNodeWithText("5 – 11 octobre").assertIsDisplayed()
+        rule.onNodeWithText("5 – 11 OCTOBRE").assertIsDisplayed()
         rule.onNodeWithText("Sport").assertIsDisplayed()
         rule.onNodeWithTag("week-2026-10-07").performClick()
         assertEquals(LocalDate.of(2026, 10, 7), day)

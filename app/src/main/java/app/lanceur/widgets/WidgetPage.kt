@@ -15,6 +15,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.animation.core.animateFloatAsState
+import app.lanceur.builtin.BuiltinSlots
+import app.lanceur.ui.CardLabel
+import app.lanceur.ui.CardShape
+import app.lanceur.ui.cardBackground
 import java.util.Locale
 import app.lanceur.summary.SummaryLine
 import androidx.compose.ui.unit.sp
@@ -143,18 +147,12 @@ private fun SummaryCard(summary: DaySummaryState, actions: WidgetPageActions) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
+            .clip(CardShape)
             // Légèrement translucide : le fond d'écran transparaît, aux couleurs Material You
-            .background(colors.surfaceContainerHigh.copy(alpha = 0.82f))
+            .background(cardBackground())
             .padding(horizontal = 22.dp, vertical = 20.dp),
     ) {
-        Text(
-            summary.dateLabel.substringBefore(' ').uppercase(Locale.FRENCH),
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.primary,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 2.sp,
-        )
+        CardLabel(summary.dateLabel.substringBefore(' '))
         Text(summary.dateLabel.substringAfter(' '), style = MaterialTheme.typography.headlineMedium, color = colors.onSurface)
         Spacer(Modifier.height(14.dp))
         when {
@@ -252,6 +250,7 @@ private fun WidgetList(
         working.forEach { card ->
             key(card.slot.appWidgetId) {
                 val dragging = card.slot.appWidgetId == draggingId
+                val bare = !editMode && card is WidgetCard.Live && BuiltinSlots.isBuiltin(card.slot)
                 val frameScale by animateFloatAsState(if (editMode) 0.97f else 1f, label = "édition")
                 // Chaque widget est posé dans un cadre arrondi translucide, comme sur l'accueil du Pixel
                 Column(
@@ -263,9 +262,14 @@ private fun WidgetList(
                             scaleX = frameScale
                             scaleY = frameScale
                         }
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = if (dragging) 0.85f else 0.55f))
-                        .padding(FRAME_PADDING),
+                        .clip(if (bare) CardShape else RoundedCornerShape(24.dp))
+                        .then(
+                            // Hors édition, un widget de Lanceur est sa propre carte, comme le résumé du jour
+                            if (bare) Modifier
+                            else Modifier
+                                .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = if (dragging) 0.85f else 0.55f))
+                                .padding(FRAME_PADDING),
+                        ),
                 ) {
                     if (editMode) {
                         EditToolbar(
@@ -299,7 +303,7 @@ private fun WidgetList(
                         Modifier
                             .fillMaxWidth()
                             .height(WidgetLayout.heightDp(card.slot).dp)
-                            .clip(RoundedCornerShape(18.dp)),
+                            .clip(if (bare) CardShape else RoundedCornerShape(18.dp)),
                     ) {
                         when (card) {
                             is WidgetCard.Live -> widgetView(card.slot, Modifier.fillMaxSize())

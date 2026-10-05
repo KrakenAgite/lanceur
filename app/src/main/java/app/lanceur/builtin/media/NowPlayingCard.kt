@@ -43,6 +43,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.lanceur.ui.CardLabel
+import app.lanceur.ui.cardBackground
 import app.lanceur.widgets.WidgetSize
 import kotlinx.coroutines.delay
 
@@ -66,7 +68,7 @@ fun NowPlayingCard(
     when (state) {
         is NowPlayingState.Active -> ActiveCard(state.media, size, actions, modifier, clock)
         NowPlayingState.Idle -> Row(
-            modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(20.dp),
+            modifier.fillMaxSize().background(cardBackground()).padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
@@ -75,7 +77,7 @@ fun NowPlayingCard(
             Text("Rien en lecture", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         NowPlayingState.NoAccess -> Column(
-            modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(16.dp),
+            modifier.fillMaxSize().background(cardBackground()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -118,7 +120,8 @@ private fun ActiveCard(media: MediaSnapshot, size: WidgetSize, actions: NowPlayi
             Box(Modifier.matchParentSize().background(Brush.linearGradient(listOf(colors.primaryContainer, colors.tertiaryContainer))))
         }
         Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.25f), Color.Black.copy(alpha = 0.65f)))))
-        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
+            if (size == WidgetSize.LARGE) CardLabel("En cours", Modifier.padding(bottom = 8.dp), color = Color.White.copy(alpha = 0.85f))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val thumb = if (size == WidgetSize.LARGE) 96.dp else 56.dp
                 Box(Modifier.size(thumb).clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
