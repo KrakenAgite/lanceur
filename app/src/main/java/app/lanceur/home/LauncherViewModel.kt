@@ -36,6 +36,10 @@ class LauncherViewModel(
         VisibleApps.compute(apps, prefs)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, AppLists.EMPTY)
 
+    /** Vrai une fois le catalogue et les réglages lus : avant, l'accueil afficherait des valeurs par défaut. */
+    val loaded: StateFlow<Boolean> = combine(catalogApps, prefsRepo.prefs) { apps, _ -> apps != null }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private val _screen = MutableStateFlow(Screen.HOME)
     val screen: StateFlow<Screen> = _screen.asStateFlow()
 

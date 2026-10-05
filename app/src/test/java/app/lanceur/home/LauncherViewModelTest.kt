@@ -94,4 +94,15 @@ class LauncherViewModelTest {
         vm.back()
         assertEquals(ListMode.Favorites, vm.listMode.value)
     }
+
+    @Test
+    fun not_loaded_until_the_catalog_and_prefs_arrive() = runTest(main.dispatcher) {
+        val catalog = MutableStateFlow<List<AppEntry>?>(null)
+        val vm = LauncherViewModel(catalog, repo())
+        advanceUntilIdle()
+        assertFalse(vm.loaded.value)
+
+        catalog.value = listOf(chrome)
+        vm.loaded.first { it }
+    }
 }

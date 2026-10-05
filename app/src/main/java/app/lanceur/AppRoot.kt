@@ -54,6 +54,7 @@ import app.lanceur.vault.VaultState
 fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppContainer) {
     val context = LocalContext.current
     val activity = LocalActivity.current ?: return
+    val loaded by vm.loaded.collectAsStateWithLifecycle()
     val lists by vm.lists.collectAsStateWithLifecycle()
     val prefs by vm.prefs.collectAsStateWithLifecycle()
     val screen by vm.screen.collectAsStateWithLifecycle()
@@ -131,7 +132,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     LaunchedEffect(screen) { if (screen != Screen.SEARCH) searchVm.setQuery("") }
 
     Box(Modifier.fillMaxSize()) {
-        HomeScreen(
+        // Seul le fond d'écran est visible pendant les quelques millisecondes du chargement
+        if (loaded) HomeScreen(
             lists = lists,
             mode = mode,
             side = prefs.alphabetSide,
