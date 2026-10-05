@@ -24,7 +24,10 @@ class WidgetPageTest {
     private val slot = WidgetSlot(3, AppKey("app.meteo", "app.meteo.Widget", 0), WidgetSize.MEDIUM)
     private val summary = DaySummaryState(
         dateLabel = "Lundi 5 octobre",
-        events = listOf(SummaryLine(SummaryEvent(1, "Dentiste", 0, 0, false), "14:00 Dentiste")),
+        events = listOf(
+            SummaryLine(SummaryEvent(1, "Dentiste", 0, 0, false), "14:00 Dentiste", "14:00", "Dentiste", tomorrow = false),
+            SummaryLine(SummaryEvent(2, "Algorithmique", 0, 0, false, color = 0xFF3366CC.toInt()), "Demain 08:00 Algorithmique", "08:00", "Algorithmique", tomorrow = true),
+        ),
         alarmLabel = "Demain 07:00",
         calendarGranted = true,
     )
@@ -48,8 +51,12 @@ class WidgetPageTest {
     @Test
     fun shows_the_summary_and_the_widgets() {
         show(listOf(WidgetCard.Live(slot)), editMode = false, actions = WidgetPageActions())
-        rule.onNodeWithText("Lundi 5 octobre").assertIsDisplayed()
-        rule.onNodeWithText("14:00 Dentiste").assertIsDisplayed()
+        rule.onNodeWithText("LUNDI").assertIsDisplayed()
+        rule.onNodeWithText("5 octobre").assertIsDisplayed()
+        rule.onNodeWithText("14:00").assertIsDisplayed()
+        rule.onNodeWithText("Dentiste").assertIsDisplayed()
+        rule.onNodeWithText("DEMAIN").assertIsDisplayed()
+        rule.onNodeWithText("Algorithmique").assertIsDisplayed()
         rule.onNodeWithText("⏰ Demain 07:00").assertIsDisplayed()
         rule.onNodeWithText("CONTENU MÉTÉO").assertIsDisplayed()
         rule.onNodeWithText("Modifier").performScrollTo().assertIsDisplayed()

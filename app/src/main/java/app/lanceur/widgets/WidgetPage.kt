@@ -1,6 +1,15 @@
 package app.lanceur.widgets
 
 import androidx.compose.foundation.background
+import java.util.Locale
+import app.lanceur.summary.SummaryLine
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -105,33 +114,92 @@ fun WidgetPage(
 
 @Composable
 private fun SummaryCard(summary: DaySummaryState, actions: WidgetPageActions) {
+    val colors = MaterialTheme.colorScheme
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(20.dp),
+            .clip(RoundedCornerShape(28.dp))
+            // Légèrement translucide : le fond d'écran transparaît, aux couleurs Material You
+            .background(colors.surfaceContainerHigh.copy(alpha = 0.82f))
+            .padding(horizontal = 22.dp, vertical = 20.dp),
     ) {
-        Text(summary.dateLabel, style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
+        Text(
+            summary.dateLabel.substringBefore(' ').uppercase(Locale.FRENCH),
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.primary,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 2.sp,
+        )
+        Text(summary.dateLabel.substringAfter(' '), style = MaterialTheme.typography.headlineMedium, color = colors.onSurface)
+        Spacer(Modifier.height(14.dp))
         when {
             !summary.calendarGranted ->
                 TextButton(onClick = actions.requestCalendar) { Text("Autoriser l'agenda pour voir tes événements") }
             summary.events.isEmpty() ->
-                Text("Rien de prévu", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            else -> summary.events.forEach { line ->
-                Text(
-                    line.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth().clickable { actions.openEvent(line.event) }.padding(vertical = 6.dp),
-                )
+                Text("Rien de prévu", style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
+            else -> summary.events.forEachIndexed { index, line ->
+                // Un seul intertitre au passage à demain, au lieu de répéter « Demain » sur chaque ligne
+                if (line.tomorrow && (index == 0 || !summary.events[index - 1].tomorrow)) {
+                    Text(
+                        "DEMAIN",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.onSurfaceVariant,
+                        letterSpacing = 1.5.sp,
+                        modifier = Modifier.padding(top = if (index == 0) 0.dp else 4.dp, bottom = 6.dp),
+                    )
+                }
+                TimelineRow(line, isLast = index == summary.events.lastIndex) { actions.openEvent(line.event) }
             }
         }
         summary.alarmLabel?.let { alarm ->
-            Text("⏰ $alarm", modifier = Modifier.clickable(onClick = actions.openClock).padding(vertical = 6.dp))
+            Spacer(Modifier.height(14.dp))
+            Box(
+                Modifier
+                    .clip(CircleShape)
+                    .background(colors.secondaryContainer)
+                    .clickable(onClick = actions.openClock)
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            ) {
+                Text("⏰ $alarm", style = MaterialTheme.typography.labelLarge, color = colors.onSecondaryContainer)
+            }
         }
+    }
+}
+
+/** Une étape de la chronologie : pastille de la couleur de l'agenda, fil vers la suivante, heure, titre. */
+@Composable
+private fun TimelineRow(line: SummaryLine, isLast: Boolean, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val dot = line.event.color?.let { Color(it) } ?: colors.primary
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+    ) {
+        Column(Modifier.width(20.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(8.dp))
+            Box(Modifier.size(10.dp).clip(CircleShape).background(dot))
+            if (!isLast) {
+                Box(Modifier.padding(top = 4.dp).width(2.dp).weight(1f).background(colors.outlineVariant))
+            }
+        }
+        Text(
+            line.timeLabel,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = colors.onSurface,
+            modifier = Modifier.width(72.dp).padding(start = 8.dp, top = 3.dp, bottom = 12.dp),
+        )
+        Text(
+            line.title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).padding(top = 2.dp, bottom = 12.dp, end = 4.dp),
+        )
     }
 }
 

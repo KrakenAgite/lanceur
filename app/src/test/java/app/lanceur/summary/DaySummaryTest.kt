@@ -69,4 +69,14 @@ class DaySummaryTest {
         assertTrue(summary.events.isEmpty())
         assertEquals("Demain 07:00", summary.alarmLabel)
     }
+
+    @Test
+    fun lines_are_split_into_time_title_and_day_for_the_timeline() {
+        val events = listOf(allDay(1, "Férié", 5), timed(2, "Train", 6, 9, 30).copy(color = 0xFF3366CC.toInt()))
+        val lines = DaySummary.build(now, events, null, true).events
+        assertEquals(listOf("Journée", "09:30"), lines.map { it.timeLabel })
+        assertEquals(listOf("Férié", "Train"), lines.map { it.title })
+        assertEquals(listOf(false, true), lines.map { it.tomorrow })
+        assertEquals(0xFF3366CC.toInt(), lines[1].event.color)
+    }
 }

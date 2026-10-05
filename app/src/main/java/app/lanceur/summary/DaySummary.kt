@@ -8,9 +8,24 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-data class SummaryEvent(val eventId: Long, val title: String, val begin: Long, val end: Long, val allDay: Boolean)
+/** `color` : couleur de l'agenda (ARGB), si le système la fournit. */
+data class SummaryEvent(
+    val eventId: Long,
+    val title: String,
+    val begin: Long,
+    val end: Long,
+    val allDay: Boolean,
+    val color: Int? = null,
+)
 
-data class SummaryLine(val event: SummaryEvent, val text: String)
+/** `text` : ligne complète ; `timeLabel`, `title`, `tomorrow` : les morceaux affichés par la chronologie. */
+data class SummaryLine(
+    val event: SummaryEvent,
+    val text: String,
+    val timeLabel: String,
+    val title: String,
+    val tomorrow: Boolean,
+)
 
 data class DaySummaryState(
     val dateLabel: String,
@@ -49,7 +64,7 @@ object DaySummary {
             }
                 .sortedWith(compareBy<Pair<LocalDate, SummaryEvent>>({ it.first }, { if (it.second.allDay) 0 else 1 }, { it.second.begin }))
                 .take(MAX_EVENTS)
-                .map { (day, event) -> SummaryLine(event, text(day == tomorrow, event, now.zone)) }
+                .map { (day, event) -> line(day == tomorrow, event, now.zone) }
         }
         return DaySummaryState(
             dateLabel = DATE.format(now).replaceFirstChar { it.titlecase(Locale.FRENCH) },
@@ -68,9 +83,16 @@ object DaySummary {
         }
     }
 
-    private fun text(tomorrow: Boolean, event: SummaryEvent, zone: ZoneId): String {
+    private fun line(tomorrow: Boolean, event: SummaryEvent, zone: ZoneId): SummaryLine {
         val time = if (event.allDay) null else TIME.format(Instant.ofEpochMilli(event.begin).atZone(zone))
-        return listOfNotNull(if (tomorrow) "Demain" else null, time, event.title.ifBlank { "(Sans titre)" }).joinToString(" ")
+        val title = event.title.ifBlank { "(Sans titre)" }
+        return SummaryLine(
+            event = event,
+            text = listOfNotNull(if (tomorrow) "Demain" else null, time, title).joinToString(" "),
+            timeLabel = time ?: "Journée",
+            title = title,
+            tomorrow = tomorrow,
+        )
     }
 
     private fun utcDate(millis: Long): LocalDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
