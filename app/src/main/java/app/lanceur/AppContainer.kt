@@ -15,6 +15,7 @@ import app.lanceur.search.WebProvider
 import app.lanceur.apps.AppCatalog
 import app.lanceur.apps.AppLauncher
 import app.lanceur.apps.IconLoader
+import app.lanceur.apps.LauncherAppsSource
 import app.lanceur.prefs.PrefsRepo
 import app.lanceur.prefs.launcherDataStore
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +27,12 @@ class AppContainer(context: Context) {
     val appContext: Context = context.applicationContext
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     val iconLoader = IconLoader(appContext)
-    val catalog = AppCatalog(appContext, appScope, onPackageChanged = iconLoader::evict)
+    val catalog = AppCatalog(
+        scope = appScope,
+        source = LauncherAppsSource(appContext),
+        onPackageChanged = iconLoader::evict,
+        onError = { Log.w("Lanceur", "Lecture des applis impossible", it) },
+    )
     val prefsRepo = PrefsRepo(appContext.launcherDataStore)
     val appLauncher = AppLauncher(appContext)
     val resultActions = ResultActions(appContext, appLauncher)
