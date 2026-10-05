@@ -16,11 +16,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,9 +43,12 @@ private val ROW_HEIGHT = 64.dp
 /** Glisser la poignée pour déplacer un favori ; l'ordre est enregistré quand on lâche. */
 @Composable
 fun ReorderableFavorites(items: List<AppEntry>, icon: @Composable (AppKey) -> Unit, onCommit: (List<AppKey>) -> Unit) {
-    var working by remember(items) { mutableStateOf(items) }
+    // Un seul état stable : les gestes déjà lancés (pointerInput par clé) lisent toujours la liste à jour
+    var working by remember { mutableStateOf(items) }
     var draggingKey by remember { mutableStateOf<AppKey?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
+    val latestOnCommit by rememberUpdatedState(onCommit)
+    LaunchedEffect(items) { if (draggingKey == null) working = items }
     val rowHeightPx = with(LocalDensity.current) { ROW_HEIGHT.toPx() }
 
     Column {
@@ -70,7 +75,7 @@ fun ReorderableFavorites(items: List<AppEntry>, icon: @Composable (AppKey) -> Un
                         modifier = Modifier.pointerInput(entry.key) {
                             detectDragGestures(
                                 onDragStart = { draggingKey = entry.key; dragOffset = 0f },
-                                onDragEnd = { draggingKey = null; dragOffset = 0f; onCommit(working.map { it.key }) },
+                                onDragEnd = { draggingKey = null; dragOffset = 0f; latestOnCommit(working.map { it.key }) },
                                 onDragCancel = { draggingKey = null; dragOffset = 0f },
                             ) { change, amount ->
                                 change.consume()
