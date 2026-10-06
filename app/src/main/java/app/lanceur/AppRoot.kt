@@ -4,6 +4,10 @@ import app.lanceur.i18n.tr
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import app.lanceur.news.ArticleReader
+import app.lanceur.news.ReaderImage
+import app.lanceur.news.ReaderState
+import app.lanceur.ui.blockTouchesBelow
 import app.lanceur.apps.icons.IconPacks
 import app.lanceur.apps.icons.Wallpaper
 import app.lanceur.settings.AppearanceState
@@ -331,6 +335,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     var newsFilter by remember { mutableStateOf<String?>(null) }
     var newsRefreshing by remember { mutableStateOf(false) }
     var addingFeed by remember { mutableStateOf(false) }
+    // Article ouvert en mode lecture (page Actualités)
+    var reading by remember { mutableStateOf<app.lanceur.builtin.rss.Article?>(null) }
     val newsNow = rememberMinuteClock()
     fun refreshNews(force: Boolean) {
         scope.launch {
@@ -401,6 +407,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                         add = { addingFeed = true },
                         remove = { url -> vm.updateNews { NewsState.decode(it).remove(url).encode() } },
                         open = builtinServices.openUrl,
+                        read = { reading = it },
                         refresh = { refreshNews(force = true) },
                     ),
                     image = { url, m -> NewsImage(url, container.images, m) },
@@ -534,6 +541,22 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     setNewsEnabled = vm::setNewsEnabled,
                     movePage = vm::movePage,
                 ),
+            )
+        }
+        AnimatedVisibility(visible = reading != null, enter = fadeIn(), exit = fadeOut()) {
+            // Garde l'article pendant le fondu de sortie
+            val article = remember { reading } ?: return@AnimatedVisibility
+            val current = reading ?: article
+            BackHandler { reading = null }
+            val readerState by produceState<ReaderState>(ReaderState.Loading, current.link) { value = container.articles.read(current.link) }
+            ArticleReader(
+                article = current,
+                state = readerState,
+                now = newsNow,
+                image = { url, m -> ReaderImage(url, container.images, m) },
+                onBack = { reading = null },
+                onOpenSite = { builtinServices.openUrl(current.link) },
+                modifier = Modifier.blockTouchesBelow(),
             )
         }
         if (addingFeed) {

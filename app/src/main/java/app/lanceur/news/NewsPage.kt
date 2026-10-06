@@ -72,6 +72,8 @@ class NewsActions(
     val add: () -> Unit = {},
     val remove: (String) -> Unit = {},
     val open: (String) -> Unit = {},
+    /** Mode lecture ; sans lui, l'article s'ouvre dans le navigateur. */
+    val read: ((Article) -> Unit)? = null,
     val refresh: () -> Unit = {},
 )
 
@@ -161,7 +163,7 @@ fun NewsPage(
                     verticalArrangement = Arrangement.spacedBy(GAP),
                 ) {
                     itemsIndexed(articles, key = { _, a -> a.link }) { index, article ->
-                        ArticleCard(article, featured = index == 0, now = now, open = actions.open, image = image)
+                        ArticleCard(article, featured = index == 0, now = now, open = { actions.read?.invoke(article) ?: actions.open(article.link) }, image = image)
                     }
                     footer?.let { text ->
                         item {
@@ -226,14 +228,14 @@ private fun AddBubble(onClick: () -> Unit) {
 
 /** Le premier article est « à la une » : titre plus grand, image plus haute. */
 @Composable
-private fun ArticleCard(article: Article, featured: Boolean, now: Long, open: (String) -> Unit, image: @Composable (String, Modifier) -> Unit) {
+private fun ArticleCard(article: Article, featured: Boolean, now: Long, open: () -> Unit, image: @Composable (String, Modifier) -> Unit) {
     val colors = MaterialTheme.colorScheme
     Column(
         Modifier
             .fillMaxWidth()
             .clip(CardShape)
             .background(cardBackground())
-            .clickable { open(article.link) }
+            .clickable(onClick = open)
             .padding(CARD_PADDING),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

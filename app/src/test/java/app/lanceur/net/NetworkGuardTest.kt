@@ -19,7 +19,7 @@ class NetworkGuardTest {
     @Test
     fun connections_are_opened_only_in_network() {
         val offenders = sources.filter { relative(it) != "net/Network.kt" }
-            .filter { file -> listOf("HttpURLConnection", "openConnection", "openStream", "URL(", "toURL(", "Socket(", "WebView", "DownloadManager", "okhttp", "ktor").any { it in file.readText() } }
+            .filter { file -> listOf("HttpURLConnection", "openConnection", "openStream", "URL(", "toURL(", "Socket(", "WebView", "DownloadManager", "okhttp", "ktor", "Jsoup.connect", ".connect(").any { it in file.readText() } }
             .map(::relative)
         assertEquals(emptyList<String>(), offenders)
     }
