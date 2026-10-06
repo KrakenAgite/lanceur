@@ -166,7 +166,13 @@ fun SettingsScreen(
     Column(
         modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            // Comme la recherche : le fond d'écran reste visible derrière un voile
+            .background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
+                    1f to MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                ),
+            )
             .blockTouchesBelow()
             .systemBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -202,6 +208,7 @@ fun SettingsScreen(
                 }
                 Text(current.label, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 4.dp))
             }
+            Column(Modifier.fillMaxWidth().clip(CARD).background(cardBackground()).padding(horizontal = 18.dp, vertical = 8.dp)) {
             when (current) {
                 SettingsPage.HOME -> {
                     SettingRow(
@@ -256,6 +263,7 @@ fun SettingsScreen(
                 }
                 SettingsPage.BACKUP -> BackupPage(backup, actions, now)
                 SettingsPage.ABOUT -> AboutPage(updates, actions, now)
+            }
             }
         }
     }

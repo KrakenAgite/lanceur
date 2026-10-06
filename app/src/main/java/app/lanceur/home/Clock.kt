@@ -45,16 +45,23 @@ fun Clock(
             }
         }
     }
+    // Ombre douce de la couleur opposée au texte : lisible sur tous les fonds d'écran, sans cadre
+    val dark = androidx.compose.foundation.isSystemInDarkTheme()
+    val shadow = androidx.compose.ui.graphics.Shadow(
+        color = (if (dark) androidx.compose.ui.graphics.Color.Black else androidx.compose.ui.graphics.Color.White).copy(alpha = 0.45f),
+        offset = androidx.compose.ui.geometry.Offset(0f, 2f),
+        blurRadius = 12f,
+    )
     Column(modifier.padding(horizontal = 24.dp, vertical = 32.dp)) {
         Text(
             now.format(TIME),
-            style = MaterialTheme.typography.displayLarge,
+            style = MaterialTheme.typography.displayLarge.copy(shadow = shadow, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.combinedClickable(onClick = onClockTap, onLongClick = onClockLongPress),
         )
         Text(
             now.format(DATE).replaceFirstChar { it.titlecase(Locale.FRENCH) },
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium.copy(shadow = shadow),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.clickable(onClick = onDateTap),
         )
