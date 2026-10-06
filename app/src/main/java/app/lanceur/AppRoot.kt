@@ -528,8 +528,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 existing = newsState.feeds.mapTo(HashSet()) { it.url },
                 check = { container.rss.check(it) },
                 onAdd = { url, title ->
+                    // La feuille reste ouverte : on peut ajouter plusieurs flux du catalogue d'affilée
                     vm.updateNews { NewsState.decode(it).add(url, title).encode() }
-                    addingFeed = false
                 },
                 onDismiss = { addingFeed = false },
             )

@@ -1,6 +1,8 @@
 package app.lanceur.news
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -79,12 +81,26 @@ class NewsPageTest {
     }
 
     @Test
-    fun form_checks_then_adds_a_suggestion() {
-        var added: Pair<String, String>? = null
-        rule.setContent { MaterialTheme { NewsFeedForm(existing = setOf("https://korben.info/feed"), check = { FeedCheck.Ok("Le Monde", 20) }, onAdd = { u, t -> added = u to t }) } }
-        rule.onNodeWithText("Le Monde").performClick()
-        rule.waitUntil(3_000) { added != null }
-        assertEquals("https://www.lemonde.fr/rss/une.xml" to "Le Monde", added)
+    fun catalog_filters_by_language_and_theme_then_adds_with_its_label() {
+        val added = mutableListOf<Pair<String, String>>()
+        rule.setContent { MaterialTheme { NewsFeedForm(existing = setOf("https://feeds.bbci.co.uk/news/business/rss.xml"), check = { FeedCheck.Ok("Long feed title", 20) }, onAdd = { u, t -> added += u to t }) } }
+        rule.onNodeWithTag("theme-ECONOMY").performScrollTo().performClick()
+        rule.onNodeWithContentDescription("Ajouter franceinfo · Économie").performScrollTo().performClick()
+        rule.waitUntil(3_000) { added.isNotEmpty() }
+        assertEquals("https://www.francetvinfo.fr/economie.rss" to "franceinfo · Économie", added.single())
+        rule.onNodeWithContentDescription("Déjà ajouté : franceinfo · Économie").assertExists()
+        // Autre langue : le flux déjà sur la page est marqué
+        rule.onNodeWithTag("region-UK").performScrollTo().performClick()
+        rule.onNodeWithTag("theme-ECONOMY").performScrollTo().performClick()
+        rule.onNodeWithContentDescription("Déjà ajouté : BBC News · Business").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun catalog_search_finds_feeds_in_every_language() {
+        rule.setContent { MaterialTheme { NewsFeedForm(existing = emptySet(), check = { FeedCheck.Ok("x", 1) }, onAdd = { _, _ -> }) } }
+        rule.onNodeWithTag("catalog-search").performScrollTo().performTextInput("football")
+        rule.onNodeWithContentDescription("Ajouter BBC Sport · Football").performScrollTo().assertExists()
+        rule.onNodeWithContentDescription("Ajouter L'Équipe · Football").performScrollTo().assertExists()
     }
 
     @Test
