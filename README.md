@@ -94,6 +94,17 @@ autorisation et se déplacent, se redimensionnent et se retirent comme les autre
 - **Agendas** : utilisent la même autorisation que le résumé du jour ; glisser sur le mois change de mois.
 - **Batterie** : aucune autorisation ; le niveau des accessoires Bluetooth n'est pas disponible pour les applis.
 
+## Pages et Actualités
+
+Réglages › Pages : active ou désactive Actualités et Widgets, et choisis leur ordre de gauche à droite avec ↑ / ↓
+(l'Accueil reste toujours là). Lanceur démarre sur l'Accueil ; le bouton Accueil et le geste Retour y ramènent.
+
+La page **Actualités** rassemble tes flux RSS/Atom : bulles en haut pour filtrer (« Tout » ou un flux), « + » pour en
+ajouter, appui long pour en retirer, puis les articles du plus récent au plus ancien, avec l'image fournie par le flux.
+Tirer vers le bas ou ⟳ actualise ; sinon la page se met à jour à l'affichage, au plus toutes les 30 minutes, jamais
+en arrière-plan. Tout passe par le même point de sortie réseau que la Météo et le RSS (HTTPS seulement) ; les images
+sont gardées en cache (50 Mo au plus).
+
 ## Limites d'Android
 
 Une appli seulement masquée dans le launcher reste visible dans le multitâche, dans *Paramètres > Applis*,
