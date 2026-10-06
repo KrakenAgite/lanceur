@@ -34,7 +34,6 @@ import app.lanceur.apps.icons.IconStyle
 import app.lanceur.i18n.tr
 import app.lanceur.ui.AppLabelStyle
 import app.lanceur.ui.HintText
-import app.lanceur.ui.SectionTitle
 import app.lanceur.ui.cardBackground
 
 /** Ce que la section Apparence affiche : style actuel, packs installés, outil de fond d'écran. */
@@ -49,7 +48,6 @@ private val ROW_SHAPE = RoundedCornerShape(20.dp)
 
 @Composable
 fun AppearanceSection(state: AppearanceState, actions: SettingsActions, onChoosePack: () -> Unit) {
-    SectionTitle(tr("Apparence", "Appearance"))
     SettingRow(
         title = tr("Fond d'écran", "Wallpaper"),
         subtitle = state.wallpaperLabel ?: tr("Outil du téléphone", "Phone's wallpaper app"),

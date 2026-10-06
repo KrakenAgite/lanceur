@@ -47,7 +47,6 @@ import app.lanceur.i18n.L10n
 import app.lanceur.i18n.tr
 import app.lanceur.text.TextNormalizer
 import app.lanceur.ui.HintText
-import app.lanceur.ui.SectionTitle
 import app.lanceur.ui.cardBackground
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -114,17 +113,17 @@ class FocusActions(
     val start: () -> Unit = {},
     val stop: () -> Unit = {},
     val update: ((FocusMode) -> FocusMode) -> Unit = {},
+    val grantNotifications: () -> Unit = {},
 )
 
 /** Réglages › Concentration. [apps] : les applis de la liste de l'accueil, celles qu'on peut cocher. */
 @Composable
-fun FocusSection(focus: FocusMode, active: Boolean, apps: List<AppEntry>, actions: FocusActions) {
+fun FocusSection(focus: FocusMode, active: Boolean, apps: List<AppEntry>, actions: FocusActions, notificationAccess: Boolean = true) {
     var choosing by remember { mutableStateOf(false) }
     var asking by remember { mutableStateOf(false) }
     var addingSchedule by remember { mutableStateOf(false) }
     val colors = MaterialTheme.colorScheme
 
-    SectionTitle(tr("Concentration", "Focus"))
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(if (active) tr("En cours", "On") else tr("Arrêtée", "Off"), style = MaterialTheme.typography.titleMedium)
@@ -160,6 +159,27 @@ fun FocusSection(focus: FocusMode, active: Boolean, apps: List<AppEntry>, action
     }
     if (focus.filter == FocusFilter.SHOW_ONLY && count == 0) {
         HintText(tr("Aucune appli cochée : toutes seront masquées pendant la concentration.", "No app checked: all will be hidden during focus."))
+    }
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(tr("Notifications en attente", "Hold notifications"), style = MaterialTheme.typography.titleMedium)
+            Text(
+                tr("Celles des applis masquées arrivent après la concentration", "Those of hidden apps arrive after focus"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurfaceVariant,
+            )
+        }
+        androidx.compose.material3.Switch(
+            checked = focus.blockNotifications,
+            onCheckedChange = { on -> actions.update { it.copy(blockNotifications = on) } },
+            modifier = Modifier.testTag("focus-notifications"),
+        )
+    }
+    if (focus.blockNotifications && !notificationAccess) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            HintText(tr("Il faut l'accès aux notifications.", "Notification access is needed."))
+            TextButton(onClick = actions.grantNotifications) { Text(tr("Autoriser", "Allow")) }
+        }
     }
     Text(tr("Horaires (facultatif)", "Schedule (optional)"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
     focus.schedules.forEachIndexed { index, schedule ->

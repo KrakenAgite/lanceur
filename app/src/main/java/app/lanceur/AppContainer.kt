@@ -12,6 +12,8 @@ import app.lanceur.builtin.shortcuts.TorchController
 import app.lanceur.builtin.storage.StorageSource
 import app.lanceur.builtin.weather.WeatherSource
 import app.lanceur.net.Network
+import app.lanceur.backup.BackupStore
+import app.lanceur.update.UpdateChecker
 import app.lanceur.news.ImageLoader
 import app.lanceur.news.NewsSource
 import app.lanceur.search.AppSearchProvider
@@ -37,7 +39,9 @@ import app.lanceur.summary.DaySummarySource
 import app.lanceur.widgets.WidgetHost
 import app.lanceur.widgets.WidgetIds
 import app.lanceur.widgets.WidgetProviderSource
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -74,9 +78,30 @@ class AppContainer(context: Context) {
     val rss = RssSource(network)
     val news = NewsSource(network)
     val images = ImageLoader(appContext, network)
+    val backups = BackupStore(appContext, prefsRepo)
+    val updates = UpdateChecker(appContext, network, prefsRepo)
     val battery = BatterySource(appContext)
     val nowPlaying = NowPlayingSource(appContext)
     val calendarRange = CalendarRangeSource(appContext)
+
+    /**
+     * Sauvegarde automatique, quelques minutes après le dernier changement de réglage (le cache des articles,
+     * qui change à chaque actualisation, ne compte pas).
+     */
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    fun watchBackups() {
+        appScope.launch {
+            prefsRepo.prefs
+                .map { prefsRepo.snapshot().filterKeys { it != "news" } }
+                .distinctUntilChanged()
+                .drop(1)
+                .debounce(BACKUP_DELAY_MS)
+                .collect {
+                    val backup = prefsRepo.readOrNull()?.backup ?: return@collect
+                    if (backup.auto && backup.folder != null) backups.writeToFolder(backup.folder)
+                }
+        }
+    }
 
     /** Les icônes suivent le style enregistré (pack, forme, thématisées). */
     fun watchIconStyle() {
@@ -106,3 +131,5 @@ class AppContainer(context: Context) {
         onError = { Log.w("Lanceur", "Source de recherche en erreur", it) },
     )
 }
+
+private const val BACKUP_DELAY_MS = 2 * 60_000L

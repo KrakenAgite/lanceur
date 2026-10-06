@@ -10,6 +10,8 @@ import app.lanceur.ui.blockTouchesBelow
 import app.lanceur.apps.icons.IconPacks
 import app.lanceur.apps.icons.Wallpaper
 import app.lanceur.settings.AppearanceState
+import app.lanceur.settings.BackupState
+import app.lanceur.settings.UpdatesState
 import android.provider.AlarmClock
 import android.provider.Settings
 import android.widget.Toast
@@ -27,6 +29,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -131,6 +134,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     val authenticator = remember(activity) { Authenticator(activity) }
     val icon: @Composable (AppKey) -> Unit = { key -> AppIcon(key, container.iconLoader) }
     val roleWatcher = remember { HomeRoleWatcher { container.catalog.reload() } }
+    var canNotify by remember { mutableStateOf(container.updates.canNotify()) }
+    var notificationAccess by remember { mutableStateOf(container.nowPlaying.hasAccess()) }
     var isDefault by remember { mutableStateOf(HomeRole.isHeld(context).also(roleWatcher::update)) }
     var permissionsGranted by remember { mutableStateOf(SearchPermissions.allGranted(context)) }
     var lockServiceEnabled by remember { mutableStateOf(LockScreenService.isEnabled(context)) }
@@ -150,8 +155,32 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         lockServiceEnabled = LockScreenService.isEnabled(context)
         widgetRefresh++
         reloadSummary()
+        canNotify = container.updates.canNotify()
+        notificationAccess = container.nowPlaying.hasAccess()
+        // Au plus toutes les 12 h, seulement si l'option est active
+        container.appScope.launch { container.updates.check() }
         onPauseOrDispose { }
     }
+    fun quickToast(message: String) = android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+    val notifyLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { canNotify = it }
+    val backupFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let { scope.launch { quickToast(if (container.backups.exportTo(it)) tr("Sauvegarde enregistrée", "Backup saved") else tr("Sauvegarde impossible", "Backup failed")) } }
+    }
+    var pendingRestore by remember { mutableStateOf<app.lanceur.prefs.BackupFile?>(null) }
+    val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { scope.launch { container.backups.read(it)?.let { b -> pendingRestore = b } ?: quickToast(tr("Ce n'est pas une sauvegarde de Lanceur", "This is not a Lanceur backup")) } }
+    }
+    val folderLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        uri?.let {
+            runCatching { container.backups.keepAccess(it) }
+            scope.launch {
+                container.prefsRepo.setBackupFolder(it.toString())
+                container.prefsRepo.setBackupAuto(true)
+                container.backups.writeToFolder(it.toString())
+            }
+        }
+    }
+    var checkingUpdates by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         permissionsGranted = SearchPermissions.allGranted(context)
         searchVm.refresh()
@@ -515,6 +544,10 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 focus = prefs.focus,
                 focusActive = lists.focusActive,
                 focusApps = lists.focusCandidates,
+                backup = BackupState(prefs.backup.auto, container.backups.folderName(prefs.backup.folder), prefs.backup.last),
+                updates = UpdatesState(container.updates.installed, prefs.updates.enabled, prefs.updates.latest, checkingUpdates, prefs.updates.lastCheck, canNotify),
+                now = newsNow,
+                notificationAccess = notificationAccess,
                 appearance = AppearanceState(
                     iconStyle = prefs.iconStyle,
                     labelStyle = prefs.appLabelStyle,
@@ -525,7 +558,34 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     openWallpaper = { container.appLauncher.startSafely(Wallpaper(context).intent()) },
                     setIconStyle = vm::setIconStyle,
                     setAppLabelStyle = vm::setAppLabelStyle,
-                    focus = app.lanceur.focus.FocusActions(start = vm::startFocus, stop = vm::stopFocus, update = vm::updateFocus),
+                    grantNotificationAccess = builtinServices.grantMediaAccess,
+                    allowNotifications = { notifyLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS) },
+                    backupNow = { backupFileLauncher.launch(app.lanceur.prefs.Backup.fileName(java.time.LocalDateTime.now())) },
+                    restoreBackup = { restoreLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) },
+                    chooseBackupFolder = { folderLauncher.launch(null) },
+                    setBackupAuto = { on ->
+                        if (on && prefs.backup.folder == null) folderLauncher.launch(null)
+                        else scope.launch { container.prefsRepo.setBackupAuto(on) }
+                    },
+                    setUpdatesEnabled = { on ->
+                        scope.launch { container.prefsRepo.updateUpdates { it.copy(enabled = on) } }
+                        if (on && !canNotify) notifyLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    },
+                    checkUpdatesNow = {
+                        checkingUpdates = true
+                        scope.launch {
+                            val newer = container.updates.check(force = true)
+                            checkingUpdates = false
+                            toast(newer?.let { tr("Lanceur ${it.version} est disponible", "Lanceur ${it.version} is available") } ?: tr("Lanceur est à jour", "Lanceur is up to date"))
+                        }
+                    },
+                    openReleases = { builtinServices.openUrl(app.lanceur.update.UpdateCheck.RELEASES_PAGE) },
+                    focus = app.lanceur.focus.FocusActions(
+                        start = vm::startFocus,
+                        stop = vm::stopFocus,
+                        update = vm::updateFocus,
+                        grantNotifications = builtinServices.grantMediaAccess,
+                    ),
                     findIconPacks = {
                         container.appLauncher.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=icon%20pack&c=apps")))
                     },
@@ -564,6 +624,27 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 modifier = Modifier.blockTouchesBelow(),
             )
         }
+        pendingRestore?.let { backup ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { pendingRestore = null },
+                title = { Text(tr("Restaurer cette sauvegarde ?", "Restore this backup?")) },
+                text = {
+                    val date = java.time.format.DateTimeFormatter.ofPattern(tr("d MMMM yyyy 'à' HH:mm", "MMMM d, yyyy 'at' HH:mm"), app.lanceur.i18n.L10n.locale)
+                        .format(java.time.Instant.ofEpochMilli(backup.createdAt).atZone(ZoneId.systemDefault()))
+                    Text(tr("Sauvegarde du $date. Tes réglages actuels seront remplacés.", "Backup from $date. Your current settings will be replaced."))
+                },
+                confirmButton = {
+                    androidx.compose.material3.Button(onClick = {
+                        pendingRestore = null
+                        scope.launch {
+                            container.backups.restore(backup)
+                            toast(tr("Réglages restaurés", "Settings restored"))
+                        }
+                    }) { Text(tr("Restaurer", "Restore")) }
+                },
+                dismissButton = { androidx.compose.material3.TextButton(onClick = { pendingRestore = null }) { Text(tr("Annuler", "Cancel")) } },
+            )
+        }
         if (addingFeed) {
             NewsFeedSheet(
                 existing = newsState.feeds.mapTo(HashSet()) { it.url },
@@ -573,6 +654,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     vm.updateNews { NewsState.decode(it).add(url, title).encode() }
                 },
                 onDismiss = { addingFeed = false },
+                mine = newsState.feeds.map { it.url to it.title },
+                onRemoveFeeds = { urls -> vm.updateNews { urls.fold(NewsState.decode(it)) { state, url -> state.remove(url) }.encode() } },
             )
         }
         settingsRequest?.let { (kind, id) ->

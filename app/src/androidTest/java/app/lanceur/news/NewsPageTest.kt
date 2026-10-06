@@ -1,6 +1,7 @@
 package app.lanceur.news
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsDisplayed
@@ -109,5 +110,26 @@ class NewsPageTest {
         rule.onNodeWithTag("news-url").performTextInput("http://x.fr/rss")
         rule.onNodeWithText("Vérifier et ajouter").performClick()
         rule.onNodeWithText("✗ Adresse HTTPS requise").assertIsDisplayed()
+    }
+
+    @Test
+    fun check_all_lists_the_dead_feeds_and_removes_them_in_one_tap() {
+        var removed: List<String>? = null
+        rule.setContent {
+            MaterialTheme {
+                NewsFeedForm(
+                    existing = emptySet(),
+                    check = { url -> if (url.contains("mort")) FeedCheck.Failed("Flux injoignable") else FeedCheck.Ok("ok", 3) },
+                    onAdd = { _, _ -> },
+                    mine = listOf("https://vivant/rss" to "Vivant", "https://mort/rss" to "Mort"),
+                    onRemoveFeeds = { removed = it },
+                )
+            }
+        }
+        rule.onNodeWithTag("feeds-check").performClick()
+        rule.waitUntil(3_000) { rule.onAllNodesWithTag("feeds-remove-invalid").fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithText("✗ Mort — Flux injoignable").assertExists()
+        rule.onNodeWithTag("feeds-remove-invalid").performClick()
+        assertEquals(listOf("https://mort/rss"), removed)
     }
 }

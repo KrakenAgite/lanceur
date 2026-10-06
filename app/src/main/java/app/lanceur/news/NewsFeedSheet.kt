@@ -54,7 +54,13 @@ private val ROW_SHAPE = RoundedCornerShape(20.dp)
  * Chaque flux est vérifié avant d'être ajouté ; la feuille reste ouverte pour en ajouter plusieurs.
  */
 @Composable
-fun NewsFeedForm(existing: Set<String>, check: suspend (String) -> FeedCheck, onAdd: (url: String, title: String) -> Unit) {
+fun NewsFeedForm(
+    existing: Set<String>,
+    check: suspend (String) -> FeedCheck,
+    onAdd: (url: String, title: String) -> Unit,
+    mine: List<Pair<String, String>> = emptyList(),
+    onRemoveFeeds: (List<String>) -> Unit = {},
+) {
     var url by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
     var query by remember { mutableStateOf("") }
@@ -90,6 +96,7 @@ fun NewsFeedForm(existing: Set<String>, check: suspend (String) -> FeedCheck, on
         Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        if (mine.isNotEmpty()) MyFeedsCheck(mine, check, onRemoveFeeds)
         Text(tr("Ajouter des flux", "Add feeds"), style = MaterialTheme.typography.headlineSmall)
         OutlinedTextField(
             value = url,
@@ -234,8 +241,58 @@ private fun CatalogRow(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewsFeedSheet(existing: Set<String>, check: suspend (String) -> FeedCheck, onAdd: (String, String) -> Unit, onDismiss: () -> Unit) {
+fun NewsFeedSheet(
+    existing: Set<String>,
+    check: suspend (String) -> FeedCheck,
+    onAdd: (String, String) -> Unit,
+    onDismiss: () -> Unit,
+    mine: List<Pair<String, String>> = emptyList(),
+    onRemoveFeeds: (List<String>) -> Unit = {},
+) {
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        NewsFeedForm(existing, check, onAdd)
+        NewsFeedForm(existing, check, onAdd, mine, onRemoveFeeds)
+    }
+}
+
+/** Mes flux : tout vérifier, puis supprimer d'un geste ceux qui ne répondent plus. */
+@Composable
+private fun MyFeedsCheck(mine: List<Pair<String, String>>, check: suspend (String) -> FeedCheck, onRemove: (List<String>) -> Unit) {
+    var running by remember { mutableStateOf(false) }
+    var invalid by remember { mutableStateOf<List<InvalidFeed>?>(null) }
+    val scope = rememberCoroutineScope()
+    val colors = MaterialTheme.colorScheme
+    Column(
+        Modifier.fillMaxWidth().clip(ROW_SHAPE).background(cardBackground()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(tr("Mes flux", "My feeds") + " · ${mine.size}", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            androidx.compose.material3.FilledTonalButton(
+                onClick = {
+                    running = true
+                    invalid = null
+                    scope.launch {
+                        invalid = FeedValidation.invalid(mine, check)
+                        running = false
+                    }
+                },
+                enabled = !running,
+                modifier = Modifier.testTag("feeds-check"),
+            ) {
+                if (running) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                else Text(tr("Tout vérifier", "Check all"))
+            }
+        }
+        when (val found = invalid) {
+            null -> Unit
+            emptyList<InvalidFeed>() -> Text(tr("✓ Tous tes flux fonctionnent", "✓ All your feeds work"), color = colors.primary)
+            else -> {
+                found.forEach { Text("✗ ${it.title.ifBlank { it.url }} — ${it.reason}", style = MaterialTheme.typography.bodySmall, color = colors.error) }
+                Button(
+                    onClick = { onRemove(found.map { it.url }); invalid = emptyList() },
+                    modifier = Modifier.fillMaxWidth().testTag("feeds-remove-invalid"),
+                ) { Text(tr("Supprimer les ${found.size} invalides", "Remove the ${found.size} invalid ones")) }
+            }
+        }
     }
 }

@@ -4,6 +4,8 @@
     <!-- Afficher l'Espace privé (accordée quand Lanceur est l'écran d'accueil par défaut) -->
     <!-- Météo et RSS uniquement, par net/Network (voir NetworkGuardTest) -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Notification « nouvelle version disponible » -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Demandée seulement si « Ma position » est choisie pour la météo -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />

@@ -36,10 +36,10 @@ class SettingsEnglishTest {
             }
         }
         rule.onNodeWithText("Settings").assertIsDisplayed()
-        rule.onNodeWithText("Language").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("Change").performClick()
+        rule.onNodeWithText("Appearance").assertIsDisplayed()
+        rule.onNodeWithTag("settings-language").performScrollTo().performClick()
         assertTrue(opened)
+        rule.onNodeWithTag("settings-PAGES").performScrollTo().performClick()
         rule.onNodeWithTag("page-eye-NEWS").performScrollTo().assertContentDescriptionEquals("Show News")
-        rule.onNodeWithText("Home").performScrollTo().assertIsDisplayed()
     }
 }

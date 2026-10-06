@@ -1,19 +1,29 @@
 package app.lanceur.settings
 
-import app.lanceur.i18n.tr
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,14 +32,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
+import app.lanceur.apps.icons.IconShape
+import app.lanceur.builtin.Freshness
+import app.lanceur.focus.FocusActions
+import app.lanceur.focus.FocusMode
+import app.lanceur.focus.FocusSection
 import app.lanceur.home.PageKind
+import app.lanceur.i18n.tr
 import app.lanceur.prefs.AlphabetSide
+import app.lanceur.ui.AppLabelStyle
 import app.lanceur.ui.HintText
 import app.lanceur.ui.SectionTitle
 import app.lanceur.ui.blockTouchesBelow
+import app.lanceur.ui.cardBackground
 
 class SettingsActions(
     val setDefault: () -> Unit = {},
@@ -44,10 +65,55 @@ class SettingsActions(
     val openLanguage: () -> Unit = {},
     val openWallpaper: () -> Unit = {},
     val setIconStyle: (app.lanceur.apps.icons.IconStyle) -> Unit = {},
-    val setAppLabelStyle: (app.lanceur.ui.AppLabelStyle) -> Unit = {},
-    val focus: app.lanceur.focus.FocusActions = app.lanceur.focus.FocusActions(),
+    val setAppLabelStyle: (AppLabelStyle) -> Unit = {},
+    val focus: FocusActions = FocusActions(),
     val findIconPacks: () -> Unit = {},
+    val grantNotificationAccess: () -> Unit = {},
+    val allowNotifications: () -> Unit = {},
+    val backupNow: () -> Unit = {},
+    val restoreBackup: () -> Unit = {},
+    val chooseBackupFolder: () -> Unit = {},
+    val setBackupAuto: (Boolean) -> Unit = {},
+    val setUpdatesEnabled: (Boolean) -> Unit = {},
+    val checkUpdatesNow: () -> Unit = {},
+    val openReleases: () -> Unit = {},
 )
+
+data class BackupState(val auto: Boolean = false, val folderName: String? = null, val last: Long? = null)
+
+data class UpdatesState(
+    val installed: String = "",
+    val enabled: Boolean = true,
+    val latest: String? = null,
+    val checking: Boolean = false,
+    val lastCheck: Long? = null,
+    val canNotify: Boolean = true,
+)
+
+data class PermissionsState(
+    val searchGranted: Boolean = true,
+    val notificationAccess: Boolean = true,
+    val lockService: Boolean = true,
+    val canNotify: Boolean = true,
+) {
+    val missing: Int get() = listOf(searchGranted, notificationAccess, lockService, canNotify).count { !it }
+}
+
+/** Sous-menus des réglages, dans l'ordre de la liste. */
+enum class SettingsPage(val emoji: String, private val fr: String, private val en: String) {
+    HOME("🏠", "Accueil", "Home"),
+    APPEARANCE("🎨", "Apparence", "Appearance"),
+    PAGES("📑", "Pages", "Pages"),
+    FOCUS("🎯", "Concentration", "Focus"),
+    PERMISSIONS("🔐", "Autorisations", "Permissions"),
+    BACKUP("💾", "Sauvegarde", "Backup"),
+    ABOUT("ℹ️", "À propos", "About"),
+    ;
+
+    val label: String get() = tr(fr, en)
+}
+
+private val CARD = RoundedCornerShape(20.dp)
 
 @Composable
 fun SettingsScreen(
@@ -63,11 +129,20 @@ fun SettingsScreen(
     actions: SettingsActions,
     modifier: Modifier = Modifier,
     appearance: AppearanceState = AppearanceState(),
-    focus: app.lanceur.focus.FocusMode = app.lanceur.focus.FocusMode(),
+    focus: FocusMode = FocusMode(),
     focusActive: Boolean = false,
     focusApps: List<AppEntry> = emptyList(),
+    notificationAccess: Boolean = true,
+    backup: BackupState = BackupState(),
+    updates: UpdatesState = UpdatesState(),
+    now: Long = System.currentTimeMillis(),
+    initialPage: SettingsPage? = null,
 ) {
+    var page by remember { mutableStateOf(initialPage) }
     var choosingPack by remember { mutableStateOf(false) }
+    val permissions = PermissionsState(permissionsGranted, notificationAccess, lockServiceEnabled, updates.canNotify)
+    BackHandler(enabled = page != null) { page = null }
+
     Column(
         modifier
             .fillMaxSize()
@@ -77,50 +152,85 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
     ) {
-        Text(tr("Réglages", "Settings"), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 16.dp))
-        SettingRow(
-            title = tr("Écran d'accueil par défaut", "Default home app"),
-            subtitle = if (isDefaultLauncher) tr("Lanceur est ton écran d'accueil", "Lanceur is your home app") else tr("Lanceur n'est pas encore ton écran d'accueil", "Lanceur is not your home app yet"),
-            actionLabel = if (isDefaultLauncher) null else tr("Définir", "Set"),
-            onAction = actions.setDefault,
-        )
-        SettingRow(
-            title = tr("Agenda et contacts dans la recherche", "Calendar and contacts in search"),
-            subtitle = if (permissionsGranted) tr("Autorisés", "Allowed") else tr("Non autorisés", "Not allowed"),
-            actionLabel = if (permissionsGranted) null else tr("Autoriser", "Allow"),
-            onAction = actions.requestPermissions,
-        )
-        SettingRow(
-            title = tr("Double toucher pour verrouiller", "Double tap to lock"),
-            subtitle = if (lockServiceEnabled) tr("Activé", "On") else tr("Non activé : à autoriser dans Accessibilité", "Off: allow it in Accessibility"),
-            actionLabel = if (lockServiceEnabled) null else tr("Activer", "Turn on"),
-            onAction = actions.enableLockService,
-        )
-        SettingRow(
-            title = tr("Applis cachées", "Hidden apps"),
-            subtitle = tr("Protégées par ton empreinte", "Protected by your fingerprint"),
-            actionLabel = tr("Ouvrir", "Open"),
-            onAction = actions.openHidden,
-        )
-        SettingRow(
-            title = tr("Langue", "Language"),
-            subtitle = tr("Français · suit le téléphone ou ton choix", "English · follows the phone or your choice"),
-            actionLabel = tr("Changer", "Change"),
-            onAction = actions.openLanguage,
-        )
-        AppearanceSection(appearance, actions, onChoosePack = { choosingPack = true })
-        app.lanceur.focus.FocusSection(focus, focusActive, focusApps, actions.focus)
-        PagesSection(pageOrder, widgetPageEnabled, newsEnabled, actions)
-        SectionTitle(tr("Côté de l'alphabet", "Alphabet side"))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = side == AlphabetSide.LEFT, onClick = { actions.setSide(AlphabetSide.LEFT) }, label = { Text(tr("Gauche", "Left")) })
-            FilterChip(selected = side == AlphabetSide.RIGHT, onClick = { actions.setSide(AlphabetSide.RIGHT) }, label = { Text(tr("Droite", "Right")) })
-        }
-        SectionTitle(tr("Ordre des favoris", "Favorites order"))
-        if (favorites.isEmpty()) {
-            HintText(tr("Aucun favori pour l'instant.", "No favorites yet."))
+        val current = page
+        if (current == null) {
+            Text(tr("Réglages", "Settings"), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 16.dp))
+            if (!isDefaultLauncher) {
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(CARD).background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(tr("Lanceur n'est pas ton écran d'accueil", "Lanceur is not your home app"), Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+                    Button(onClick = actions.setDefault) { Text(tr("Définir", "Set")) }
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SettingsPage.entries.forEach { p ->
+                    MenuRow(p.emoji, p.label, summary(p, side, favorites.size, appearance, pageOrder, widgetPageEnabled, newsEnabled, focus, focusActive, permissions, backup, updates, now), tag = "settings-${p.name}") {
+                        page = p
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                MenuRow("🔒", tr("Applis cachées", "Hidden apps"), null, tag = "settings-hidden", external = true, onClick = actions.openHidden)
+                MenuRow("🌐", tr("Langue", "Language"), tr("Français", "English"), tag = "settings-language", external = true, onClick = actions.openLanguage)
+            }
         } else {
-            ReorderableFavorites(favorites, icon, actions.reorderFavorites)
+            Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { page = null }, modifier = Modifier.testTag("settings-back")) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = tr("Retour", "Back"))
+                }
+                Text(current.label, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 4.dp))
+            }
+            when (current) {
+                SettingsPage.HOME -> {
+                    SettingRow(
+                        tr("Double toucher pour verrouiller", "Double tap to lock"),
+                        if (lockServiceEnabled) tr("Activé", "On") else tr("Désactivé", "Off"),
+                        if (lockServiceEnabled) null else tr("Activer", "Turn on"),
+                        actions.enableLockService,
+                    )
+                    SectionTitle(tr("Côté de l'alphabet", "Alphabet side"))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(selected = side == AlphabetSide.LEFT, onClick = { actions.setSide(AlphabetSide.LEFT) }, label = { Text(tr("Gauche", "Left")) })
+                        FilterChip(selected = side == AlphabetSide.RIGHT, onClick = { actions.setSide(AlphabetSide.RIGHT) }, label = { Text(tr("Droite", "Right")) })
+                    }
+                    SectionTitle(tr("Ordre des favoris", "Favorites order"))
+                    if (favorites.isEmpty()) HintText(tr("Aucun favori pour l'instant.", "No favorites yet."))
+                    else ReorderableFavorites(favorites, icon, actions.reorderFavorites)
+                }
+                SettingsPage.APPEARANCE -> AppearanceSection(appearance, actions, onChoosePack = { choosingPack = true })
+                SettingsPage.PAGES -> PagesSection(pageOrder, widgetPageEnabled, newsEnabled, actions)
+                SettingsPage.FOCUS -> FocusSection(focus, focusActive, focusApps, actions.focus, notificationAccess)
+                SettingsPage.PERMISSIONS -> {
+                    SettingRow(
+                        tr("Agenda et contacts", "Calendar and contacts"),
+                        if (permissionsGranted) tr("Autorisés", "Allowed") else tr("Non autorisés", "Not allowed"),
+                        if (permissionsGranted) null else tr("Autoriser", "Allow"),
+                        actions.requestPermissions,
+                    )
+                    SettingRow(
+                        tr("Accès aux notifications", "Notification access"),
+                        if (notificationAccess) tr("Autorisé", "Allowed") else tr("Non autorisé", "Not allowed"),
+                        if (notificationAccess) null else tr("Autoriser", "Allow"),
+                        actions.grantNotificationAccess,
+                    )
+                    SettingRow(
+                        tr("Accessibilité", "Accessibility"),
+                        if (lockServiceEnabled) tr("Autorisée", "Allowed") else tr("Non autorisée", "Not allowed"),
+                        if (lockServiceEnabled) null else tr("Autoriser", "Allow"),
+                        actions.enableLockService,
+                    )
+                    SettingRow(
+                        tr("Envoyer des notifications", "Send notifications"),
+                        if (updates.canNotify) tr("Autorisé", "Allowed") else tr("Non autorisé", "Not allowed"),
+                        if (updates.canNotify) null else tr("Autoriser", "Allow"),
+                        actions.allowNotifications,
+                    )
+                }
+                SettingsPage.BACKUP -> BackupPage(backup, actions, now)
+                SettingsPage.ABOUT -> AboutPage(updates, actions, now)
+            }
         }
     }
     if (choosingPack) {
@@ -131,6 +241,120 @@ fun SettingsScreen(
             onDismiss = { choosingPack = false },
         )
     }
+}
+
+/** L'état actuel de chaque sous-menu, en quelques mots. */
+private fun summary(
+    page: SettingsPage,
+    side: AlphabetSide,
+    favorites: Int,
+    appearance: AppearanceState,
+    pages: List<PageKind>,
+    widgets: Boolean,
+    news: Boolean,
+    focus: FocusMode,
+    focusActive: Boolean,
+    permissions: PermissionsState,
+    backup: BackupState,
+    updates: UpdatesState,
+    now: Long,
+): String = when (page) {
+    SettingsPage.HOME -> listOf(
+        if (side == AlphabetSide.LEFT) tr("Alphabet à gauche", "Alphabet on the left") else tr("Alphabet à droite", "Alphabet on the right"),
+        tr("$favorites favoris", "$favorites favorites"),
+    ).joinToString(" · ")
+    SettingsPage.APPEARANCE -> listOfNotNull(
+        if (appearance.labelStyle.showIcons) appearance.iconStyle.shape.takeIf { it != IconShape.SYSTEM }?.label ?: tr("Icônes", "Icons") else tr("Sans icônes", "No icons"),
+        if (appearance.labelStyle.uppercase) tr("MAJUSCULES", "CAPITALS") else null,
+    ).joinToString(" · ")
+    SettingsPage.PAGES -> app.lanceur.home.PageLayout.normalize(pages)
+        .filter { it == PageKind.HOME || (it == PageKind.WIDGETS && widgets) || (it == PageKind.NEWS && news) }
+        .joinToString(" · ") { it.label }
+    SettingsPage.FOCUS -> listOfNotNull(
+        if (focusActive) tr("En cours", "On") else tr("Arrêtée", "Off"),
+        focus.schedules.size.takeIf { it > 0 }?.let { tr("$it plage" + (if (it > 1) "s" else ""), "$it range" + (if (it > 1) "s" else "")) },
+    ).joinToString(" · ")
+    SettingsPage.PERMISSIONS -> if (permissions.missing == 0) tr("Tout est autorisé", "All allowed") else tr("${permissions.missing} à autoriser", "${permissions.missing} to allow")
+    SettingsPage.BACKUP -> listOf(
+        if (backup.auto && backup.folderName != null) tr("Automatique", "Automatic") else tr("Manuelle", "Manual"),
+        backup.last?.let { Freshness.ago(it, now) } ?: tr("jamais", "never"),
+    ).joinToString(" · ")
+    SettingsPage.ABOUT -> updates.latest?.let { tr("$it disponible", "$it available") } ?: tr("Version ", "Version ") + updates.installed
+}
+
+@Composable
+private fun MenuRow(emoji: String, title: String, summary: String?, tag: String, external: Boolean = false, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        Modifier.fillMaxWidth().clip(CARD).background(cardBackground()).clickable(onClick = onClick).testTag(tag)
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(emoji, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+            summary?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant) }
+        }
+        Text(if (external) "↗" else "›", style = MaterialTheme.typography.titleLarge, color = colors.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun BackupPage(backup: BackupState, actions: SettingsActions, now: Long) {
+    SettingRow(
+        tr("Dernière sauvegarde", "Last backup"),
+        backup.last?.let { Freshness.ago(it, now) } ?: tr("Jamais", "Never"),
+        null,
+    ) {}
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Button(onClick = actions.backupNow, modifier = Modifier.weight(1f).testTag("backup-now")) { Text(tr("Sauvegarder", "Back up")) }
+        FilledTonalButton(onClick = actions.restoreBackup, modifier = Modifier.weight(1f).testTag("backup-restore")) { Text(tr("Restaurer", "Restore")) }
+    }
+    SectionTitle(tr("Automatique", "Automatic"))
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(tr("Après chaque changement", "After every change"), style = MaterialTheme.typography.titleMedium)
+            Text(tr("Les ${app.lanceur.prefs.Backup.KEEP} dernières sont gardées", "The last ${app.lanceur.prefs.Backup.KEEP} are kept"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = backup.auto, onCheckedChange = actions.setBackupAuto, modifier = Modifier.testTag("backup-auto"))
+    }
+    SettingRow(
+        tr("Dossier", "Folder"),
+        backup.folderName ?: tr("Aucun", "None"),
+        if (backup.folderName == null) tr("Choisir", "Choose") else tr("Changer", "Change"),
+        actions.chooseBackupFolder,
+    )
+}
+
+@Composable
+private fun AboutPage(updates: UpdatesState, actions: SettingsActions, now: Long) {
+    SettingRow(
+        tr("Version", "Version"),
+        updates.installed + (updates.latest?.let { " · " + tr("$it disponible", "$it available") } ?: ""),
+        updates.latest?.let { tr("Télécharger", "Download") },
+        actions.openReleases,
+    )
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(tr("Vérifier les mises à jour", "Check for updates"), style = MaterialTheme.typography.titleMedium)
+            Text(
+                updates.lastCheck?.let { tr("Dernière vérification ", "Last checked ") + Freshness.ago(it, now) } ?: tr("Jamais vérifié", "Never checked"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = updates.enabled, onCheckedChange = actions.setUpdatesEnabled, modifier = Modifier.testTag("updates-enabled"))
+    }
+    FilledTonalButton(onClick = actions.checkUpdatesNow, enabled = !updates.checking, modifier = Modifier.fillMaxWidth().testTag("updates-check")) {
+        Text(if (updates.checking) tr("Vérification…", "Checking…") else tr("Vérifier maintenant", "Check now"))
+    }
+    if (updates.enabled && !updates.canNotify) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            HintText(tr("Notifications bloquées pour Lanceur.", "Notifications are blocked for Lanceur."))
+            androidx.compose.material3.TextButton(onClick = actions.allowNotifications) { Text(tr("Autoriser", "Allow")) }
+        }
+    }
+    SettingRow(tr("Code source", "Source code"), "github.com/KrakenAgite/lanceur", tr("Ouvrir", "Open"), actions.openReleases)
 }
 
 @Composable
@@ -147,8 +371,7 @@ internal fun SettingRow(title: String, subtitle: String, actionLabel: String?, o
 /** Pages de gauche à droite, comme quand on fait défiler ; l'Accueil ne se masque pas. */
 @Composable
 private fun PagesSection(order: List<PageKind>, widgetsEnabled: Boolean, newsEnabled: Boolean, actions: SettingsActions) {
-    SectionTitle(tr("Pages", "Pages"))
-    HintText(tr("Appui long puis glisse pour changer l'ordre ; l'œil affiche ou masque la page", "Long press then drag to reorder; the eye shows or hides the page"))
+    HintText(tr("Appui long puis glisse pour changer l'ordre", "Long press then drag to reorder"))
     PagePreviews(
         order = order,
         isShown = { kind ->

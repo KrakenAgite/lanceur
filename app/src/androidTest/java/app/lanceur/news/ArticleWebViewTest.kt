@@ -8,6 +8,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import app.lanceur.builtin.rss.Article
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -31,6 +33,25 @@ class ArticleWebViewTest {
         assertEquals("about:blank", browser)
         rule.onNodeWithTag("article-close").performClick()
         assertTrue(closed)
+    }
+
+    @Test
+    fun closing_the_view_deletes_the_cookies_left_by_sites() {
+        val cookies = android.webkit.CookieManager.getInstance()
+        var shown by androidx.compose.runtime.mutableStateOf(true)
+        rule.setContent {
+            MaterialTheme {
+                if (shown) ArticleWebView(url = "about:blank", source = "Le Journal", onClose = {}, onOpenInBrowser = {})
+            }
+        }
+        rule.runOnIdle {
+            cookies.setCookie("https://site.example", "session=abc")
+            cookies.flush()
+        }
+        assertEquals("session=abc", cookies.getCookie("https://site.example"))
+        shown = false
+        rule.waitForIdle()
+        rule.waitUntil(3_000) { cookies.getCookie("https://site.example") == null }
     }
 
     @Test

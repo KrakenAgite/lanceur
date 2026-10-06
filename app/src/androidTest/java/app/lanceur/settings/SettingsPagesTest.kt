@@ -28,6 +28,7 @@ class SettingsPagesTest {
                 favorites = emptyList(), side = AlphabetSide.RIGHT, isDefaultLauncher = true, permissionsGranted = true,
                 lockServiceEnabled = true, pageOrder = PageLayout.DEFAULT_ORDER, widgetPageEnabled = true, newsEnabled = false,
                 icon = {},
+                initialPage = SettingsPage.PAGES,
                 actions = SettingsActions(
                     movePage = { k, d -> moved = k to d },
                     setNewsEnabled = { news = it },

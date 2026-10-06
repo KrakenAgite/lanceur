@@ -2,5 +2,5 @@
     <!-- Texts shown by Android in Settings > Accessibility (required resources) -->
     <string name="lock_service_label">Lanceur: double tap to lock</string>
     <string name="lock_service_description">Lets Lanceur turn off the screen when you double tap an empty area of the home screen. Lanceur reads nothing on screen and does nothing else.</string>
-    <string name="media_listener_label">Lanceur — media players</string>
+    <string name="media_listener_label">Lanceur — media players and focus</string>
 </resources>

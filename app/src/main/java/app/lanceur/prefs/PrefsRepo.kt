@@ -100,6 +100,41 @@ class PrefsRepo(
     /** Transformation dans la transaction : une actualisation et un ajout de flux ne s'écrasent pas. */
     suspend fun updateNews(transform: (String?) -> String) = update { it.copy(news = transform(it.news)) }
 
+    suspend fun updateUpdates(transform: (UpdateSettings) -> UpdateSettings) = update { it.copy(updates = transform(it.updates)) }
+
+    suspend fun setBackupFolder(folder: String?) = update { it.copy(backup = it.backup.copy(folder = folder)) }
+
+    suspend fun setBackupAuto(auto: Boolean) = update { it.copy(backup = it.backup.copy(auto = auto)) }
+
+    suspend fun setBackupLast(time: Long) = update { it.copy(backup = it.backup.copy(last = time)) }
+
+    /** Toutes les valeurs enregistrées, sauf les réglages de la sauvegarde. */
+    suspend fun snapshot(): Map<String, Any> =
+        store.data.first().asMap().mapKeys { it.key.name }.filterKeys { !Backup.isExcluded(it) }
+
+    /** Remplace tous les réglages par [values] (les réglages de la sauvegarde restent tels quels). */
+    suspend fun restore(values: Map<String, Any>) {
+        try {
+            store.edit { out ->
+                out.asMap().keys.filterNot { Backup.isExcluded(it.name) }.toList().forEach { out.remove(it) }
+                values.filterKeys { !Backup.isExcluded(it) }.forEach { (name, value) ->
+                    @Suppress("UNCHECKED_CAST")
+                    when (value) {
+                        is String -> out[stringPreferencesKey(name)] = value
+                        is Boolean -> out[booleanPreferencesKey(name)] = value
+                        is Int -> out[androidx.datastore.preferences.core.intPreferencesKey(name)] = value
+                        is Long -> out[androidx.datastore.preferences.core.longPreferencesKey(name)] = value
+                        is Float -> out[androidx.datastore.preferences.core.floatPreferencesKey(name)] = value
+                        is Double -> out[androidx.datastore.preferences.core.doublePreferencesKey(name)] = value
+                        is Set<*> -> out[stringSetPreferencesKey(name)] = value as Set<String>
+                    }
+                }
+            }
+        } catch (e: IOException) {
+            onError(e)
+        }
+    }
+
     /** Transformation dans la transaction : démarrer, arrêter et cocher ne s'écrasent pas. */
     suspend fun updateFocus(transform: (FocusMode) -> FocusMode) = update { it.copy(focus = transform(it.focus)) }
 
@@ -136,6 +171,13 @@ class PrefsRepo(
         val ICON_THEMED = booleanPreferencesKey("icon_themed")
         val SHOW_ICONS = booleanPreferencesKey("show_icons")
         val FOCUS = stringPreferencesKey("focus")
+        val BACKUP_FOLDER = stringPreferencesKey("backup_folder")
+        val UPDATE_ENABLED = booleanPreferencesKey("update_enabled")
+        val UPDATE_LAST = androidx.datastore.preferences.core.longPreferencesKey("update_last")
+        val UPDATE_LATEST = stringPreferencesKey("update_latest")
+        val UPDATE_NOTIFIED = stringPreferencesKey("update_notified")
+        val BACKUP_AUTO = booleanPreferencesKey("backup_auto")
+        val BACKUP_LAST = androidx.datastore.preferences.core.longPreferencesKey("backup_last")
         val LABEL_UPPERCASE = booleanPreferencesKey("label_uppercase")
 
         fun decode(stored: Preferences) = LauncherPrefs(
@@ -148,6 +190,8 @@ class PrefsRepo(
             pageOrder = PageLayout.decode(stored[PAGE_ORDER]),
             news = stored[NEWS],
             focus = FocusMode.decode(stored[FOCUS]),
+            updates = UpdateSettings(stored[UPDATE_ENABLED] ?: true, stored[UPDATE_LAST], stored[UPDATE_LATEST], stored[UPDATE_NOTIFIED]),
+            backup = BackupSettings(stored[BACKUP_FOLDER], stored[BACKUP_AUTO] ?: false, stored[BACKUP_LAST]),
             appLabelStyle = AppLabelStyle(stored[SHOW_ICONS] ?: true, stored[LABEL_UPPERCASE] ?: false),
             iconStyle = IconStyle(stored[ICON_PACK], IconShape.decode(stored[ICON_SHAPE]), stored[ICON_THEMED] ?: false),
             widgets = stored[WIDGETS].orEmpty().split('\n').mapNotNull(WidgetSlot::decode).distinctBy { it.appWidgetId },
@@ -171,6 +215,13 @@ class PrefsRepo(
             out[ICON_THEMED] = prefs.iconStyle.themed
             out[SHOW_ICONS] = prefs.appLabelStyle.showIcons
             out[FOCUS] = prefs.focus.encode()
+            prefs.backup.folder?.let { out[BACKUP_FOLDER] = it } ?: out.remove(BACKUP_FOLDER)
+            out[BACKUP_AUTO] = prefs.backup.auto
+            out[UPDATE_ENABLED] = prefs.updates.enabled
+            prefs.updates.lastCheck?.let { out[UPDATE_LAST] = it } ?: out.remove(UPDATE_LAST)
+            prefs.updates.latest?.let { out[UPDATE_LATEST] = it } ?: out.remove(UPDATE_LATEST)
+            prefs.updates.notified?.let { out[UPDATE_NOTIFIED] = it } ?: out.remove(UPDATE_NOTIFIED)
+            prefs.backup.last?.let { out[BACKUP_LAST] = it } ?: out.remove(BACKUP_LAST)
             out[LABEL_UPPERCASE] = prefs.appLabelStyle.uppercase
             out[WIDGETS] = prefs.widgets.joinToString("\n") { it.encode() }
             // Les données d'un widget retiré disparaissent avec lui

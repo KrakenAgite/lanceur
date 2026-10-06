@@ -51,6 +51,8 @@ data class FocusMode(
     val apps: Set<Pair<String, Long>> = emptySet(),
     val schedules: List<FocusSchedule> = emptyList(),
     val pausedUntil: Long? = null,
+    /** Notifications des applis masquées mises en attente jusqu'à la fin de la concentration. */
+    val blockNotifications: Boolean = true,
 ) {
     private fun scheduleEnd(now: ZonedDateTime): ZonedDateTime? {
         val paused = pausedUntil != null && now.toInstant().toEpochMilli() < pausedUntil
@@ -84,6 +86,7 @@ data class FocusMode(
             put("apps", WidgetData.list(apps.map { "${it.first}#${it.second}" }))
             put("schedules", WidgetData.list(schedules.map { s -> s.days.joinToString(",") { it.name } + "|" + s.start + "|" + s.end }))
             pausedUntil?.let { put("paused", it.toString()) }
+            put("notifications", if (blockNotifications) "block" else "allow")
         },
     )
 
@@ -113,7 +116,40 @@ data class FocusMode(
                     }.getOrNull()
                 },
                 pausedUntil = v["paused"]?.toLongOrNull(),
+                blockNotifications = v["notifications"] != "allow",
             )
         }
+    }
+}
+
+/** Pendant la concentration, les notifications des applis masquées attendent (rien n'est supprimé). */
+object FocusNotifications {
+    private const val MANUAL_SNOOZE_MS = 60 * 60_000L
+    private val NEVER = setOf("call", "alarm")
+
+    /**
+     * Durée de mise en attente, ou null pour laisser passer. Ne touche qu'aux applis lançables (pas au système),
+     * jamais aux appels, alarmes ni notifications permanentes (musique, navigation…).
+     */
+    fun snoozeFor(
+        focus: FocusMode,
+        packageName: String,
+        userSerial: Long,
+        ongoing: Boolean,
+        category: String?,
+        launchable: Set<Pair<String, Long>>,
+        now: ZonedDateTime,
+    ): Long? {
+        if (!focus.blockNotifications || !focus.isActive(now)) return null
+        if (ongoing || category in NEVER || packageName.startsWith("app.lanceur")) return null
+        val key = packageName to userSerial
+        if (key !in launchable) return null
+        val hidden = when (focus.filter) {
+            FocusFilter.HIDE -> key in focus.apps
+            FocusFilter.SHOW_ONLY -> key !in focus.apps
+        }
+        if (!hidden) return null
+        val until = focus.activeUntil(now) ?: return MANUAL_SNOOZE_MS
+        return java.time.Duration.between(now, until).toMillis().coerceAtLeast(60_000L)
     }
 }

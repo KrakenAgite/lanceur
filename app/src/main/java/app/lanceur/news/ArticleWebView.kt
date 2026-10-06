@@ -6,6 +6,7 @@ import android.net.Uri
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
@@ -46,7 +47,7 @@ import app.lanceur.ui.CardLabel
 /**
  * Article ouvert dans Lanceur : la page du site dans une vue web, sous la barre du lanceur (Retour, source,
  * ↗ navigateur). Retour remonte d'abord dans les pages visitées. Seuls les liens web s'ouvrent ici ;
- * pas de cookies tiers, pas d'accès aux fichiers, aucun téléchargement.
+ * pas de cookies tiers, pas d'accès aux fichiers, aucun téléchargement ; cookies et stockage effacés à la fermeture.
  */
 @Composable
 fun ArticleWebView(
@@ -99,9 +100,24 @@ fun ArticleWebView(
         onDispose {
             view?.apply {
                 stopLoading()
+                clearHistory()
+                clearCache(true)
                 destroy()
             }
+            // Rien ne survit à la fermeture : cookies et stockage des sites effacés
+            WebBrowsingData.clear()
         }
+    }
+}
+
+/** Données laissées par les sites visités dans la vue web. */
+object WebBrowsingData {
+    fun clear() {
+        CookieManager.getInstance().apply {
+            removeAllCookies(null)
+            flush()
+        }
+        WebStorage.getInstance().deleteAllData()
     }
 }
 
