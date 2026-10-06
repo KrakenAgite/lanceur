@@ -24,4 +24,12 @@ class ImageSizingTest {
         assertEquals(emptyList<String>(), ImageSizing.toDelete(files, maxBytes = 90))
         assertEquals(listOf("c", "b"), ImageSizing.toDelete(files, maxBytes = 30))
     }
+
+    @Test
+    fun very_tall_images_are_reduced_too() {
+        // 2000 × 6000 sur un écran de 1080 : la largeur seule ne réduirait pas, le nombre de pixels si
+        val sample = ImageSizing.sampleSize(2000, 6000, 1080)
+        assertEquals(true, (2000 / sample) * (6000 / sample) <= ImageSizing.MAX_PIXELS)
+        assertEquals(2, sample)
+    }
 }

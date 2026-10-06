@@ -55,7 +55,8 @@ data class NewsState(val feeds: List<FeedSnapshot> = emptyList()) {
         /** Résultat d'une actualisation appliqué à l'état courant : un flux ajouté ou retiré entre-temps est respecté. */
         fun merge(current: NewsState, refreshed: NewsState): NewsState {
             val byUrl = refreshed.feeds.associateBy { it.url }
-            return NewsState(current.feeds.map { byUrl[it.url] ?: it })
+            // Une actualisation partie plus tôt (plus ancienne) n'écrase jamais des articles plus récents
+            return NewsState(current.feeds.map { feed -> byUrl[feed.url]?.takeIf { (it.fetchedAt ?: -1) >= (feed.fetchedAt ?: -1) } ?: feed })
         }
     }
 }

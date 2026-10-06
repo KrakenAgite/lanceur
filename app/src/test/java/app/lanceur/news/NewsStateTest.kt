@@ -75,4 +75,13 @@ class NewsStateTest {
         assertNull(NewsFeed.footer(NewsState(), at, paris))
         assertTrue(NewsFeed.allFailedEmpty(NewsState(listOf(FeedSnapshot(lemonde, "LM", failed = true)))))
     }
+
+    @Test
+    fun an_older_refresh_never_overwrites_a_newer_one() {
+        val newer = NewsState(listOf(FeedSnapshot(lemonde, "LM", listOf(art("Neuf", "https://l/n", 900)), fetchedAt = 5_000)))
+        val olderRefresh = NewsState(listOf(FeedSnapshot(lemonde, "LM", listOf(art("Vieux", "https://l/v", 100)), fetchedAt = 1_000)))
+        assertEquals("Neuf", NewsState.merge(newer, olderRefresh).feeds.single().articles.single().title)
+        val failedNow = NewsState(listOf(newer.feeds.single().copy(failed = true)))
+        assertTrue(NewsState.merge(newer, failedNow).feeds.single().failed)
+    }
 }

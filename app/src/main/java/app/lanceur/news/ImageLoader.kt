@@ -27,7 +27,10 @@ import kotlinx.coroutines.withContext
 
 /** Images des articles : téléchargées par `Network` (HTTPS, 1 Mo), décodées réduites, gardées en mémoire et sur disque. */
 class ImageLoader(context: Context, private val network: Network) {
-    private val memory = LruCache<String, ImageBitmap>(MEMORY_IMAGES)
+    // Taille en octets, pas en nombre d'images : un huitième de la mémoire de l'appli au plus
+    private val memory = object : LruCache<String, ImageBitmap>((Runtime.getRuntime().maxMemory() / 8).toInt()) {
+        override fun sizeOf(key: String, value: ImageBitmap): Int = value.width * value.height * 4
+    }
     private val dir = File(context.cacheDir, "news-images")
 
     suspend fun load(url: String, targetWidth: Int): ImageBitmap? {
@@ -48,6 +51,8 @@ class ImageLoader(context: Context, private val network: Network) {
     private fun decode(bytes: ByteArray, targetWidth: Int): ImageBitmap? = runCatching {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        // Dimensions illisibles : on ne décode pas à l'aveugle en taille réelle
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
         val options = BitmapFactory.Options().apply { inSampleSize = ImageSizing.sampleSize(bounds.outWidth, bounds.outHeight, targetWidth) }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)?.asImageBitmap()
     }.getOrNull()
@@ -61,7 +66,6 @@ class ImageLoader(context: Context, private val network: Network) {
         MessageDigest.getInstance("SHA-1").digest(url.toByteArray()).joinToString("") { "%02x".format(it) }
 
     private companion object {
-        const val MEMORY_IMAGES = 40
         const val MAX_DISK_BYTES = 50L * 1024 * 1024
     }
 }
