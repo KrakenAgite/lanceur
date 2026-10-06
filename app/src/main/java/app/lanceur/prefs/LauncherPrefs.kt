@@ -24,4 +24,5 @@ data class LauncherPrefs(
     val news: String? = null,
     val iconStyle: app.lanceur.apps.icons.IconStyle = app.lanceur.apps.icons.IconStyle(),
     val appLabelStyle: app.lanceur.ui.AppLabelStyle = app.lanceur.ui.AppLabelStyle(),
+    val focus: app.lanceur.focus.FocusMode = app.lanceur.focus.FocusMode(),
 )

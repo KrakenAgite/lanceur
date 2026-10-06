@@ -1,6 +1,7 @@
 package app.lanceur.prefs
 
 import app.lanceur.apps.icons.IconShape
+import app.lanceur.focus.FocusMode
 import app.lanceur.ui.AppLabelStyle
 import app.lanceur.apps.icons.IconStyle
 import androidx.datastore.core.DataStore
@@ -99,6 +100,9 @@ class PrefsRepo(
     /** Transformation dans la transaction : une actualisation et un ajout de flux ne s'écrasent pas. */
     suspend fun updateNews(transform: (String?) -> String) = update { it.copy(news = transform(it.news)) }
 
+    /** Transformation dans la transaction : démarrer, arrêter et cocher ne s'écrasent pas. */
+    suspend fun updateFocus(transform: (FocusMode) -> FocusMode) = update { it.copy(focus = transform(it.focus)) }
+
     suspend fun setAppLabelStyle(style: AppLabelStyle) = update { it.copy(appLabelStyle = style) }
 
     suspend fun setIconStyle(style: IconStyle) = update { it.copy(iconStyle = style) }
@@ -131,6 +135,7 @@ class PrefsRepo(
         val ICON_SHAPE = stringPreferencesKey("icon_shape")
         val ICON_THEMED = booleanPreferencesKey("icon_themed")
         val SHOW_ICONS = booleanPreferencesKey("show_icons")
+        val FOCUS = stringPreferencesKey("focus")
         val LABEL_UPPERCASE = booleanPreferencesKey("label_uppercase")
 
         fun decode(stored: Preferences) = LauncherPrefs(
@@ -142,6 +147,7 @@ class PrefsRepo(
             newsEnabled = stored[NEWS_ENABLED] ?: false,
             pageOrder = PageLayout.decode(stored[PAGE_ORDER]),
             news = stored[NEWS],
+            focus = FocusMode.decode(stored[FOCUS]),
             appLabelStyle = AppLabelStyle(stored[SHOW_ICONS] ?: true, stored[LABEL_UPPERCASE] ?: false),
             iconStyle = IconStyle(stored[ICON_PACK], IconShape.decode(stored[ICON_SHAPE]), stored[ICON_THEMED] ?: false),
             widgets = stored[WIDGETS].orEmpty().split('\n').mapNotNull(WidgetSlot::decode).distinctBy { it.appWidgetId },
@@ -164,6 +170,7 @@ class PrefsRepo(
             out[ICON_SHAPE] = prefs.iconStyle.shape.name
             out[ICON_THEMED] = prefs.iconStyle.themed
             out[SHOW_ICONS] = prefs.appLabelStyle.showIcons
+            out[FOCUS] = prefs.focus.encode()
             out[LABEL_UPPERCASE] = prefs.appLabelStyle.uppercase
             out[WIDGETS] = prefs.widgets.joinToString("\n") { it.encode() }
             // Les données d'un widget retiré disparaissent avec lui

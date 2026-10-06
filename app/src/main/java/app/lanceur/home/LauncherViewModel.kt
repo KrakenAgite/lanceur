@@ -27,17 +27,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class LauncherViewModel(
     catalogApps: StateFlow<List<AppEntry>?>,
     private val prefsRepo: PrefsRepo,
+    /** Heure courante, chaque minute : les plages du mode concentration commencent et finissent seules. */
+    minutes: kotlinx.coroutines.flow.Flow<java.time.ZonedDateTime> = minuteTicks(),
 ) : ViewModel() {
     val prefs: StateFlow<LauncherPrefs> = prefsRepo.prefs.stateIn(viewModelScope, SharingStarted.Eagerly, LauncherPrefs())
 
-    val lists: StateFlow<AppLists> = combine(catalogApps.filterNotNull(), prefsRepo.prefs) { apps, prefs ->
-        VisibleApps.compute(apps, prefs)
+    val lists: StateFlow<AppLists> = combine(catalogApps.filterNotNull(), prefsRepo.prefs, minutes) { apps, prefs, now ->
+        VisibleApps.compute(apps, prefs, now)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, AppLists.EMPTY)
 
     /** Vrai une fois le catalogue et les réglages lus : avant, l'accueil afficherait des valeurs par défaut. */
@@ -160,6 +163,18 @@ class LauncherViewModel(
         viewModelScope.launch { prefsRepo.setWidgetsOrder(ids) }
     }
 
+    fun startFocus() {
+        viewModelScope.launch { prefsRepo.updateFocus { it.start() } }
+    }
+
+    fun stopFocus() {
+        viewModelScope.launch { prefsRepo.updateFocus { it.stop(java.time.ZonedDateTime.now()) } }
+    }
+
+    fun updateFocus(transform: (app.lanceur.focus.FocusMode) -> app.lanceur.focus.FocusMode) {
+        viewModelScope.launch { prefsRepo.updateFocus(transform) }
+    }
+
     fun setAppLabelStyle(style: app.lanceur.ui.AppLabelStyle) {
         viewModelScope.launch { prefsRepo.setAppLabelStyle(style) }
     }
@@ -199,3 +214,12 @@ class LauncherViewModel(
         }
     }
 }
+
+/** Émet l'heure tout de suite, puis au début de chaque minute (temps réel, même sous un répartiteur de test). */
+fun minuteTicks(): kotlinx.coroutines.flow.Flow<java.time.ZonedDateTime> = kotlinx.coroutines.flow.flow {
+    while (true) {
+        val now = java.time.ZonedDateTime.now()
+        emit(now)
+        kotlinx.coroutines.delay(60_000L - (now.second * 1000L + now.nano / 1_000_000))
+    }
+}.flowOn(kotlinx.coroutines.Dispatchers.Default)

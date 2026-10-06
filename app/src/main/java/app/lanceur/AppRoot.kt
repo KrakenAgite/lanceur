@@ -423,6 +423,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     side = prefs.alphabetSide,
                     icon = icon,
                     actions = HomeActions(
+                        stopFocus = vm::stopFocus,
                         launch = ::launch,
                         menu = ::onMenu,
                         changeMode = vm::setListMode,
@@ -511,6 +512,9 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 widgetPageEnabled = prefs.widgetPageEnabled,
                 newsEnabled = prefs.newsEnabled,
                 icon = icon,
+                focus = prefs.focus,
+                focusActive = lists.focusActive,
+                focusApps = lists.focusCandidates,
                 appearance = AppearanceState(
                     iconStyle = prefs.iconStyle,
                     labelStyle = prefs.appLabelStyle,
@@ -521,6 +525,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     openWallpaper = { container.appLauncher.startSafely(Wallpaper(context).intent()) },
                     setIconStyle = vm::setIconStyle,
                     setAppLabelStyle = vm::setAppLabelStyle,
+                    focus = app.lanceur.focus.FocusActions(start = vm::startFocus, stop = vm::stopFocus, update = vm::updateFocus),
                     findIconPacks = {
                         container.appLauncher.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=icon%20pack&c=apps")))
                     },

@@ -14,4 +14,5 @@ class HomeActions(
     val openClock: () -> Unit = {},
     val openCalendar: () -> Unit = {},
     val lockScreen: () -> Unit = {},
+    val stopFocus: () -> Unit = {},
 )

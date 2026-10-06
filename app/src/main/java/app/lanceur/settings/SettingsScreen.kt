@@ -45,6 +45,7 @@ class SettingsActions(
     val openWallpaper: () -> Unit = {},
     val setIconStyle: (app.lanceur.apps.icons.IconStyle) -> Unit = {},
     val setAppLabelStyle: (app.lanceur.ui.AppLabelStyle) -> Unit = {},
+    val focus: app.lanceur.focus.FocusActions = app.lanceur.focus.FocusActions(),
     val findIconPacks: () -> Unit = {},
 )
 
@@ -62,6 +63,9 @@ fun SettingsScreen(
     actions: SettingsActions,
     modifier: Modifier = Modifier,
     appearance: AppearanceState = AppearanceState(),
+    focus: app.lanceur.focus.FocusMode = app.lanceur.focus.FocusMode(),
+    focusActive: Boolean = false,
+    focusApps: List<AppEntry> = emptyList(),
 ) {
     var choosingPack by remember { mutableStateOf(false) }
     Column(
@@ -105,6 +109,7 @@ fun SettingsScreen(
             onAction = actions.openLanguage,
         )
         AppearanceSection(appearance, actions, onChoosePack = { choosingPack = true })
+        app.lanceur.focus.FocusSection(focus, focusActive, focusApps, actions.focus)
         PagesSection(pageOrder, widgetPageEnabled, newsEnabled, actions)
         SectionTitle(tr("Côté de l'alphabet", "Alphabet side"))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

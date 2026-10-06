@@ -210,6 +210,7 @@ fun HomeScreen(
                     onDateTap = { act.openCalendar() },
                     modifier = Modifier.height(HEADER_HEIGHT),
                 )
+                if (lists.focusActive) app.lanceur.focus.FocusBanner(until = lists.focusUntil, onStop = { act.stopFocus() })
                 LazyColumn(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     verticalArrangement = Arrangement.Bottom,

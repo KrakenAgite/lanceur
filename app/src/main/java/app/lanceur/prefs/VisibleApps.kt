@@ -10,6 +10,11 @@ data class AppLists(
     val favorites: List<AppEntry>,
     val hiddenApps: List<AppEntry>,
     val privateApps: List<AppEntry>,
+    /** Mode concentration en cours ; [focusUntil] : fin de la plage horaire, null si démarré à la main. */
+    val focusActive: Boolean = false,
+    /** Applis qu'on peut cocher pour la concentration : la liste de l'accueil, sans le filtre de la concentration. */
+    val focusCandidates: List<AppEntry> = emptyList(),
+    val focusUntil: java.time.ZonedDateTime? = null,
 ) {
     companion object {
         val EMPTY = AppLists(emptyList(), emptyList(), emptyList(), emptyList())
@@ -17,17 +22,21 @@ data class AppLists(
 }
 
 object VisibleApps {
-    fun compute(catalog: List<AppEntry>, prefs: LauncherPrefs): AppLists {
+    fun compute(catalog: List<AppEntry>, prefs: LauncherPrefs, now: java.time.ZonedDateTime = java.time.ZonedDateTime.now()): AppLists {
         val sorted = catalog.sortedWith(LabelOrder)
         val hiddenPackages = prefs.hidden.mapTo(HashSet()) { it.packageInProfile() }
         val isHidden = { entry: AppEntry -> entry.key.packageInProfile() in hiddenPackages }
-        val visible = sorted.filter { !it.isPrivateSpace && !isHidden(it) }
+        val launchable = sorted.filter { !it.isPrivateSpace && !isHidden(it) }
+        val visible = prefs.focus.visible(launchable, now)
         val visibleByKey = visible.associateBy { it.key }
         return AppLists(
             allVisible = visible,
             favorites = prefs.favorites.mapNotNull { visibleByKey[it] },
             hiddenApps = sorted.filter { !it.isPrivateSpace && isHidden(it) },
             privateApps = sorted.filter { it.isPrivateSpace },
+            focusActive = prefs.focus.isActive(now),
+            focusCandidates = launchable.filterNot { it.key.packageName.startsWith("app.lanceur") },
+            focusUntil = prefs.focus.activeUntil(now),
         )
     }
 
