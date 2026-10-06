@@ -10,17 +10,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
+import app.lanceur.home.PageKind
+import app.lanceur.home.PageLayout
 import app.lanceur.prefs.AlphabetSide
 import app.lanceur.ui.HintText
 import app.lanceur.ui.SectionTitle
@@ -34,6 +42,8 @@ class SettingsActions(
     val setSide: (AlphabetSide) -> Unit = {},
     val enableLockService: () -> Unit = {},
     val setWidgetPageEnabled: (Boolean) -> Unit = {},
+    val setNewsEnabled: (Boolean) -> Unit = {},
+    val movePage: (PageKind, Int) -> Unit = { _, _ -> },
 )
 
 @Composable
@@ -43,7 +53,9 @@ fun SettingsScreen(
     isDefaultLauncher: Boolean,
     permissionsGranted: Boolean,
     lockServiceEnabled: Boolean,
+    pageOrder: List<PageKind>,
     widgetPageEnabled: Boolean,
+    newsEnabled: Boolean,
     icon: @Composable (AppKey) -> Unit,
     actions: SettingsActions,
     modifier: Modifier = Modifier,
@@ -76,18 +88,13 @@ fun SettingsScreen(
             actionLabel = if (lockServiceEnabled) null else "Activer",
             onAction = actions.enableLockService,
         )
-        SwitchRow(
-            title = "Page de widgets à gauche",
-            subtitle = "Glisser vers la droite depuis l'accueil",
-            checked = widgetPageEnabled,
-            onCheckedChange = actions.setWidgetPageEnabled,
-        )
         SettingRow(
             title = "Applis cachées",
             subtitle = "Protégées par ton empreinte",
             actionLabel = "Ouvrir",
             onAction = actions.openHidden,
         )
+        PagesSection(pageOrder, widgetPageEnabled, newsEnabled, actions)
         SectionTitle("Côté de l'alphabet")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = side == AlphabetSide.LEFT, onClick = { actions.setSide(AlphabetSide.LEFT) }, label = { Text("Gauche") })
@@ -113,13 +120,40 @@ private fun SettingRow(title: String, subtitle: String, actionLabel: String?, on
     }
 }
 
+/** Pages de gauche à droite, comme quand on fait défiler ; l'Accueil ne se désactive pas. */
 @Composable
-private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun PagesSection(order: List<PageKind>, widgetsEnabled: Boolean, newsEnabled: Boolean, actions: SettingsActions) {
+    SectionTitle("Pages")
+    HintText("De gauche à droite, comme quand tu fais défiler")
+    val pages = PageLayout.normalize(order)
+    pages.forEachIndexed { index, kind ->
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(kind.label, style = MaterialTheme.typography.titleMedium)
+                Text(kind.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = { actions.movePage(kind, -1) }, enabled = index > 0) {
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Monter ${kind.label}")
+            }
+            IconButton(onClick = { actions.movePage(kind, +1) }, enabled = index < pages.lastIndex) {
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Descendre ${kind.label}")
+            }
+            Switch(
+                checked = when (kind) {
+                    PageKind.HOME -> true
+                    PageKind.WIDGETS -> widgetsEnabled
+                    PageKind.NEWS -> newsEnabled
+                },
+                onCheckedChange = { on ->
+                    when (kind) {
+                        PageKind.WIDGETS -> actions.setWidgetPageEnabled(on)
+                        PageKind.NEWS -> actions.setNewsEnabled(on)
+                        PageKind.HOME -> Unit
+                    }
+                },
+                enabled = kind != PageKind.HOME,
+                modifier = Modifier.testTag("page-switch-${kind.name}"),
+            )
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

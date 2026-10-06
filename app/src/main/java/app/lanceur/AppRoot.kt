@@ -51,14 +51,23 @@ import app.lanceur.builtin.BuiltinSlots
 import app.lanceur.builtin.BuiltinWidget
 import app.lanceur.builtin.calendar.CalendarCardActions
 import app.lanceur.builtin.contacts.FavoritesActions
+import app.lanceur.builtin.rememberMinuteClock
 import app.lanceur.builtin.shortcuts.ShortcutActions
 import app.lanceur.home.HomeActions
 import app.lanceur.home.HomePager
 import app.lanceur.home.HomeScreen
 import app.lanceur.home.LauncherViewModel
 import app.lanceur.home.ListMode
+import app.lanceur.home.PageKind
+import app.lanceur.home.PageLayout
 import app.lanceur.home.Screen
 import app.lanceur.lock.LockScreenService
+import app.lanceur.news.NewsActions
+import app.lanceur.news.NewsFeed
+import app.lanceur.news.NewsFeedSheet
+import app.lanceur.news.NewsImage
+import app.lanceur.news.NewsPage
+import app.lanceur.news.NewsState
 import app.lanceur.search.SearchActions
 import app.lanceur.search.SearchPermissions
 import app.lanceur.search.SearchResult
@@ -310,18 +319,41 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         rss = container.rss,
         refresh = widgetRefresh,
     )
+    val pages = remember(prefs.pageOrder, prefs.widgetPageEnabled, prefs.newsEnabled) {
+        PageLayout.active(prefs.pageOrder, prefs.widgetPageEnabled, prefs.newsEnabled)
+    }
+    val newsState = remember(prefs.news) { NewsState.decode(prefs.news) }
+    var newsFilter by remember { mutableStateOf<String?>(null) }
+    var newsRefreshing by remember { mutableStateOf(false) }
+    var addingFeed by remember { mutableStateOf(false) }
+    val newsNow = rememberMinuteClock()
+    fun refreshNews(force: Boolean) {
+        scope.launch {
+            newsRefreshing = force
+            val refreshed = container.news.refresh(newsState, System.currentTimeMillis(), force)
+            vm.updateNews { current -> NewsState.merge(NewsState.decode(current), refreshed).encode() }
+            newsRefreshing = false
+        }
+    }
+    LaunchedEffect(newsState.feeds.map { it.url }) { if (newsState.feeds.any { it.fetchedAt == null }) refreshNews(force = false) }
     Box(Modifier.fillMaxSize()) {
         // Seul le fond d'écran est visible pendant les quelques millisecondes du chargement
         if (loaded) HomePager(
             modifier = Modifier.graphicsLayer { alpha = homeAlpha },
-            widgetsEnabled = prefs.widgetPageEnabled,
+            pages = pages,
             homePageRequests = homePageRequests,
             backEnabled = screen == Screen.HOME,
             editMode = widgetEditMode,
             onExitEdit = { vm.setWidgetEditMode(false) },
-            onWidgetsShown = {
-                widgetRefresh++
-                reloadSummary()
+            onPageShown = { kind ->
+                when (kind) {
+                    PageKind.WIDGETS -> {
+                        widgetRefresh++
+                        reloadSummary()
+                    }
+                    PageKind.NEWS -> refreshNews(force = false)
+                    PageKind.HOME -> Unit
+                }
             },
             widgetPage = {
                 WidgetPage(
@@ -347,6 +379,26 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                         reconfigure = { slot -> BuiltinSlots.kindOf(slot)?.let { settingsRequest = it to slot.appWidgetId } ?: widgetHostActions.reconfigure(slot) },
                         reorder = vm::setWidgetsOrder,
                     ),
+                )
+            },
+            newsPage = {
+                val filter = NewsFeed.validFilter(newsState, newsFilter)
+                NewsPage(
+                    chips = NewsFeed.chips(newsState),
+                    filter = filter,
+                    articles = NewsFeed.articles(newsState, filter),
+                    footer = NewsFeed.footer(newsState, newsNow, java.time.ZoneId.systemDefault()),
+                    unavailable = NewsFeed.allFailedEmpty(newsState),
+                    refreshing = newsRefreshing,
+                    now = newsNow,
+                    actions = NewsActions(
+                        filter = { newsFilter = it },
+                        add = { addingFeed = true },
+                        remove = { url -> vm.updateNews { NewsState.decode(it).remove(url).encode() } },
+                        open = builtinServices.openUrl,
+                        refresh = { refreshNews(force = true) },
+                    ),
+                    image = { url, m -> NewsImage(url, container.images, m) },
                 )
             },
             home = {
@@ -440,7 +492,9 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 isDefaultLauncher = isDefault,
                 permissionsGranted = permissionsGranted,
                 lockServiceEnabled = lockServiceEnabled,
+                pageOrder = prefs.pageOrder,
                 widgetPageEnabled = prefs.widgetPageEnabled,
+                newsEnabled = prefs.newsEnabled,
                 icon = icon,
                 actions = SettingsActions(
                     setDefault = {
@@ -456,7 +510,20 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     setSide = vm::setAlphabetSide,
                     enableLockService = ::openAccessibilitySettings,
                     setWidgetPageEnabled = vm::setWidgetPageEnabled,
+                    setNewsEnabled = vm::setNewsEnabled,
+                    movePage = vm::movePage,
                 ),
+            )
+        }
+        if (addingFeed) {
+            NewsFeedSheet(
+                existing = newsState.feeds.mapTo(HashSet()) { it.url },
+                check = { container.rss.check(it) },
+                onAdd = { url, title ->
+                    vm.updateNews { NewsState.decode(it).add(url, title).encode() }
+                    addingFeed = false
+                },
+                onDismiss = { addingFeed = false },
             )
         }
         settingsRequest?.let { (kind, id) ->

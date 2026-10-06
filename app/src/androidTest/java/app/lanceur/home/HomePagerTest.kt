@@ -17,6 +17,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
@@ -141,5 +142,48 @@ class HomePagerTest {
         rule.waitForIdle()
         rule.onNodeWithText("ACCUEIL").assertIsDisplayed()
         rule.onNodeWithText("PAGE WIDGETS").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun three_pages_reach_news_and_home_returns() {
+        var requests by mutableIntStateOf(0)
+        rule.setContent {
+            MaterialTheme {
+                HomePager(
+                    pages = listOf(PageKind.NEWS, PageKind.WIDGETS, PageKind.HOME),
+                    homePageRequests = requests,
+                    editMode = false,
+                    onExitEdit = {},
+                    onPageShown = {},
+                    widgetPage = { Text("PAGE WIDGETS") },
+                    newsPage = { Text("PAGE ACTUS") },
+                    home = simpleHome(),
+                )
+            }
+        }
+        rule.onNodeWithText("ACCUEIL").assertIsDisplayed()
+        rule.onNodeWithTag("pager").performTouchInput { swipeRight() }
+        rule.onNodeWithText("PAGE WIDGETS").assertIsDisplayed()
+        rule.onNodeWithTag("pager").performTouchInput { swipeRight() }
+        rule.onNodeWithText("PAGE ACTUS").assertIsDisplayed()
+        requests++
+        rule.onNodeWithText("ACCUEIL").assertIsDisplayed()
+    }
+
+    @Test
+    fun news_on_the_right_is_reached_by_swiping_left() {
+        rule.setContent {
+            MaterialTheme {
+                HomePager(
+                    pages = listOf(PageKind.WIDGETS, PageKind.HOME, PageKind.NEWS),
+                    homePageRequests = 0, editMode = false, onExitEdit = {}, onPageShown = {},
+                    widgetPage = { Text("PAGE WIDGETS") }, newsPage = { Text("PAGE ACTUS") }, home = simpleHome(),
+                )
+            }
+        }
+        rule.onNodeWithTag("pager").performTouchInput { swipeLeft() }
+        rule.onNodeWithText("PAGE ACTUS").assertIsDisplayed()
+        Espresso.pressBack()
+        rule.onNodeWithText("ACCUEIL").assertIsDisplayed()
     }
 }
