@@ -6,6 +6,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,14 +48,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.lanceur.builtin.Freshness
 import app.lanceur.builtin.rss.Article
 import app.lanceur.ui.CardLabel
@@ -98,13 +103,29 @@ fun NewsPage(
         modifier
             .fillMaxSize()
             // Même dégradé que la page de widgets : le haut laisse voir le fond d'écran, le bas reste lisible
-            .background(Brush.verticalGradient(0f to colors.surface.copy(alpha = 0.15f), 1f to colors.surface.copy(alpha = 0.65f)))
+            .background(Brush.verticalGradient(0f to colors.surface.copy(alpha = 0.35f), 0.3f to colors.surface.copy(alpha = 0.45f), 1f to colors.surface.copy(alpha = 0.7f)))
             .systemBarsPadding(),
     ) {
         Row(Modifier.fillMaxWidth().padding(start = 24.dp, end = 16.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Ombre douce : le titre et la date restent lisibles sur un fond d'écran clair ou chargé
+            val dark = isSystemInDarkTheme()
+            val shadow = Shadow(color = (if (dark) Color.Black else Color.White).copy(alpha = 0.5f), offset = Offset(0f, 2f), blurRadius = 10f)
             Column(Modifier.weight(1f)) {
-                CardLabel("Actualités")
-                if (dateLabel.isNotEmpty()) Text(dateLabel, style = MaterialTheme.typography.headlineMedium, color = colors.onSurface)
+                Text(
+                    "ACTUALITÉS",
+                    style = MaterialTheme.typography.labelLarge.copy(shadow = shadow),
+                    color = colors.primaryFixed,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp,
+                )
+                if (dateLabel.isNotEmpty()) {
+                    Text(
+                        dateLabel,
+                        style = MaterialTheme.typography.headlineMedium.copy(shadow = shadow),
+                        color = if (dark) Color.White else Color.Black,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
             FilledTonalIconButton(onClick = actions.refresh) { Icon(Icons.Default.Refresh, contentDescription = "Actualiser") }
         }
