@@ -160,6 +160,10 @@ class LauncherViewModel(
         viewModelScope.launch { prefsRepo.setWidgetsOrder(ids) }
     }
 
+    fun setIconStyle(style: app.lanceur.apps.icons.IconStyle) {
+        viewModelScope.launch { prefsRepo.setIconStyle(style) }
+    }
+
     fun setNewsEnabled(enabled: Boolean) {
         viewModelScope.launch { prefsRepo.setNewsEnabled(enabled) }
     }

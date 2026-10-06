@@ -37,7 +37,9 @@ import app.lanceur.summary.DaySummarySource
 import app.lanceur.widgets.WidgetHost
 import app.lanceur.widgets.WidgetIds
 import app.lanceur.widgets.WidgetProviderSource
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /** Un seul exemplaire de chaque service pour toute l'app. */
@@ -48,7 +50,10 @@ class AppContainer(context: Context) {
     val catalog = AppCatalog(
         scope = appScope,
         source = LauncherAppsSource(appContext),
-        onPackageChanged = iconLoader::evict,
+        onPackageChanged = { pkg ->
+            iconLoader.evict(pkg)
+            appScope.launch { iconLoader.packChanged(pkg) }
+        },
         onError = { Log.w("Lanceur", "Lecture des applis impossible", it) },
     )
     // Même fichier que l'ancien `preferencesDataStore(name = "lanceur")` : les réglages déjà enregistrés sont conservés
@@ -72,6 +77,11 @@ class AppContainer(context: Context) {
     val battery = BatterySource(appContext)
     val nowPlaying = NowPlayingSource(appContext)
     val calendarRange = CalendarRangeSource(appContext)
+
+    /** Les icônes suivent le style enregistré (pack, forme, thématisées). */
+    fun watchIconStyle() {
+        appScope.launch { prefsRepo.prefs.map { it.iconStyle }.distinctUntilChanged().collect { iconLoader.setStyle(it) } }
+    }
 
     /** Libère les identifiants réservés par un ajout interrompu (Lanceur tué pendant la configuration). */
     fun cleanUpWidgetIds() {

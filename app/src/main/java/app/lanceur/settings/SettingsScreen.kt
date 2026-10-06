@@ -16,6 +16,10 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -38,6 +42,9 @@ class SettingsActions(
     val setNewsEnabled: (Boolean) -> Unit = {},
     val movePage: (PageKind, Int) -> Unit = { _, _ -> },
     val openLanguage: () -> Unit = {},
+    val openWallpaper: () -> Unit = {},
+    val setIconStyle: (app.lanceur.apps.icons.IconStyle) -> Unit = {},
+    val findIconPacks: () -> Unit = {},
 )
 
 @Composable
@@ -53,7 +60,9 @@ fun SettingsScreen(
     icon: @Composable (AppKey) -> Unit,
     actions: SettingsActions,
     modifier: Modifier = Modifier,
+    appearance: AppearanceState = AppearanceState(),
 ) {
+    var choosingPack by remember { mutableStateOf(false) }
     Column(
         modifier
             .fillMaxSize()
@@ -94,6 +103,7 @@ fun SettingsScreen(
             actionLabel = tr("Changer", "Change"),
             onAction = actions.openLanguage,
         )
+        AppearanceSection(appearance, actions, onChoosePack = { choosingPack = true })
         PagesSection(pageOrder, widgetPageEnabled, newsEnabled, actions)
         SectionTitle(tr("Côté de l'alphabet", "Alphabet side"))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -107,10 +117,18 @@ fun SettingsScreen(
             ReorderableFavorites(favorites, icon, actions.reorderFavorites)
         }
     }
+    if (choosingPack) {
+        IconPackSheet(
+            state = appearance,
+            onPick = { actions.setIconStyle(appearance.iconStyle.copy(pack = it)); choosingPack = false },
+            onFindPacks = { actions.findIconPacks(); choosingPack = false },
+            onDismiss = { choosingPack = false },
+        )
+    }
 }
 
 @Composable
-private fun SettingRow(title: String, subtitle: String, actionLabel: String?, onAction: () -> Unit) {
+internal fun SettingRow(title: String, subtitle: String, actionLabel: String?, onAction: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium)

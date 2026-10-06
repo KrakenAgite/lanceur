@@ -22,4 +22,5 @@ data class LauncherPrefs(
     val pageOrder: List<PageKind> = PageLayout.DEFAULT_ORDER,
     /** État de la page Actualités (`NewsState` encodé). */
     val news: String? = null,
+    val iconStyle: app.lanceur.apps.icons.IconStyle = app.lanceur.apps.icons.IconStyle(),
 )

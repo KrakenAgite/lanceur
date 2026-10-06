@@ -1,5 +1,7 @@
 package app.lanceur.prefs
 
+import app.lanceur.apps.icons.IconShape
+import app.lanceur.apps.icons.IconStyle
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
@@ -96,6 +98,8 @@ class PrefsRepo(
     /** Transformation dans la transaction : une actualisation et un ajout de flux ne s'écrasent pas. */
     suspend fun updateNews(transform: (String?) -> String) = update { it.copy(news = transform(it.news)) }
 
+    suspend fun setIconStyle(style: IconStyle) = update { it.copy(iconStyle = style) }
+
     suspend fun setWidgetPageEnabled(enabled: Boolean) = update { it.copy(widgetPageEnabled = enabled) }
 
     suspend fun prune(catalog: List<AppEntry>) = update { VisibleApps.prune(catalog, it) }
@@ -120,6 +124,9 @@ class PrefsRepo(
         val NEWS_ENABLED = booleanPreferencesKey("news_enabled")
         val PAGE_ORDER = stringPreferencesKey("page_order")
         val NEWS = stringPreferencesKey("news")
+        val ICON_PACK = stringPreferencesKey("icon_pack")
+        val ICON_SHAPE = stringPreferencesKey("icon_shape")
+        val ICON_THEMED = booleanPreferencesKey("icon_themed")
 
         fun decode(stored: Preferences) = LauncherPrefs(
             favorites = stored[FAVORITES].orEmpty().split('\n').mapNotNull(AppKey::decode),
@@ -130,6 +137,7 @@ class PrefsRepo(
             newsEnabled = stored[NEWS_ENABLED] ?: false,
             pageOrder = PageLayout.decode(stored[PAGE_ORDER]),
             news = stored[NEWS],
+            iconStyle = IconStyle(stored[ICON_PACK], IconShape.decode(stored[ICON_SHAPE]), stored[ICON_THEMED] ?: false),
             widgets = stored[WIDGETS].orEmpty().split('\n').mapNotNull(WidgetSlot::decode).distinctBy { it.appWidgetId },
             widgetData = stored.asMap().mapNotNull { (key, value) ->
                 val id = key.name.takeIf { it.startsWith(DATA_PREFIX) }?.removePrefix(DATA_PREFIX)?.toIntOrNull()
@@ -146,6 +154,9 @@ class PrefsRepo(
             out[NEWS_ENABLED] = prefs.newsEnabled
             out[PAGE_ORDER] = PageLayout.encode(prefs.pageOrder)
             if (prefs.news != null) out[NEWS] = prefs.news else out.remove(NEWS)
+            prefs.iconStyle.pack?.let { out[ICON_PACK] = it } ?: out.remove(ICON_PACK)
+            out[ICON_SHAPE] = prefs.iconStyle.shape.name
+            out[ICON_THEMED] = prefs.iconStyle.themed
             out[WIDGETS] = prefs.widgets.joinToString("\n") { it.encode() }
             // Les données d'un widget retiré disparaissent avec lui
             out.asMap().keys.filter { it.name.startsWith(DATA_PREFIX) }.toList().forEach { out.remove(it) }

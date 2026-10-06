@@ -27,6 +27,14 @@
         <intent>
             <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
         </intent>
+        <!-- Packs d'icônes (format Nova / ADW) -->
+        <intent><action android:name="org.adw.launcher.THEMES" /></intent>
+        <intent><action android:name="com.novalauncher.THEME" /></intent>
+        <intent><action android:name="com.teslacoilsw.launcher.THEME" /></intent>
+        <intent><action android:name="com.anddoes.launcher.THEME" /></intent>
+        <intent><action android:name="com.gau.go.launcherex.theme" /></intent>
+        <!-- Outil de fond d'écran du téléphone -->
+        <intent><action android:name="android.intent.action.SET_WALLPAPER" /></intent>
     </queries>
 
     <application

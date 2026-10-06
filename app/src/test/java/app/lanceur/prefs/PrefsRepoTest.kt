@@ -187,6 +187,17 @@ class PrefsRepoTest {
     }
 
     @Test
+    fun icon_style_is_saved_and_the_pack_can_be_cleared() = runTest {
+        val repo = PrefsRepo(store())
+        assertEquals(app.lanceur.apps.icons.IconStyle(), repo.prefs.first().iconStyle)
+        val style = app.lanceur.apps.icons.IconStyle(pack = "com.pack", shape = app.lanceur.apps.icons.IconShape.CIRCLE, themed = true)
+        repo.setIconStyle(style)
+        assertEquals(style, repo.prefs.first().iconStyle)
+        repo.setIconStyle(style.copy(pack = null))
+        assertEquals(null, repo.prefs.first().iconStyle.pack)
+    }
+
+    @Test
     fun pages_default_and_migration() = runTest {
         val repo = PrefsRepo(store())
         val initial = repo.prefs.first()

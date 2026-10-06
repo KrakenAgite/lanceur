@@ -40,6 +40,6 @@ class SettingsEnglishTest {
         rule.onNodeWithText("Change").performClick()
         assertTrue(opened)
         rule.onNodeWithTag("page-eye-NEWS").performScrollTo().assertContentDescriptionEquals("Show News")
-        rule.onNodeWithText("Home").assertIsDisplayed()
+        rule.onNodeWithText("Home").performScrollTo().assertIsDisplayed()
     }
 }

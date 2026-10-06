@@ -4,6 +4,9 @@ import app.lanceur.i18n.tr
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import app.lanceur.apps.icons.IconPacks
+import app.lanceur.apps.icons.Wallpaper
+import app.lanceur.settings.AppearanceState
 import android.provider.AlarmClock
 import android.provider.Settings
 import android.widget.Toast
@@ -499,7 +502,17 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 widgetPageEnabled = prefs.widgetPageEnabled,
                 newsEnabled = prefs.newsEnabled,
                 icon = icon,
+                appearance = AppearanceState(
+                    iconStyle = prefs.iconStyle,
+                    packs = remember { IconPacks.installed(context) },
+                    wallpaperLabel = remember { Wallpaper(context).label() },
+                ),
                 actions = SettingsActions(
+                    openWallpaper = { container.appLauncher.startSafely(Wallpaper(context).intent()) },
+                    setIconStyle = vm::setIconStyle,
+                    findIconPacks = {
+                        container.appLauncher.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=icon%20pack&c=apps")))
+                    },
                     setDefault = {
                         try {
                             roleLauncher.launch(HomeRole.requestIntent(context))

@@ -14,6 +14,7 @@ class LanceurApp : Application() {
         container = AppContainer(this)
         container.catalog.start()
         container.cleanUpWidgetIds()
+        container.watchIconStyle()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
