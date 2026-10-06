@@ -13,6 +13,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -76,6 +77,7 @@ fun NewsImage(url: String, loader: ImageLoader, modifier: Modifier = Modifier) {
     val width = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.roundToPx() }
     val bitmap by produceState<ImageBitmap?>(null, url) { value = loader.load(url, width) }
     Box(modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)) {
-        bitmap?.let { Image(it, contentDescription = null, modifier = Modifier.matchParentSize(), contentScale = ContentScale.Crop) }
+        val alpha = fadeIn(bitmap != null)
+        bitmap?.let { Image(it, contentDescription = null, modifier = Modifier.matchParentSize().graphicsLayer { this.alpha = alpha }, contentScale = ContentScale.Crop) }
     }
 }

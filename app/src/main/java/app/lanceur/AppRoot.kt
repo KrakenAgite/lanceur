@@ -399,6 +399,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                         refresh = { refreshNews(force = true) },
                     ),
                     image = { url, m -> NewsImage(url, container.images, m) },
+                    dateLabel = NewsFeed.dateLabel(newsNow, java.time.ZoneId.systemDefault()),
                 )
             },
             home = {

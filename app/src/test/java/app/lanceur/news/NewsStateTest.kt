@@ -84,4 +84,11 @@ class NewsStateTest {
         val failedNow = NewsState(listOf(newer.feeds.single().copy(failed = true)))
         assertTrue(NewsState.merge(newer, failedNow).feeds.single().failed)
     }
+
+    @Test
+    fun header_date_like_the_day_summary() {
+        val paris = ZoneId.of("Europe/Paris")
+        val at = LocalDateTime.of(2026, 10, 6, 9, 0).atZone(paris).toInstant().toEpochMilli()
+        assertEquals("Mardi 6 octobre", NewsFeed.dateLabel(at, paris))
+    }
 }

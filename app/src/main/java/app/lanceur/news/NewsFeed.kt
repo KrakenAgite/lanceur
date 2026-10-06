@@ -35,5 +35,11 @@ object NewsFeed {
 
     fun allFailedEmpty(state: NewsState): Boolean = state.feeds.isNotEmpty() && state.feeds.all { it.failed && it.articles.isEmpty() }
 
+    private val DATE = java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", java.util.Locale.FRENCH)
+
+    /** « Mardi 6 octobre », comme l'en-tête du résumé du jour. */
+    fun dateLabel(now: Long, zone: ZoneId): String =
+        DATE.format(java.time.Instant.ofEpochMilli(now).atZone(zone)).replaceFirstChar { it.titlecase(java.util.Locale.FRENCH) }
+
     private fun host(url: String) = runCatching { java.net.URI(url).host.removePrefix("www.") }.getOrNull().orEmpty()
 }
