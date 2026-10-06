@@ -17,6 +17,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.CenterFocusStrong
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.ViewCarousel
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -107,14 +120,14 @@ data class PermissionsState(
 }
 
 /** Sous-menus des réglages, dans l'ordre de la liste. */
-enum class SettingsPage(val emoji: String, private val fr: String, private val en: String) {
-    HOME("🏠", "Accueil", "Home"),
-    APPEARANCE("🎨", "Apparence", "Appearance"),
-    PAGES("📑", "Pages", "Pages"),
-    FOCUS("🎯", "Concentration", "Focus"),
-    PERMISSIONS("🔐", "Autorisations", "Permissions"),
-    BACKUP("💾", "Sauvegarde", "Backup"),
-    ABOUT("ℹ️", "À propos", "About"),
+enum class SettingsPage(val icon: ImageVector, private val fr: String, private val en: String) {
+    HOME(Icons.Outlined.Home, "Accueil", "Home"),
+    APPEARANCE(Icons.Outlined.Palette, "Apparence", "Appearance"),
+    PAGES(Icons.Outlined.ViewCarousel, "Pages", "Pages"),
+    FOCUS(Icons.Outlined.CenterFocusStrong, "Concentration", "Focus"),
+    PERMISSIONS(Icons.Outlined.Shield, "Autorisations", "Permissions"),
+    BACKUP(Icons.Outlined.Backup, "Sauvegarde", "Backup"),
+    ABOUT(Icons.Outlined.Info, "À propos", "About"),
     ;
 
     val label: String get() = tr(fr, en)
@@ -174,13 +187,13 @@ fun SettingsScreen(
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingsPage.entries.forEach { p ->
-                    MenuRow(p.emoji, p.label, summary(p, side, favorites.size, appearance, pageOrder, widgetPageEnabled, newsEnabled, focus, focusActive, permissions, backup, updates, now), tag = "settings-${p.name}") {
+                    MenuRow(p.icon, p.label, summary(p, side, favorites.size, appearance, pageOrder, widgetPageEnabled, newsEnabled, focus, focusActive, permissions, backup, updates, now), tag = "settings-${p.name}") {
                         page = p
                     }
                 }
                 Spacer(Modifier.height(4.dp))
-                MenuRow("🔒", tr("Applis cachées", "Hidden apps"), null, tag = "settings-hidden", external = true, onClick = actions.openHidden)
-                MenuRow("🌐", tr("Langue", "Language"), tr("Français", "English"), tag = "settings-language", external = true, onClick = actions.openLanguage)
+                MenuRow(Icons.Outlined.Lock, tr("Applis cachées", "Hidden apps"), null, tag = "settings-hidden", external = true, onClick = actions.openHidden)
+                MenuRow(Icons.Outlined.Language, tr("Langue", "Language"), tr("Français", "English"), tag = "settings-language", external = true, onClick = actions.openLanguage)
             }
         } else {
             Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -296,19 +309,24 @@ private fun summary(
 }
 
 @Composable
-private fun MenuRow(emoji: String, title: String, summary: String?, tag: String, external: Boolean = false, onClick: () -> Unit) {
+private fun MenuRow(icon: ImageVector, title: String, summary: String?, tag: String, external: Boolean = false, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Row(
         Modifier.fillMaxWidth().clip(CARD).background(cardBackground()).clickable(onClick = onClick).testTag(tag)
             .padding(horizontal = 18.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(emoji, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 14.dp))
+        Icon(icon, contentDescription = null, tint = colors.primary, modifier = Modifier.padding(end = 16.dp).size(24.dp))
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
             summary?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant) }
         }
-        Text(if (external) "↗" else "›", style = MaterialTheme.typography.titleLarge, color = colors.onSurfaceVariant)
+        Icon(
+            if (external) Icons.AutoMirrored.Outlined.OpenInNew else Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+            contentDescription = null,
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

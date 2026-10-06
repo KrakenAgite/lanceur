@@ -1,5 +1,14 @@
 package app.lanceur.builtin.shortcuts
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
+import androidx.compose.material.icons.outlined.Bluetooth
+import androidx.compose.material.icons.outlined.DoNotDisturbOn
+import androidx.compose.material.icons.outlined.FlashlightOff
+import androidx.compose.material.icons.outlined.FlashlightOn
+import androidx.compose.material.icons.outlined.Wifi
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
 import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,17 +50,17 @@ fun ShortcutsCard(torch: TorchState, actions: ShortcutActions, modifier: Modifie
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 12.dp, vertical = 12.dp)) {
         CardLabel(tr("Raccourcis", "Shortcuts"), Modifier.padding(start = 10.dp))
         Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            Shortcut("🔦", tr("Lampe", "Flashlight"), active = torch.on, enabled = torch.available) { actions.toggleTorch(!torch.on) }
-            Shortcut("🌐", "Internet", onClick = actions.internet)
-            Shortcut("🔵", "Bluetooth", onClick = actions.bluetooth)
-            Shortcut("🔊", tr("Son", "Sound"), onClick = actions.sound)
-            Shortcut("🌙", tr("Ne pas déranger", "Do not disturb"), onClick = actions.doNotDisturb)
+            Shortcut(if (torch.on) Icons.Outlined.FlashlightOn else Icons.Outlined.FlashlightOff, tr("Lampe", "Flashlight"), active = torch.on, enabled = torch.available) { actions.toggleTorch(!torch.on) }
+            Shortcut(Icons.Outlined.Wifi, "Internet", onClick = actions.internet)
+            Shortcut(Icons.Outlined.Bluetooth, "Bluetooth", onClick = actions.bluetooth)
+            Shortcut(Icons.AutoMirrored.Outlined.VolumeUp, tr("Son", "Sound"), onClick = actions.sound)
+            Shortcut(Icons.Outlined.DoNotDisturbOn, tr("Ne pas déranger", "Do not disturb"), onClick = actions.doNotDisturb)
         }
     }
 }
 
 @Composable
-private fun Shortcut(emoji: String, label: String, active: Boolean = false, enabled: Boolean = true, onClick: () -> Unit) {
+private fun Shortcut(icon: ImageVector, label: String, active: Boolean = false, enabled: Boolean = true, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Column(
         Modifier
@@ -65,7 +74,7 @@ private fun Shortcut(emoji: String, label: String, active: Boolean = false, enab
         Box(
             Modifier.size(44.dp).clip(CircleShape).background(if (active) colors.primary else colors.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
-        ) { Text(emoji, fontSize = 20.sp) }
+        ) { Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp), tint = if (active) colors.onPrimary else colors.onSurfaceVariant) }
         Text(label, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, maxLines = 2, lineHeight = 12.sp)
     }
 }
