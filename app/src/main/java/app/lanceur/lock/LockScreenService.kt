@@ -32,14 +32,25 @@ class LockScreenService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     companion object {
+        /** Le réglage à surveiller pour suivre l'activation sans attendre un retour sur l'accueil. */
+        val SETTING_URI: android.net.Uri = android.provider.Settings.Secure.getUriFor(android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+
         @Volatile
         private var instance: LockScreenService? = null
 
         /** `false` si le service n'est pas activé dans les paramètres d'accessibilité. */
         fun lock(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) ?: false
 
+        /**
+         * Le choix enregistré dans Android compte, même si le service n'est pas encore relancé (juste après une
+         * mise à jour de Lanceur, il n'apparaît pas tout de suite parmi les services en marche).
+         */
         fun isEnabled(context: Context): Boolean {
             val me = ComponentName(context, LockScreenService::class.java)
+            val saved = runCatching {
+                android.provider.Settings.Secure.getString(context.contentResolver, android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+            }.getOrNull()
+            if (LockServiceSetting.isEnabledIn(saved, me.packageName, me.className)) return true
             return context.getSystemService(AccessibilityManager::class.java)
                 .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
                 .any { it.resolveInfo.serviceInfo.let { s -> s.packageName == me.packageName && s.name == me.className } }

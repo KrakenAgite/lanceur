@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -164,6 +165,16 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         onPauseOrDispose { }
     }
     fun quickToast(message: String) = android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+    // Activation du double toucher suivie en direct (y compris juste après une mise à jour)
+    DisposableEffect(Unit) {
+        val observer = object : android.database.ContentObserver(android.os.Handler(android.os.Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                lockServiceEnabled = LockScreenService.isEnabled(context)
+            }
+        }
+        context.contentResolver.registerContentObserver(LockScreenService.SETTING_URI, false, observer)
+        onDispose { context.contentResolver.unregisterContentObserver(observer) }
+    }
     val notifyLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { canNotify = it }
     val backupFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         uri?.let { scope.launch { quickToast(if (container.backups.exportTo(it)) tr("Sauvegarde enregistrée", "Backup saved") else tr("Sauvegarde impossible", "Backup failed")) } }
@@ -256,7 +267,9 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     }
 
     fun lockScreen() {
-        if (!LockScreenService.lock()) {
+        // Activé mais pas encore relancé par Android (quelques secondes après une mise à jour) : on n'envoie pas
+        // l'utilisateur dans les réglages pour rien
+        if (!LockScreenService.lock() && !LockScreenService.isEnabled(context)) {
             toast(tr("Active « Lanceur » dans Accessibilité pour verrouiller d'un double toucher", "Turn on “Lanceur” in Accessibility to lock with a double tap"))
             openAccessibilitySettings()
         }
