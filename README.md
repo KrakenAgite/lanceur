@@ -26,8 +26,9 @@ Au premier essai : *Paramètres > Applis > Applis par défaut > Appli d'écran d
 
 ### Version debug
 
-`installDebug` installe une app distincte, `app.lanceur.debug`, à côté de la release : elle sert au développement et
-aux tests d'interface, sans jamais toucher à la version que tu utilises.
+La version de test est une app distincte, `app.lanceur.debug`, nommée « Lanceur (test) ». Les tests d'interface
+l'installent puis la désinstallent à la fin ; elle ne touche jamais à la release signée (`app.lanceur`), la seule à
+utiliser au quotidien. Après des tests, mettre à jour la release avec `adb install -r` (les réglages sont conservés).
 
 ## Tests
 
