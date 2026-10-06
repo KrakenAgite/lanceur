@@ -299,8 +299,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         if (screen != Screen.WIDGET_PICKER) pickerQuery = ""
     }
 
-    // Sous la recherche translucide, seul le fond d'écran doit transparaître
-    val homeAlpha by animateFloatAsState(if (screen == Screen.SEARCH) 0f else 1f, label = "homeAlpha")
+    // Recherche et Réglages : seul le fond d'écran reste derrière, pas l'accueil
+    val homeAlpha by animateFloatAsState(if (screen == Screen.SEARCH || screen == Screen.SETTINGS) 0f else 1f, label = "homeAlpha")
     val builtinServices = BuiltinServices(
         battery = container.battery,
         nowPlaying = container.nowPlaying,
