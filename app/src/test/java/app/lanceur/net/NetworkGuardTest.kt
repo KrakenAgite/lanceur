@@ -19,9 +19,16 @@ class NetworkGuardTest {
     @Test
     fun connections_are_opened_only_in_network() {
         val offenders = sources.filter { relative(it) != "net/Network.kt" }
-            .filter { file -> listOf("HttpURLConnection", "openConnection", "openStream", "URL(", "toURL(", "Socket(", "WebView", "DownloadManager", "okhttp", "ktor", "Jsoup.connect", ".connect(").any { it in file.readText() } }
+            .filter { file -> listOf("HttpURLConnection", "openConnection", "openStream", "URL(", "toURL(", "Socket(", "DownloadManager", "okhttp", "ktor", ".connect(").any { it in file.readText() } }
             .map(::relative)
         assertEquals(emptyList<String>(), offenders)
+    }
+
+    /** La vue web des articles est la seule exception : elle charge la page que l'on a touchée, rien d'autre. */
+    @Test
+    fun webview_is_used_only_by_the_article_view() {
+        val users = sources.filter { "android.webkit" in it.readText() }.map(::relative)
+        assertEquals(listOf("news/ArticleWebView.kt"), users)
     }
 
     @Test

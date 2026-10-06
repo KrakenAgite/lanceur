@@ -12,7 +12,6 @@ import app.lanceur.builtin.shortcuts.TorchController
 import app.lanceur.builtin.storage.StorageSource
 import app.lanceur.builtin.weather.WeatherSource
 import app.lanceur.net.Network
-import app.lanceur.news.ArticleSource
 import app.lanceur.news.ImageLoader
 import app.lanceur.news.NewsSource
 import app.lanceur.search.AppSearchProvider
@@ -75,7 +74,6 @@ class AppContainer(context: Context) {
     val rss = RssSource(network)
     val news = NewsSource(network)
     val images = ImageLoader(appContext, network)
-    val articles = ArticleSource(network)
     val battery = BatterySource(appContext)
     val nowPlaying = NowPlayingSource(appContext)
     val calendarRange = CalendarRangeSource(appContext)

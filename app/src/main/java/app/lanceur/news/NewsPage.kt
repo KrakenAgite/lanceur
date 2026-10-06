@@ -72,7 +72,7 @@ class NewsActions(
     val add: () -> Unit = {},
     val remove: (String) -> Unit = {},
     val open: (String) -> Unit = {},
-    /** Mode lecture ; sans lui, l'article s'ouvre dans le navigateur. */
+    /** Vue web dans Lanceur ; sans elle, l'article s'ouvre dans le navigateur. */
     val read: ((Article) -> Unit)? = null,
     val refresh: () -> Unit = {},
 )

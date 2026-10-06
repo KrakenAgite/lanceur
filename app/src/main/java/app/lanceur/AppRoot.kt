@@ -4,9 +4,7 @@ import app.lanceur.i18n.tr
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
-import app.lanceur.news.ArticleReader
-import app.lanceur.news.ReaderImage
-import app.lanceur.news.ReaderState
+import app.lanceur.news.ArticleWebView
 import app.lanceur.ui.blockTouchesBelow
 import app.lanceur.apps.icons.IconPacks
 import app.lanceur.apps.icons.Wallpaper
@@ -547,15 +545,11 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
             // Garde l'article pendant le fondu de sortie
             val article = remember { reading } ?: return@AnimatedVisibility
             val current = reading ?: article
-            BackHandler { reading = null }
-            val readerState by produceState<ReaderState>(ReaderState.Loading, current.link) { value = container.articles.read(current.link) }
-            ArticleReader(
-                article = current,
-                state = readerState,
-                now = newsNow,
-                image = { url, m -> ReaderImage(url, container.images, m) },
-                onBack = { reading = null },
-                onOpenSite = { builtinServices.openUrl(current.link) },
+            ArticleWebView(
+                url = current.link,
+                source = current.source,
+                onClose = { reading = null },
+                onOpenInBrowser = builtinServices.openUrl,
                 modifier = Modifier.blockTouchesBelow(),
             )
         }

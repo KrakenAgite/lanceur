@@ -21,9 +21,6 @@ sealed interface NetResult {
 /** Décisions pures du point de sortie : HTTPS seulement, y compris après redirection. */
 object NetRules {
     const val MAX_BYTES = 1_000_000
-
-    /** Pages web du mode lecture, plus lourdes qu'un flux. */
-    const val MAX_PAGE_BYTES = 3_000_000
     const val MAX_REDIRECTS = 3
     const val TIMEOUT_MS = 10_000
 
@@ -39,12 +36,12 @@ object NetRules {
 
 /**
  * Seul endroit de Lanceur qui ouvre une connexion (vérifié par `NetworkGuardTest`). Utilisé uniquement par la météo,
- * le RSS et le mode lecture des Actualités ; aucun cookie ni identifiant n'est envoyé.
+ * le RSS et les Actualités (la vue web des articles a son propre moteur, cf. `ArticleWebView`) ; aucun cookie ni identifiant n'est envoyé.
  */
 class Network {
-    suspend fun get(url: String, maxBytes: Int = NetRules.MAX_BYTES): NetResult = withContext(Dispatchers.IO) { fetch(url, maxBytes) }
+    suspend fun get(url: String): NetResult = withContext(Dispatchers.IO) { fetch(url) }
 
-    private fun fetch(start: String, maxBytes: Int): NetResult {
+    private fun fetch(start: String): NetResult {
         var current = start
         repeat(NetRules.MAX_REDIRECTS + 1) {
             if (!NetRules.allowed(current)) return NetResult.Failed(tr("Adresse HTTPS requise", "HTTPS address required"))
@@ -62,7 +59,7 @@ class Network {
             }
             try {
                 when (val code = connection.responseCode) {
-                    in 200..299 -> return NetResult.Ok(connection.inputStream.use { readLimited(it, maxBytes) })
+                    in 200..299 -> return NetResult.Ok(connection.inputStream.use(::readLimited))
                     301, 302, 303, 307, 308 ->
                         current = NetRules.next(current, connection.getHeaderField("Location")) ?: return NetResult.Failed(tr("Redirection refusée", "Redirect refused"))
                     else -> return NetResult.Failed(tr("Erreur ", "Error ") + code)
@@ -79,15 +76,15 @@ class Network {
         return NetResult.Failed(tr("Trop de redirections", "Too many redirects"))
     }
 
-    /** Lit au plus [maxBytes] : au-delà, erreur sans tout charger en mémoire. */
-    private fun readLimited(input: InputStream, maxBytes: Int): ByteArray {
+    /** Lit au plus `MAX_BYTES` : au-delà, erreur sans tout charger en mémoire. */
+    private fun readLimited(input: InputStream): ByteArray {
         val out = ByteArrayOutputStream()
         val buffer = ByteArray(8 * 1024)
         while (true) {
             val read = input.read(buffer)
             if (read < 0) break
             out.write(buffer, 0, read)
-            if (out.size() > maxBytes) throw IOException("Réponse trop grosse")
+            if (out.size() > NetRules.MAX_BYTES) throw IOException("Réponse trop grosse")
         }
         return out.toByteArray()
     }
