@@ -26,6 +26,15 @@ class FeedCatalogTest {
     }
 
     @Test
+    fun economy_and_markets_are_well_stocked_in_every_region() {
+        FeedRegion.entries.forEach { region ->
+            assertTrue(FeedCatalog.feeds(region, FeedTheme.ECONOMY).size >= 8)
+            assertTrue(FeedCatalog.feeds(region, FeedTheme.MARKETS).size >= 7)
+        }
+        assertTrue(FeedCatalog.search("bourse").any { it.source == "Le Figaro" && it.name == "Bourse" })
+    }
+
+    @Test
     fun franceinfo_offers_many_themes() {
         val themes = FeedCatalog.all.filter { it.source == "franceinfo" }.map { it.theme }.toSet()
         assertTrue(themes.size >= 8)
