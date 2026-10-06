@@ -185,4 +185,22 @@ class PrefsRepoTest {
         assertEquals(mapOf(-2 to "b=2"), repo.prefs.first().widgetData)
         assertEquals(listOf(-2), repo.prefs.first().widgets.map { it.appWidgetId })
     }
+
+    @Test
+    fun pages_default_and_migration() = runTest {
+        val repo = PrefsRepo(store())
+        val initial = repo.prefs.first()
+        assertEquals(app.lanceur.home.PageLayout.DEFAULT_ORDER, initial.pageOrder)
+        assertFalse(initial.newsEnabled)
+        repo.setWidgetPageEnabled(false)
+        repo.setNewsEnabled(true)
+        repo.setPageOrder(listOf(app.lanceur.home.PageKind.WIDGETS, app.lanceur.home.PageKind.HOME, app.lanceur.home.PageKind.NEWS))
+        val prefs = repo.prefs.first()
+        assertFalse(prefs.widgetPageEnabled)
+        assertTrue(prefs.newsEnabled)
+        assertEquals(listOf(app.lanceur.home.PageKind.WIDGETS, app.lanceur.home.PageKind.HOME, app.lanceur.home.PageKind.NEWS), prefs.pageOrder)
+        repo.updateNews { (it ?: "") + "x" }
+        repo.updateNews { (it ?: "") + "y" }
+        assertEquals("xy", repo.prefs.first().news)
+    }
 }

@@ -12,6 +12,8 @@ import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
 import app.lanceur.builtin.BuiltinKind
 import app.lanceur.builtin.BuiltinSlots
+import app.lanceur.home.PageKind
+import app.lanceur.home.PageLayout
 import app.lanceur.widgets.WidgetSize
 import app.lanceur.widgets.WidgetSlot
 import java.io.IOException
@@ -87,6 +89,13 @@ class PrefsRepo(
         prefs.copy(widgets = ordered + prefs.widgets.filter { it.appWidgetId !in ids })
     }
 
+    suspend fun setNewsEnabled(enabled: Boolean) = update { it.copy(newsEnabled = enabled) }
+
+    suspend fun setPageOrder(order: List<PageKind>) = update { it.copy(pageOrder = PageLayout.normalize(order)) }
+
+    /** Transformation dans la transaction : une actualisation et un ajout de flux ne s'écrasent pas. */
+    suspend fun updateNews(transform: (String?) -> String) = update { it.copy(news = transform(it.news)) }
+
     suspend fun setWidgetPageEnabled(enabled: Boolean) = update { it.copy(widgetPageEnabled = enabled) }
 
     suspend fun prune(catalog: List<AppEntry>) = update { VisibleApps.prune(catalog, it) }
@@ -108,6 +117,9 @@ class PrefsRepo(
         val HINT_DISMISSED = booleanPreferencesKey("permission_hint_dismissed")
         val WIDGETS = stringPreferencesKey("widgets")
         val WIDGET_PAGE = booleanPreferencesKey("widget_page_enabled")
+        val NEWS_ENABLED = booleanPreferencesKey("news_enabled")
+        val PAGE_ORDER = stringPreferencesKey("page_order")
+        val NEWS = stringPreferencesKey("news")
 
         fun decode(stored: Preferences) = LauncherPrefs(
             favorites = stored[FAVORITES].orEmpty().split('\n').mapNotNull(AppKey::decode),
@@ -115,6 +127,9 @@ class PrefsRepo(
             alphabetSide = AlphabetSide.entries.firstOrNull { it.name == stored[SIDE] } ?: AlphabetSide.RIGHT,
             permissionHintDismissed = stored[HINT_DISMISSED] ?: false,
             widgetPageEnabled = stored[WIDGET_PAGE] ?: true,
+            newsEnabled = stored[NEWS_ENABLED] ?: false,
+            pageOrder = PageLayout.decode(stored[PAGE_ORDER]),
+            news = stored[NEWS],
             widgets = stored[WIDGETS].orEmpty().split('\n').mapNotNull(WidgetSlot::decode).distinctBy { it.appWidgetId },
             widgetData = stored.asMap().mapNotNull { (key, value) ->
                 val id = key.name.takeIf { it.startsWith(DATA_PREFIX) }?.removePrefix(DATA_PREFIX)?.toIntOrNull()
@@ -128,6 +143,9 @@ class PrefsRepo(
             out[SIDE] = prefs.alphabetSide.name
             out[HINT_DISMISSED] = prefs.permissionHintDismissed
             out[WIDGET_PAGE] = prefs.widgetPageEnabled
+            out[NEWS_ENABLED] = prefs.newsEnabled
+            out[PAGE_ORDER] = PageLayout.encode(prefs.pageOrder)
+            if (prefs.news != null) out[NEWS] = prefs.news else out.remove(NEWS)
             out[WIDGETS] = prefs.widgets.joinToString("\n") { it.encode() }
             // Les données d'un widget retiré disparaissent avec lui
             out.asMap().keys.filter { it.name.startsWith(DATA_PREFIX) }.toList().forEach { out.remove(it) }

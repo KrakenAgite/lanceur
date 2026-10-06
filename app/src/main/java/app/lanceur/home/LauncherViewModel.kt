@@ -160,6 +160,18 @@ class LauncherViewModel(
         viewModelScope.launch { prefsRepo.setWidgetsOrder(ids) }
     }
 
+    fun setNewsEnabled(enabled: Boolean) {
+        viewModelScope.launch { prefsRepo.setNewsEnabled(enabled) }
+    }
+
+    fun movePage(kind: PageKind, delta: Int) {
+        viewModelScope.launch { prefsRepo.setPageOrder(PageLayout.move(prefs.value.pageOrder, kind, delta)) }
+    }
+
+    fun updateNews(transform: (String?) -> String) {
+        viewModelScope.launch { prefsRepo.updateNews(transform) }
+    }
+
     fun setWidgetPageEnabled(enabled: Boolean) {
         viewModelScope.launch { prefsRepo.setWidgetPageEnabled(enabled) }
     }
