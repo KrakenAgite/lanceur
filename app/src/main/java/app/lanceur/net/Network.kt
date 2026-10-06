@@ -21,6 +21,9 @@ sealed interface NetResult {
 /** Décisions pures du point de sortie : HTTPS seulement, y compris après redirection. */
 object NetRules {
     const val MAX_BYTES = 1_000_000
+
+    /** APK d'une mise à jour de Lanceur. */
+    const val MAX_DOWNLOAD_BYTES = 50_000_000L
     const val MAX_REDIRECTS = 3
     const val TIMEOUT_MS = 10_000
 
@@ -36,12 +39,30 @@ object NetRules {
 
 /**
  * Seul endroit de Lanceur qui ouvre une connexion (vérifié par `NetworkGuardTest`). Utilisé uniquement par la météo,
- * le RSS et les Actualités (la vue web des articles a son propre moteur, cf. `ArticleWebView`) ; aucun cookie ni identifiant n'est envoyé.
+ * le RSS, les Actualités et les mises à jour de Lanceur (la vue web des articles a son propre moteur, cf. `ArticleWebView`) ; aucun cookie ni identifiant n'est envoyé.
  */
 class Network {
-    suspend fun get(url: String): NetResult = withContext(Dispatchers.IO) { fetch(url) }
+    suspend fun get(url: String): NetResult = withContext(Dispatchers.IO) { fetch(url) { NetResult.Ok(readLimited(it)) } }
 
-    private fun fetch(start: String): NetResult {
+    /** Mise à jour de Lanceur : écrit la réponse dans [target] (au plus [NetRules.MAX_DOWNLOAD_BYTES]). */
+    suspend fun download(url: String, target: java.io.File): NetResult = withContext(Dispatchers.IO) {
+        fetch(url) { input ->
+            target.outputStream().use { out ->
+                val buffer = ByteArray(64 * 1024)
+                var total = 0L
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    total += read
+                    if (total > NetRules.MAX_DOWNLOAD_BYTES) throw IOException("Fichier trop gros")
+                    out.write(buffer, 0, read)
+                }
+            }
+            NetResult.Ok(ByteArray(0))
+        }
+    }
+
+    private fun fetch(start: String, read: (InputStream) -> NetResult): NetResult {
         var current = start
         repeat(NetRules.MAX_REDIRECTS + 1) {
             if (!NetRules.allowed(current)) return NetResult.Failed(tr("Adresse HTTPS requise", "HTTPS address required"))
@@ -59,7 +80,7 @@ class Network {
             }
             try {
                 when (val code = connection.responseCode) {
-                    in 200..299 -> return NetResult.Ok(connection.inputStream.use(::readLimited))
+                    in 200..299 -> return connection.inputStream.use(read)
                     301, 302, 303, 307, 308 ->
                         current = NetRules.next(current, connection.getHeaderField("Location")) ?: return NetResult.Failed(tr("Redirection refusée", "Redirect refused"))
                     else -> return NetResult.Failed(tr("Erreur ", "Error ") + code)

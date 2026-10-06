@@ -73,11 +73,12 @@ class SettingsMenuTest {
     @Test
     fun about_page_shows_the_update_and_checks_on_demand() {
         val calls = mutableListOf<String>()
-        show(SettingsActions(checkUpdatesNow = { calls += "check" }, openReleases = { calls += "open" }, setUpdatesEnabled = { calls += "enabled=$it" }), page = SettingsPage.ABOUT)
+        show(SettingsActions(checkUpdatesNow = { calls += "check" }, installUpdate = { calls += "install" }, setUpdatesEnabled = { calls += "enabled=$it" }, setAutoInstall = { calls += "auto=$it" }), page = SettingsPage.ABOUT)
         rule.onNodeWithText("1.4.0 · 1.5.0 disponible").assertIsDisplayed()
-        rule.onNodeWithText("Télécharger").performClick()
+        rule.onNodeWithText("Installer").performClick()
         rule.onNodeWithTag("updates-check").performClick()
         rule.onNodeWithTag("updates-enabled").performClick()
-        assertEquals(listOf("open", "check", "enabled=false"), calls)
+        rule.onNodeWithTag("updates-auto-install").performClick()
+        assertEquals(listOf("install", "check", "enabled=false", "auto=false"), calls)
     }
 }

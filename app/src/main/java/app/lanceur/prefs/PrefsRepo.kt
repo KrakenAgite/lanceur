@@ -176,6 +176,7 @@ class PrefsRepo(
         val UPDATE_LAST = androidx.datastore.preferences.core.longPreferencesKey("update_last")
         val UPDATE_LATEST = stringPreferencesKey("update_latest")
         val UPDATE_NOTIFIED = stringPreferencesKey("update_notified")
+        val UPDATE_AUTO_INSTALL = booleanPreferencesKey("update_auto_install")
         val BACKUP_AUTO = booleanPreferencesKey("backup_auto")
         val BACKUP_LAST = androidx.datastore.preferences.core.longPreferencesKey("backup_last")
         val LABEL_UPPERCASE = booleanPreferencesKey("label_uppercase")
@@ -190,7 +191,7 @@ class PrefsRepo(
             pageOrder = PageLayout.decode(stored[PAGE_ORDER]),
             news = stored[NEWS],
             focus = FocusMode.decode(stored[FOCUS]),
-            updates = UpdateSettings(stored[UPDATE_ENABLED] ?: true, stored[UPDATE_LAST], stored[UPDATE_LATEST], stored[UPDATE_NOTIFIED]),
+            updates = UpdateSettings(stored[UPDATE_ENABLED] ?: true, stored[UPDATE_LAST], stored[UPDATE_LATEST], stored[UPDATE_NOTIFIED], stored[UPDATE_AUTO_INSTALL] ?: true),
             backup = BackupSettings(stored[BACKUP_FOLDER], stored[BACKUP_AUTO] ?: false, stored[BACKUP_LAST]),
             appLabelStyle = AppLabelStyle(stored[SHOW_ICONS] ?: true, stored[LABEL_UPPERCASE] ?: false),
             iconStyle = IconStyle(stored[ICON_PACK], IconShape.decode(stored[ICON_SHAPE]), stored[ICON_THEMED] ?: false),
@@ -218,6 +219,7 @@ class PrefsRepo(
             prefs.backup.folder?.let { out[BACKUP_FOLDER] = it } ?: out.remove(BACKUP_FOLDER)
             out[BACKUP_AUTO] = prefs.backup.auto
             out[UPDATE_ENABLED] = prefs.updates.enabled
+            out[UPDATE_AUTO_INSTALL] = prefs.updates.autoInstall
             prefs.updates.lastCheck?.let { out[UPDATE_LAST] = it } ?: out.remove(UPDATE_LAST)
             prefs.updates.latest?.let { out[UPDATE_LATEST] = it } ?: out.remove(UPDATE_LATEST)
             prefs.updates.notified?.let { out[UPDATE_NOTIFIED] = it } ?: out.remove(UPDATE_NOTIFIED)

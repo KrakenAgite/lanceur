@@ -135,6 +135,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     val icon: @Composable (AppKey) -> Unit = { key -> AppIcon(key, container.iconLoader) }
     val roleWatcher = remember { HomeRoleWatcher { container.catalog.reload() } }
     var canNotify by remember { mutableStateOf(container.updates.canNotify()) }
+    var canInstall by remember { mutableStateOf(container.updates.installer.canInstall()) }
     var notificationAccess by remember { mutableStateOf(container.nowPlaying.hasAccess()) }
     var isDefault by remember { mutableStateOf(HomeRole.isHeld(context).also(roleWatcher::update)) }
     var permissionsGranted by remember { mutableStateOf(SearchPermissions.allGranted(context)) }
@@ -156,6 +157,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         widgetRefresh++
         reloadSummary()
         canNotify = container.updates.canNotify()
+        canInstall = container.updates.installer.canInstall()
         notificationAccess = container.nowPlaying.hasAccess()
         // Au plus toutes les 12 h, seulement si l'option est active
         container.appScope.launch { container.updates.check() }
@@ -181,6 +183,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         }
     }
     var checkingUpdates by remember { mutableStateOf(false) }
+    var installingUpdate by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         permissionsGranted = SearchPermissions.allGranted(context)
         searchVm.refresh()
@@ -545,7 +548,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 focusActive = lists.focusActive,
                 focusApps = lists.focusCandidates,
                 backup = BackupState(prefs.backup.auto, container.backups.folderName(prefs.backup.folder), prefs.backup.last),
-                updates = UpdatesState(container.updates.installed, prefs.updates.enabled, prefs.updates.latest, checkingUpdates, prefs.updates.lastCheck, canNotify),
+                updates = UpdatesState(container.updates.installed, prefs.updates.enabled, prefs.updates.latest, checkingUpdates, prefs.updates.lastCheck, canNotify, prefs.updates.autoInstall, canInstall, installingUpdate),
                 now = newsNow,
                 notificationAccess = notificationAccess,
                 appearance = AppearanceState(
@@ -579,6 +582,19 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                             toast(newer?.let { tr("Lanceur ${it.version} est disponible", "Lanceur ${it.version} is available") } ?: tr("Lanceur est à jour", "Lanceur is up to date"))
                         }
                     },
+                    installUpdate = {
+                        installingUpdate = true
+                        scope.launch {
+                            if (!container.updates.installer.canInstall()) container.appLauncher.startSafely(container.updates.unknownSourcesIntent())
+                            else if (!container.updates.installNow()) quickToast(tr("Mise à jour impossible", "Update failed"))
+                            installingUpdate = false
+                        }
+                    },
+                    setAutoInstall = { on ->
+                        scope.launch { container.prefsRepo.updateUpdates { it.copy(autoInstall = on) } }
+                        if (on && !container.updates.installer.canInstall()) container.appLauncher.startSafely(container.updates.unknownSourcesIntent())
+                    },
+                    allowInstalls = { container.appLauncher.startSafely(container.updates.unknownSourcesIntent()) },
                     openReleases = { builtinServices.openUrl(app.lanceur.update.UpdateCheck.RELEASES_PAGE) },
                     focus = app.lanceur.focus.FocusActions(
                         start = vm::startFocus,

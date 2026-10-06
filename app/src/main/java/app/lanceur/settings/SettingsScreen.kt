@@ -77,6 +77,9 @@ class SettingsActions(
     val setUpdatesEnabled: (Boolean) -> Unit = {},
     val checkUpdatesNow: () -> Unit = {},
     val openReleases: () -> Unit = {},
+    val installUpdate: () -> Unit = {},
+    val setAutoInstall: (Boolean) -> Unit = {},
+    val allowInstalls: () -> Unit = {},
 )
 
 data class BackupState(val auto: Boolean = false, val folderName: String? = null, val last: Long? = null)
@@ -88,6 +91,9 @@ data class UpdatesState(
     val checking: Boolean = false,
     val lastCheck: Long? = null,
     val canNotify: Boolean = true,
+    val autoInstall: Boolean = true,
+    val canInstall: Boolean = true,
+    val installing: Boolean = false,
 )
 
 data class PermissionsState(
@@ -95,8 +101,9 @@ data class PermissionsState(
     val notificationAccess: Boolean = true,
     val lockService: Boolean = true,
     val canNotify: Boolean = true,
+    val canInstall: Boolean = true,
 ) {
-    val missing: Int get() = listOf(searchGranted, notificationAccess, lockService, canNotify).count { !it }
+    val missing: Int get() = listOf(searchGranted, notificationAccess, lockService, canNotify, canInstall).count { !it }
 }
 
 /** Sous-menus des réglages, dans l'ordre de la liste. */
@@ -140,7 +147,7 @@ fun SettingsScreen(
 ) {
     var page by remember { mutableStateOf(initialPage) }
     var choosingPack by remember { mutableStateOf(false) }
-    val permissions = PermissionsState(permissionsGranted, notificationAccess, lockServiceEnabled, updates.canNotify)
+    val permissions = PermissionsState(permissionsGranted, notificationAccess, lockServiceEnabled, updates.canNotify, updates.canInstall)
     BackHandler(enabled = page != null) { page = null }
 
     Column(
@@ -226,6 +233,12 @@ fun SettingsScreen(
                         if (updates.canNotify) tr("Autorisé", "Allowed") else tr("Non autorisé", "Not allowed"),
                         if (updates.canNotify) null else tr("Autoriser", "Allow"),
                         actions.allowNotifications,
+                    )
+                    SettingRow(
+                        tr("Installer les mises à jour", "Install updates"),
+                        if (updates.canInstall) tr("Autorisé", "Allowed") else tr("Non autorisé", "Not allowed"),
+                        if (updates.canInstall) null else tr("Autoriser", "Allow"),
+                        actions.allowInstalls,
                     )
                 }
                 SettingsPage.BACKUP -> BackupPage(backup, actions, now)
@@ -331,8 +344,8 @@ private fun AboutPage(updates: UpdatesState, actions: SettingsActions, now: Long
     SettingRow(
         tr("Version", "Version"),
         updates.installed + (updates.latest?.let { " · " + tr("$it disponible", "$it available") } ?: ""),
-        updates.latest?.let { tr("Télécharger", "Download") },
-        actions.openReleases,
+        updates.latest?.let { if (updates.installing) tr("Installation…", "Installing…") else tr("Installer", "Install") },
+        actions.installUpdate,
     )
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
@@ -344,6 +357,23 @@ private fun AboutPage(updates: UpdatesState, actions: SettingsActions, now: Long
             )
         }
         Switch(checked = updates.enabled, onCheckedChange = actions.setUpdatesEnabled, modifier = Modifier.testTag("updates-enabled"))
+    }
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(tr("Installer automatiquement", "Install automatically"), style = MaterialTheme.typography.titleMedium)
+            Text(
+                if (updates.canInstall) tr("Dès qu'une version sort", "As soon as a version is out") else tr("Autorisation d'installer requise", "Install permission needed"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = updates.autoInstall, onCheckedChange = actions.setAutoInstall, modifier = Modifier.testTag("updates-auto-install"))
+    }
+    if (updates.autoInstall && !updates.canInstall) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            HintText(tr("Lanceur n'a pas le droit d'installer.", "Lanceur can't install apps yet."))
+            androidx.compose.material3.TextButton(onClick = actions.allowInstalls) { Text(tr("Autoriser", "Allow")) }
+        }
     }
     FilledTonalButton(onClick = actions.checkUpdatesNow, enabled = !updates.checking, modifier = Modifier.fillMaxWidth().testTag("updates-check")) {
         Text(if (updates.checking) tr("Vérification…", "Checking…") else tr("Vérifier maintenant", "Check now"))

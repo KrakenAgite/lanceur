@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Notification « nouvelle version disponible » -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Se mettre à jour depuis les releases GitHub (APK vérifié par son empreinte et sa signature) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Demandée seulement si « Ma position » est choisie pour la météo -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
@@ -87,5 +89,7 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/lock_service" />
         </service>
+        <receiver android:name=".update.InstallResultReceiver" android:exported="false" />
+        <receiver android:name=".update.InstallNowReceiver" android:exported="false" />
     </application>
 </manifest>

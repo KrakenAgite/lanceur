@@ -6,7 +6,14 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** Mises à jour : propre à ce téléphone, ni sauvegardé ni restauré. */
-data class UpdateSettings(val enabled: Boolean = true, val lastCheck: Long? = null, val latest: String? = null, val notified: String? = null)
+data class UpdateSettings(
+    val enabled: Boolean = true,
+    val lastCheck: Long? = null,
+    val latest: String? = null,
+    val notified: String? = null,
+    /** Télécharger et installer seul la nouvelle version. */
+    val autoInstall: Boolean = true,
+)
 
 /** Réglages de la sauvegarde elle-même : jamais sauvegardés ni restaurés (sinon on écraserait le dossier choisi). */
 data class BackupSettings(val folder: String? = null, val auto: Boolean = false, val last: Long? = null)
