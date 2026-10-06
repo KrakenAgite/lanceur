@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import app.lanceur.news.ArticleWebView
+import app.lanceur.ui.LocalAppLabelStyle
 import app.lanceur.ui.blockTouchesBelow
 import app.lanceur.apps.icons.IconPacks
 import app.lanceur.apps.icons.Wallpaper
@@ -27,6 +28,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -345,6 +347,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         }
     }
     LaunchedEffect(newsState.feeds.map { it.url }) { if (newsState.feeds.any { it.fetchedAt == null }) refreshNews(force = false) }
+    // Icônes et casse des noms des applis, partout où une appli est listée
+    CompositionLocalProvider(LocalAppLabelStyle provides prefs.appLabelStyle) {
     Box(Modifier.fillMaxSize()) {
         // Seul le fond d'écran est visible pendant les quelques millisecondes du chargement
         if (loaded) HomePager(
@@ -509,12 +513,14 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 icon = icon,
                 appearance = AppearanceState(
                     iconStyle = prefs.iconStyle,
+                    labelStyle = prefs.appLabelStyle,
                     packs = remember { IconPacks.installed(context) },
                     wallpaperLabel = remember { Wallpaper(context).label() },
                 ),
                 actions = SettingsActions(
                     openWallpaper = { container.appLauncher.startSafely(Wallpaper(context).intent()) },
                     setIconStyle = vm::setIconStyle,
+                    setAppLabelStyle = vm::setAppLabelStyle,
                     findIconPacks = {
                         container.appLauncher.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=icon%20pack&c=apps")))
                     },
@@ -581,5 +587,6 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 ),
             )
         }
+    }
     }
 }

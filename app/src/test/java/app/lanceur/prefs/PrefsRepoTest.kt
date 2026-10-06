@@ -198,6 +198,15 @@ class PrefsRepoTest {
     }
 
     @Test
+    fun app_label_style_defaults_to_icons_and_normal_case_and_is_saved() = runTest {
+        val repo = PrefsRepo(store())
+        assertEquals(app.lanceur.ui.AppLabelStyle(), repo.prefs.first().appLabelStyle)
+        val style = app.lanceur.ui.AppLabelStyle(showIcons = false, uppercase = true)
+        repo.setAppLabelStyle(style)
+        assertEquals(style, repo.prefs.first().appLabelStyle)
+    }
+
+    @Test
     fun pages_default_and_migration() = runTest {
         val repo = PrefsRepo(store())
         val initial = repo.prefs.first()

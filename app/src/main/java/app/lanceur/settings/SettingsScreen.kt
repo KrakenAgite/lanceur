@@ -44,6 +44,7 @@ class SettingsActions(
     val openLanguage: () -> Unit = {},
     val openWallpaper: () -> Unit = {},
     val setIconStyle: (app.lanceur.apps.icons.IconStyle) -> Unit = {},
+    val setAppLabelStyle: (app.lanceur.ui.AppLabelStyle) -> Unit = {},
     val findIconPacks: () -> Unit = {},
 )
 

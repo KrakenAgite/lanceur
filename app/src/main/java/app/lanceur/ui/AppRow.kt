@@ -58,6 +58,7 @@ fun AppRow(
         if (highlighted) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
         label = "surbrillance",
     )
+    val style = LocalAppLabelStyle.current
     Box(modifier) {
         Row(
             Modifier
@@ -71,10 +72,12 @@ fun AppRow(
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            icon(entry.key)
-            Spacer(Modifier.width(16.dp))
+            if (style.showIcons) {
+                icon(entry.key)
+                Spacer(Modifier.width(16.dp))
+            }
             Text(
-                entry.label,
+                style.format(entry.label),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,

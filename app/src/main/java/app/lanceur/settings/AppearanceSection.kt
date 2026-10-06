@@ -32,6 +32,7 @@ import app.lanceur.apps.icons.IconRenderer
 import app.lanceur.apps.icons.IconShape
 import app.lanceur.apps.icons.IconStyle
 import app.lanceur.i18n.tr
+import app.lanceur.ui.AppLabelStyle
 import app.lanceur.ui.HintText
 import app.lanceur.ui.SectionTitle
 import app.lanceur.ui.cardBackground
@@ -39,6 +40,7 @@ import app.lanceur.ui.cardBackground
 /** Ce que la section Apparence affiche : style actuel, packs installés, outil de fond d'écran. */
 data class AppearanceState(
     val iconStyle: IconStyle = IconStyle(),
+    val labelStyle: AppLabelStyle = AppLabelStyle(),
     val packs: List<IconPackInfo> = emptyList(),
     val wallpaperLabel: String? = null,
 )
@@ -54,39 +56,56 @@ fun AppearanceSection(state: AppearanceState, actions: SettingsActions, onChoose
         actionLabel = tr("Ouvrir", "Open"),
         onAction = actions.openWallpaper,
     )
-    val packName = state.iconStyle.pack?.let { p -> state.packs.firstOrNull { it.packageName == p }?.label ?: p }
-    SettingRow(
-        title = tr("Pack d'icônes", "Icon pack"),
-        subtitle = packName ?: tr("Icônes du système", "System icons"),
-        actionLabel = tr("Choisir", "Choose"),
-        onAction = onChoosePack,
-    )
-    Text(tr("Forme des icônes", "Icon shape"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        IconShape.entries.forEach { shape ->
-            ShapeChoice(shape, selected = shape == state.iconStyle.shape) { actions.setIconStyle(state.iconStyle.copy(shape = shape)) }
+    SwitchRow(
+        title = tr("Afficher les icônes", "Show icons"),
+        subtitle = tr("Sinon, seulement le nom des applis", "Otherwise, app names only"),
+        checked = state.labelStyle.showIcons,
+        tag = "show-icons",
+    ) { actions.setAppLabelStyle(state.labelStyle.copy(showIcons = it)) }
+    SwitchRow(
+        title = tr("Noms en majuscules", "Names in capitals"),
+        subtitle = tr("CALENDRIER au lieu de Calendrier", "CALENDAR instead of Calendar"),
+        checked = state.labelStyle.uppercase,
+        tag = "label-uppercase",
+    ) { actions.setAppLabelStyle(state.labelStyle.copy(uppercase = it)) }
+    // Pack, forme et thème n'ont de sens qu'avec les icônes
+    if (state.labelStyle.showIcons) {
+        val packName = state.iconStyle.pack?.let { p -> state.packs.firstOrNull { it.packageName == p }?.label ?: p }
+        SettingRow(
+            title = tr("Pack d'icônes", "Icon pack"),
+            subtitle = packName ?: tr("Icônes du système", "System icons"),
+            actionLabel = tr("Choisir", "Choose"),
+            onAction = onChoosePack,
+        )
+        Text(tr("Forme des icônes", "Icon shape"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            IconShape.entries.forEach { shape ->
+                ShapeChoice(shape, selected = shape == state.iconStyle.shape) { actions.setIconStyle(state.iconStyle.copy(shape = shape)) }
+            }
+        }
+        SwitchRow(
+            title = tr("Icônes thématisées", "Themed icons"),
+            subtitle = tr("Monochromes, aux couleurs du fond d'écran", "Monochrome, in your wallpaper colors"),
+            checked = state.iconStyle.themed,
+            tag = "icon-themed",
+        ) { actions.setIconStyle(state.iconStyle.copy(themed = it)) }
+        if (state.iconStyle.pack != null) {
+            HintText(tr("Forme et thème s'appliquent aux applis absentes du pack.", "Shape and theme apply to apps missing from the pack."))
         }
     }
+}
+
+@Composable
+private fun SwitchRow(title: String, subtitle: String, checked: Boolean, tag: String, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(tr("Icônes thématisées", "Themed icons"), style = MaterialTheme.typography.titleMedium)
-            Text(
-                tr("Monochromes, aux couleurs du fond d'écran", "Monochrome, in your wallpaper colors"),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(
-            checked = state.iconStyle.themed,
-            onCheckedChange = { actions.setIconStyle(state.iconStyle.copy(themed = it)) },
-            modifier = Modifier.testTag("icon-themed"),
-        )
-    }
-    if (state.iconStyle.pack != null) {
-        HintText(tr("Forme et thème s'appliquent aux applis absentes du pack.", "Shape and theme apply to apps missing from the pack."))
+        Switch(checked = checked, onCheckedChange = onChange, modifier = Modifier.testTag(tag))
     }
 }
 

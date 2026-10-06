@@ -47,6 +47,23 @@ class AppearanceTest {
     }
 
     @Test
+    fun icons_and_capitals_switches_and_icon_options_hidden_without_icons() {
+        val styles = mutableListOf<app.lanceur.ui.AppLabelStyle>()
+        rule.setContent {
+            MaterialTheme {
+                Column {
+                    AppearanceSection(state.copy(labelStyle = app.lanceur.ui.AppLabelStyle(showIcons = false)), SettingsActions(setAppLabelStyle = { styles += it }), onChoosePack = {})
+                }
+            }
+        }
+        rule.onNodeWithTag("shape-CIRCLE").assertDoesNotExist()
+        rule.onNodeWithText("Arcticons").assertDoesNotExist()
+        rule.onNodeWithTag("show-icons").performClick()
+        rule.onNodeWithTag("label-uppercase").performClick()
+        assertEquals(listOf(app.lanceur.ui.AppLabelStyle(showIcons = true), app.lanceur.ui.AppLabelStyle(showIcons = false, uppercase = true)), styles)
+    }
+
+    @Test
     fun pack_list_picks_a_pack_or_the_system_icons_and_links_to_the_store() {
         val picks = mutableListOf<String?>()
         var store = false

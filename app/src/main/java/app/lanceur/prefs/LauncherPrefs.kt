@@ -23,4 +23,5 @@ data class LauncherPrefs(
     /** État de la page Actualités (`NewsState` encodé). */
     val news: String? = null,
     val iconStyle: app.lanceur.apps.icons.IconStyle = app.lanceur.apps.icons.IconStyle(),
+    val appLabelStyle: app.lanceur.ui.AppLabelStyle = app.lanceur.ui.AppLabelStyle(),
 )

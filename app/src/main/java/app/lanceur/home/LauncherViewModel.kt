@@ -160,6 +160,10 @@ class LauncherViewModel(
         viewModelScope.launch { prefsRepo.setWidgetsOrder(ids) }
     }
 
+    fun setAppLabelStyle(style: app.lanceur.ui.AppLabelStyle) {
+        viewModelScope.launch { prefsRepo.setAppLabelStyle(style) }
+    }
+
     fun setIconStyle(style: app.lanceur.apps.icons.IconStyle) {
         viewModelScope.launch { prefsRepo.setIconStyle(style) }
     }
