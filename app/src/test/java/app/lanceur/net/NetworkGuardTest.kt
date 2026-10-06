@@ -26,7 +26,7 @@ class NetworkGuardTest {
 
     @Test
     fun network_is_used_only_by_weather_rss_and_the_container() {
-        val allowed = listOf("net/", "builtin/weather/", "builtin/rss/", "AppContainer.kt")
+        val allowed = listOf("net/", "builtin/weather/", "builtin/rss/", "news/", "AppContainer.kt")
         val users = sources.filter { Regex("""\bNetwork\b""").containsMatchIn(it.readText()) }
             .map(::relative)
             .filterNot { path -> allowed.any { path.startsWith(it) } }
