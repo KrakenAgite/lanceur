@@ -1,5 +1,6 @@
 package app.lanceur.builtin.battery
 
+import app.lanceur.i18n.tr
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -89,7 +90,7 @@ fun BatteryRingCard(info: BatteryInfo, onClick: () -> Unit, modifier: Modifier =
         }
         Spacer(Modifier.width(20.dp))
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            CardLabel("Batterie")
+            CardLabel(tr("Batterie", "Battery"))
             Text(info.statusText, style = MaterialTheme.typography.titleMedium)
             info.temperatureText?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant) }
             Text(info.powerSaveText, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)

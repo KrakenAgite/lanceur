@@ -1,5 +1,6 @@
 package app.lanceur.settings
 
+import app.lanceur.i18n.tr
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -115,10 +116,10 @@ fun PagePreviews(
                             )
                             .testTag("page-preview-${kind.name}")
                             .semantics {
-                                contentDescription = "Page ${kind.label}, position ${index + 1}"
+                                contentDescription = tr("Page ${kind.label}, position ${index + 1}", "${kind.label} page, position ${index + 1}")
                                 customActions = listOfNotNull(
-                                    if (index > 0) CustomAccessibilityAction("Déplacer à gauche") { onMove(kind, -1); true } else null,
-                                    if (index < working.lastIndex) CustomAccessibilityAction("Déplacer à droite") { onMove(kind, +1); true } else null,
+                                    if (index > 0) CustomAccessibilityAction(tr("Déplacer à gauche", "Move left")) { onMove(kind, -1); true } else null,
+                                    if (index < working.lastIndex) CustomAccessibilityAction(tr("Déplacer à droite", "Move right")) { onMove(kind, +1); true } else null,
                                 )
                             }
                             .pointerInput(kind) {
@@ -157,7 +158,7 @@ fun PagePreviews(
                                     .align(Alignment.BottomCenter)
                                     .padding(bottom = 4.dp)
                                     .testTag("page-eye-${kind.name}")
-                                    .semantics { contentDescription = (if (shown) "Masquer " else "Afficher ") + kind.label },
+                                    .semantics { contentDescription = (if (shown) tr("Masquer ", "Hide ") else tr("Afficher ", "Show ")) + kind.label },
                             ) {
                                 Box(
                                     Modifier

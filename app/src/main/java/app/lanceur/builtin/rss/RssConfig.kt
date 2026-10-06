@@ -1,5 +1,8 @@
 package app.lanceur.builtin.rss
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.Lang
+import app.lanceur.i18n.tr
 import app.lanceur.builtin.WidgetData
 import app.lanceur.net.NetRules
 
@@ -8,14 +11,14 @@ data class RssConfig(val urls: List<String>) {
         const val MAX = 3
 
         /** Message d'erreur, ou `null` si l'adresse est acceptable. */
-        fun validate(url: String): String? = if (NetRules.allowed(url)) null else "Adresse HTTPS requise"
+        fun validate(url: String): String? = if (NetRules.allowed(url)) null else tr("Adresse HTTPS requise", "HTTPS address required")
     }
 }
 
 data class RssSuggestion(val name: String, val url: String)
 
 object RssSuggestions {
-    val all = listOf(
+    private val FRENCH = listOf(
         RssSuggestion("Le Monde", "https://www.lemonde.fr/rss/une.xml"),
         RssSuggestion("France Info", "https://www.francetvinfo.fr/titres.rss"),
         RssSuggestion("Libération", "https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml"),
@@ -23,6 +26,14 @@ object RssSuggestions {
         RssSuggestion("Les Numériques", "https://www.lesnumeriques.com/rss.xml"),
         RssSuggestion("Korben", "https://korben.info/feed"),
     )
+    private val ENGLISH = listOf(
+        RssSuggestion("BBC News", "https://feeds.bbci.co.uk/news/rss.xml"),
+        RssSuggestion("The Verge", "https://www.theverge.com/rss/index.xml"),
+        RssSuggestion("Ars Technica", "https://feeds.arstechnica.com/arstechnica/index"),
+    )
+
+    /** En anglais, les flux anglais viennent d'abord. */
+    val all: List<RssSuggestion> get() = if (L10n.lang == Lang.EN) ENGLISH + FRENCH else FRENCH + ENGLISH
 }
 
 data class RssCache(val articles: List<Article>, val fetchedAt: Long)

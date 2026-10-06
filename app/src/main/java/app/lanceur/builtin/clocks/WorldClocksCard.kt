@@ -1,5 +1,6 @@
 package app.lanceur.builtin.clocks
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,7 +25,7 @@ import app.lanceur.widgets.WidgetSize
 fun WorldClocksCard(faces: List<ClockFace>, size: WidgetSize, modifier: Modifier = Modifier) {
     val shown = if (size == WidgetSize.SMALL) faces.take(2) else faces.take(WorldClocksConfig.MAX)
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 22.dp, vertical = 14.dp)) {
-        CardLabel("Horloges")
+        CardLabel(tr("Horloges", "Clocks"))
         Spacer(Modifier.height(6.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.SpaceEvenly) {
             shown.chunked(2).forEach { row ->

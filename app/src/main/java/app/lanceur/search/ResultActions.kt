@@ -1,5 +1,6 @@
 package app.lanceur.search
 
+import app.lanceur.i18n.tr
 import android.app.SearchManager
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -17,7 +18,7 @@ class ResultActions(private val context: Context, private val launcher: AppLaunc
         is SearchResult.App -> launcher.launch(result.entry.key)
         is SearchResult.Calc -> {
             // Android affiche lui-même la confirmation « copié »
-            context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Calcul", result.value))
+            context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(tr("Calcul", "Calculation"), result.value))
             true
         }
         is SearchResult.Contact -> launcher.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(result.lookupUri)))

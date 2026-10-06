@@ -1,5 +1,7 @@
 package app.lanceur.search
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -98,8 +100,8 @@ class SearchActions(
 )
 
 private val DAY = DateTimeFormatter.ofPattern("d", Locale.FRENCH)
-private val DATE_TIME = DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", Locale.FRENCH)
-private val DATE_ONLY = DateTimeFormatter.ofPattern("EEE d MMM", Locale.FRENCH)
+private val DATE_TIME get() = DateTimeFormatter.ofPattern(tr("EEE d MMM · HH:mm", "EEE, MMM d · HH:mm"), L10n.locale)
+private val DATE_ONLY get() = DateTimeFormatter.ofPattern(tr("EEE d MMM", "EEE, MMM d"), L10n.locale)
 
 /** Résultats affichés de bas en haut : le meilleur est juste au-dessus du champ, à portée du pouce. */
 @Composable
@@ -160,7 +162,7 @@ fun SearchScreen(
         if (query.isBlank()) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
                 Text(
-                    "Applis · calcul · contacts · agenda · réglages · web",
+                    tr("Applis · calcul · contacts · agenda · réglages · web", "Apps · math · contacts · calendar · settings · web"),
                     modifier = Modifier.padding(bottom = 16.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -194,11 +196,11 @@ fun SearchScreen(
                     .height(60.dp)
                     .focusRequester(focus)
                     .testTag("search-field"),
-                placeholder = { Text("Applis, web, agenda, contacts…") },
+                placeholder = { Text(tr("Applis, web, agenda, contacts…", "Apps, web, calendar, contacts…")) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
-                        IconButton(onClick = { act.queryChange("") }) { Icon(Icons.Default.Clear, contentDescription = "Effacer") }
+                        IconButton(onClick = { act.queryChange("") }) { Icon(Icons.Default.Clear, contentDescription = tr("Effacer", "Clear")) }
                     }
                 },
                 singleLine = true,
@@ -290,7 +292,7 @@ private fun ResultRow(result: SearchResult, icon: @Composable (AppKey) -> Unit, 
             badge = { TextBadge("=", Tone.PRIMARY) },
             title = "= ${result.value}",
             titleStyle = MaterialTheme.typography.headlineSmall,
-            subtitle = "${result.expression} · toucher pour copier",
+            subtitle = result.expression + tr(" · toucher pour copier", " · tap to copy"),
             onClick = { actions.open(result) },
         )
         is SearchResult.Contact -> ResultLine(
@@ -300,13 +302,13 @@ private fun ResultRow(result: SearchResult, icon: @Composable (AppKey) -> Unit, 
             onClick = { actions.open(result) },
         ) {
             result.phone?.let { phone ->
-                IconButton(onClick = { actions.call(phone) }) { Icon(Icons.Default.Call, contentDescription = "Appeler") }
+                IconButton(onClick = { actions.call(phone) }) { Icon(Icons.Default.Call, contentDescription = tr("Appeler", "Call")) }
                 IconButton(onClick = { actions.sms(phone) }) { Icon(Icons.Default.Email, contentDescription = "SMS") }
             }
         }
         is SearchResult.Event -> {
             val start = Instant.ofEpochMilli(result.begin).atZone(if (result.allDay) ZoneOffset.UTC else ZoneId.systemDefault())
-            val title = result.title.ifBlank { "(Sans titre)" }
+            val title = result.title.ifBlank { tr("(Sans titre)", "(No title)") }
             val birthday = DaySummary.isBirthday(title, result.allDay)
             ResultLine(
                 badge = { TextBadge(if (birthday) "🎁" else DAY.format(start), Tone.TERTIARY) },
@@ -318,12 +320,12 @@ private fun ResultRow(result: SearchResult, icon: @Composable (AppKey) -> Unit, 
         is SearchResult.Setting -> ResultLine(
             badge = { IconBadge(Icons.Default.Settings, Tone.NEUTRAL) },
             title = result.label,
-            subtitle = "Réglages",
+            subtitle = tr("Réglages", "Settings"),
             onClick = { actions.open(result) },
         )
         is SearchResult.Web -> ResultLine(
             badge = { IconBadge(Icons.Default.Search, Tone.NEUTRAL) },
-            title = "Rechercher « ${result.query} » sur le web",
+            title = tr("Rechercher « ${result.query} » sur le web", "Search the web for “${result.query}”"),
             subtitle = null,
             onClick = { actions.open(result) },
         ) {
@@ -336,11 +338,11 @@ private fun ResultRow(result: SearchResult, icon: @Composable (AppKey) -> Unit, 
         }
         SearchResult.PermissionHint -> ResultLine(
             badge = { IconBadge(Icons.Default.Lock, Tone.PRIMARY) },
-            title = "Autoriser l'accès à l'agenda et aux contacts",
-            subtitle = "Pour les retrouver dans la recherche",
+            title = tr("Autoriser l'accès à l'agenda et aux contacts", "Allow access to calendar and contacts"),
+            subtitle = tr("Pour les retrouver dans la recherche", "To find them in search"),
             onClick = actions.requestPermissions,
         ) {
-            IconButton(onClick = actions.dismissHint) { Icon(Icons.Default.Clear, contentDescription = "Ne plus afficher") }
+            IconButton(onClick = actions.dismissHint) { Icon(Icons.Default.Clear, contentDescription = tr("Ne plus afficher", "Don't show again")) }
         }
     }
 }

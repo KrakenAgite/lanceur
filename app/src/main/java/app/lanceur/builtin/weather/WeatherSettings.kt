@@ -1,5 +1,6 @@
 package app.lanceur.builtin.weather
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,10 +50,10 @@ fun WeatherSettings(
         searched = true
     }
     Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Météo", style = MaterialTheme.typography.headlineSmall)
+        Text(tr("Météo", "Weather"), style = MaterialTheme.typography.headlineSmall)
         Row(Modifier.fillMaxWidth().clickable { usePosition = false; wantsPosition = false }, verticalAlignment = Alignment.CenterVertically) {
             RadioButton(selected = !usePosition, onClick = null)
-            Text("Ville", Modifier.padding(start = 8.dp))
+            Text(tr("Ville", "City"), Modifier.padding(start = 8.dp))
         }
         Row(
             Modifier.fillMaxWidth().clickable {
@@ -62,19 +63,19 @@ fun WeatherSettings(
         ) {
             RadioButton(selected = usePosition, onClick = null)
             Column(Modifier.padding(start = 8.dp)) {
-                Text("Ma position")
-                Text("Position approximative, envoyée arrondie au kilomètre", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(tr("Ma position", "My location"))
+                Text(tr("Position approximative, envoyée arrondie au kilomètre", "Approximate location, sent rounded to the kilometre"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         if (!usePosition) {
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text(place?.label ?: "Chercher une ville") },
+                label = { Text(place?.label ?: tr("Chercher une ville", "Search a city")) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().testTag("place-search"),
             )
-            if (searched && results.isEmpty()) Text("Aucune ville trouvée", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (searched && results.isEmpty()) Text(tr("Aucune ville trouvée", "No city found"), color = MaterialTheme.colorScheme.onSurfaceVariant)
             results.forEach { p ->
                 Row(Modifier.fillMaxWidth().clickable { place = p; query = ""; results = emptyList(); searched = false }.padding(vertical = 8.dp)) {
                     Text(p.label)
@@ -85,6 +86,6 @@ fun WeatherSettings(
             onClick = { onSave(WeatherData.encode(WeatherConfig(usePosition, if (usePosition) null else place), cache = null)) },
             enabled = usePosition || place != null,
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Enregistrer") }
+        ) { Text(tr("Enregistrer", "Save")) }
     }
 }

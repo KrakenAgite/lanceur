@@ -1,5 +1,6 @@
 package app.lanceur.ui
 
+import app.lanceur.i18n.tr
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -29,13 +30,16 @@ import androidx.compose.ui.unit.dp
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
 
-enum class AppMenuAction(val label: String) {
-    ADD_FAVORITE("Ajouter aux favoris"),
-    REMOVE_FAVORITE("Retirer des favoris"),
-    HIDE("Cacher"),
-    UNHIDE("Ne plus cacher"),
-    INFO("Infos de l'appli"),
-    UNINSTALL("Désinstaller"),
+enum class AppMenuAction(private val fr: String, private val en: String) {
+    ADD_FAVORITE("Ajouter aux favoris", "Add to favorites"),
+    REMOVE_FAVORITE("Retirer des favoris", "Remove from favorites"),
+    HIDE("Cacher", "Hide"),
+    UNHIDE("Ne plus cacher", "Unhide"),
+    INFO("Infos de l'appli", "App info"),
+    UNINSTALL("Désinstaller", "Uninstall"),
+    ;
+
+    val label: String get() = tr(fr, en)
 }
 
 @OptIn(ExperimentalFoundationApi::class)

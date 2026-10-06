@@ -1,5 +1,6 @@
 package app.lanceur.builtin.countdown
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -36,9 +37,9 @@ fun CountdownCard(
             modifier.fillMaxSize().background(cardBackground()).padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            CardLabel("Compte à rebours")
+            CardLabel(tr("Compte à rebours", "Countdown"))
             Spacer(Modifier.weight(1f))
-            TextButton(onClick = onSetUp) { Text("Régler le compte à rebours") }
+            TextButton(onClick = onSetUp) { Text(tr("Régler le compte à rebours", "Set up the countdown")) }
             Spacer(Modifier.weight(1f))
         }
         return

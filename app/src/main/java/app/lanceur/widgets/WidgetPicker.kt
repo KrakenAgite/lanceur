@@ -1,5 +1,6 @@
 package app.lanceur.widgets
 
+import app.lanceur.i18n.tr
 import app.lanceur.builtin.BuiltinSlots
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,19 +55,19 @@ fun WidgetPicker(
             .imePadding()
             .padding(horizontal = 16.dp),
     ) {
-        Text("Ajouter un widget", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 16.dp))
+        Text(tr("Ajouter un widget", "Add a widget"), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 16.dp))
         TextField(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.fillMaxWidth().testTag("picker-filter"),
-            placeholder = { Text("Filtrer par appli ou widget") },
+            placeholder = { Text(tr("Filtrer par appli ou widget", "Filter by app or widget")) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             singleLine = true,
             shape = RoundedCornerShape(28.dp),
             colors = TextFieldDefaults.colors(focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
         )
         LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-            if (groups.isEmpty()) item { HintText("Aucun widget trouvé") }
+            if (groups.isEmpty()) item { HintText(tr("Aucun widget trouvé", "No widget found")) }
             groups.forEach { group ->
                 item(key = "g:${group.packageName}:${group.entries.first().provider.userSerial}") {
                     SectionTitle(if (group.isWork) "${group.appLabel} (pro)" else group.appLabel)
@@ -85,7 +86,7 @@ fun WidgetPicker(
                         Column(Modifier.weight(1f)) {
                             Text(entry.widgetLabel, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             Text(
-                                "Taille de départ : ${startingSize(entry).shortLabel}",
+                                tr("Taille de départ : ", "Starting size: ") + startingSize(entry).shortLabel,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

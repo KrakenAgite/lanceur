@@ -1,5 +1,7 @@
 package app.lanceur.summary
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.tr
 import app.lanceur.text.TextNormalizer
 import java.time.Instant
 import java.time.LocalDate
@@ -40,9 +42,9 @@ data class DaySummaryState(
 object DaySummary {
     const val MAX_EVENTS = 3
 
-    private val DATE = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRENCH)
+    private val DATE get() = DateTimeFormatter.ofPattern(tr("EEEE d MMMM", "EEEE, MMMM d"), L10n.locale)
     private val TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.FRENCH)
-    private val OTHER_DAY = DateTimeFormatter.ofPattern("EEE d MMM HH:mm", Locale.FRENCH)
+    private val OTHER_DAY get() = DateTimeFormatter.ofPattern(tr("EEE d MMM HH:mm", "EEE, MMM d HH:mm"), L10n.locale)
 
     fun build(now: ZonedDateTime, events: List<SummaryEvent>, nextAlarmMillis: Long?, calendarGranted: Boolean): DaySummaryState {
         val today = now.toLocalDate()
@@ -80,20 +82,20 @@ object DaySummary {
     fun alarmLabel(millis: Long, now: ZonedDateTime): String {
         val at = Instant.ofEpochMilli(millis).atZone(now.zone)
         return when (at.toLocalDate()) {
-            now.toLocalDate() -> "Aujourd'hui ${TIME.format(at)}"
-            now.toLocalDate().plusDays(1) -> "Demain ${TIME.format(at)}"
+            now.toLocalDate() -> tr("Aujourd'hui ", "Today ") + TIME.format(at)
+            now.toLocalDate().plusDays(1) -> tr("Demain ", "Tomorrow ") + TIME.format(at)
             else -> OTHER_DAY.format(at)
         }
     }
 
     private fun line(tomorrow: Boolean, event: SummaryEvent, zone: ZoneId): SummaryLine {
         val time = if (event.allDay) null else TIME.format(Instant.ofEpochMilli(event.begin).atZone(zone))
-        val title = event.title.ifBlank { "(Sans titre)" }
+        val title = event.title.ifBlank { tr("(Sans titre)", "(No title)") }
         val birthday = isBirthday(title, event.allDay)
         return SummaryLine(
             event = event,
-            text = listOfNotNull(if (tomorrow) "Demain" else null, time, title).joinToString(" "),
-            timeLabel = if (birthday) "🎁" else time ?: "Journée",
+            text = listOfNotNull(if (tomorrow) tr("Demain", "Tomorrow") else null, time, title).joinToString(" "),
+            timeLabel = if (birthday) "🎁" else time ?: tr("Journée", "All day"),
             title = if (birthday) shortBirthdayTitle(title) else title,
             tomorrow = tomorrow,
             birthday = birthday,

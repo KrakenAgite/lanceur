@@ -1,5 +1,6 @@
 package app.lanceur.builtin.note
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +45,7 @@ fun NoteCard(initial: String, onSave: (String) -> Unit, modifier: Modifier = Mod
     }
     val colors = MaterialTheme.colorScheme
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 22.dp, vertical = 18.dp)) {
-        CardLabel("Note")
+        CardLabel(tr("Note", "Note"))
         Spacer(Modifier.height(8.dp))
         Box(Modifier.weight(1f)) {
             BasicTextField(
@@ -55,7 +56,7 @@ fun NoteCard(initial: String, onSave: (String) -> Unit, modifier: Modifier = Mod
                 cursorBrush = SolidColor(colors.primary),
             )
             if (text.isEmpty()) {
-                Text("Touche pour écrire…", style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
+                Text(tr("Touche pour écrire…", "Tap to write…"), style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
             }
         }
     }

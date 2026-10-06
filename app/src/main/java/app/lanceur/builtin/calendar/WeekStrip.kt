@@ -1,5 +1,7 @@
 package app.lanceur.builtin.calendar
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.tr
 import app.lanceur.summary.DaySummary
 import app.lanceur.summary.SummaryEvent
 import app.lanceur.widgets.WidgetSize
@@ -26,8 +28,8 @@ data class WeekStripState(val title: String, val days: List<WeekDay>)
 
 object WeekStrip {
     private val LABELS = listOf("L", "M", "M", "J", "V", "S", "D")
-    private val DAY_MONTH = DateTimeFormatter.ofPattern("d MMMM", Locale.FRENCH)
-    private val SHORT = DateTimeFormatter.ofPattern("d MMM", Locale.FRENCH)
+    private val DAY_MONTH get() = DateTimeFormatter.ofPattern(tr("d MMMM", "MMMM d"), L10n.locale)
+    private val SHORT get() = DateTimeFormatter.ofPattern(tr("d MMM", "MMM d"), L10n.locale)
 
     fun weekStart(date: LocalDate): LocalDate = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
@@ -48,7 +50,7 @@ object WeekStrip {
                 label = LABELS[offset.toInt()],
                 isToday = date == today,
                 birthdays = birthdays.map { DaySummary.shortBirthdayTitle(it.title) },
-                items = sorted.take(perDay).map { WeekItem(it, it.title.ifBlank { "(Sans titre)" }, it.color) },
+                items = sorted.take(perDay).map { WeekItem(it, it.title.ifBlank { tr("(Sans titre)", "(No title)") }, it.color) },
                 more = (sorted.size - perDay).coerceAtLeast(0),
             )
         }

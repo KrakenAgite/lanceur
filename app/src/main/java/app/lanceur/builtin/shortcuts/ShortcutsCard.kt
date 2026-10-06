@@ -1,5 +1,6 @@
 package app.lanceur.builtin.shortcuts
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,13 +39,13 @@ class ShortcutActions(
 @Composable
 fun ShortcutsCard(torch: TorchState, actions: ShortcutActions, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 12.dp, vertical = 12.dp)) {
-        CardLabel("Raccourcis", Modifier.padding(start = 10.dp))
+        CardLabel(tr("Raccourcis", "Shortcuts"), Modifier.padding(start = 10.dp))
         Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            Shortcut("🔦", "Lampe", active = torch.on, enabled = torch.available) { actions.toggleTorch(!torch.on) }
+            Shortcut("🔦", tr("Lampe", "Flashlight"), active = torch.on, enabled = torch.available) { actions.toggleTorch(!torch.on) }
             Shortcut("🌐", "Internet", onClick = actions.internet)
             Shortcut("🔵", "Bluetooth", onClick = actions.bluetooth)
-            Shortcut("🔊", "Son", onClick = actions.sound)
-            Shortcut("🌙", "Ne pas déranger", onClick = actions.doNotDisturb)
+            Shortcut("🔊", tr("Son", "Sound"), onClick = actions.sound)
+            Shortcut("🌙", tr("Ne pas déranger", "Do not disturb"), onClick = actions.doNotDisturb)
         }
     }
 }

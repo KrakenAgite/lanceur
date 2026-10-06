@@ -1,5 +1,6 @@
 package app.lanceur.builtin.rss
 
+import app.lanceur.i18n.tr
 import app.lanceur.builtin.Freshness
 import app.lanceur.net.NetResult
 import app.lanceur.net.Network
@@ -13,9 +14,9 @@ class RssSource(private val network: Network) {
     suspend fun check(url: String): FeedCheck {
         RssConfig.validate(url)?.let { return FeedCheck.Failed(it) }
         return when (val result = network.get(url.trim())) {
-            is NetResult.Failed -> FeedCheck.Failed("Flux injoignable")
+            is NetResult.Failed -> FeedCheck.Failed(tr("Flux injoignable", "Feed unreachable"))
             is NetResult.Ok -> withContext(Dispatchers.Default) { Feed.parse(result.bytes, hostOf(url)) }?.let { FeedCheck.Ok(it.title, it.articles.size) }
-                ?: FeedCheck.Failed("Pas un flux RSS/Atom")
+                ?: FeedCheck.Failed(tr("Pas un flux RSS/Atom", "Not an RSS/Atom feed"))
         }
     }
 

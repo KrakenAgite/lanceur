@@ -1,5 +1,7 @@
 package app.lanceur.search
 
+import app.lanceur.i18n.tr
+
 /** Une carte de l'écran de recherche : un intitulé (absent pour l'invitation aux autorisations) et ses résultats. */
 data class ResultSection(val key: String, val title: String?, val items: List<SearchResult>)
 
@@ -8,8 +10,11 @@ object ResultSections {
     fun of(results: List<SearchResult>): List<ResultSection> =
         results.groupBy(::kind).map { (kind, items) -> ResultSection(kind.name, kind.title, items) }
 
-    private enum class Kind(val title: String?) {
-        HINT(null), APPS("Applis"), CALC("Calcul"), CONTACTS("Contacts"), AGENDA("Agenda"), SETTINGS("Réglages"), WEB("Web")
+    private enum class Kind(private val fr: String?, private val en: String?) {
+        HINT(null, null), APPS("Applis", "Apps"), CALC("Calcul", "Math"), CONTACTS("Contacts", "Contacts"),
+        AGENDA("Agenda", "Calendar"), SETTINGS("Réglages", "Settings"), WEB("Web", "Web");
+
+        val title: String? get() = fr?.let { tr(it, en!!) }
     }
 
     private fun kind(result: SearchResult): Kind = when (result) {

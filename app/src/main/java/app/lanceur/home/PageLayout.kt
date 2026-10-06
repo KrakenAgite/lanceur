@@ -1,10 +1,15 @@
 package app.lanceur.home
 
+import app.lanceur.i18n.tr
+
 /** Pages du défilement horizontal. Le nom de chaque entrée est enregistré : ne jamais le renommer. */
-enum class PageKind(val label: String, val subtitle: String) {
-    NEWS("Actualités", "Tes flux RSS, avec images"),
-    WIDGETS("Widgets", "Résumé du jour et widgets"),
-    HOME("Accueil", "Toujours affichée"),
+enum class PageKind(private val fr: String, private val en: String) {
+    NEWS("Actualités", "News"),
+    WIDGETS("Widgets", "Widgets"),
+    HOME("Accueil", "Home"),
+    ;
+
+    val label: String get() = tr(fr, en)
 }
 
 object PageLayout {

@@ -1,5 +1,6 @@
 package app.lanceur.builtin.timer
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -54,7 +55,7 @@ fun TimerCard(
     }
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 16.dp, vertical = 12.dp)) {
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            listOf("Minuteur", "Chrono").forEachIndexed { index, label ->
+            listOf(tr("Minuteur", "Timer"), tr("Chrono", "Stopwatch")).forEachIndexed { index, label ->
                 SegmentedButton(
                     selected = chrono == (index == 1),
                     onClick = { chrono = index == 1 },
@@ -72,9 +73,9 @@ fun TimerCard(
                             AssistChip(
                                 onClick = {
                                     if (minutes == null) onOtherTimer()
-                                    else message = if (onTimer(TimerPresets.seconds(minutes))) "Minuteur de ${TimerPresets.label(minutes)} lancé" else null
+                                    else message = if (onTimer(TimerPresets.seconds(minutes))) tr("Minuteur de ${TimerPresets.label(minutes)} lancé", "${TimerPresets.label(minutes)} timer started") else null
                                 },
-                                label = { Text(minutes?.let(TimerPresets::label) ?: "Autre") },
+                                label = { Text(minutes?.let(TimerPresets::label) ?: tr("Autre", "Other")) },
                             )
                         }
                     }
@@ -95,10 +96,10 @@ fun TimerCard(
                     FilledTonalButton(onClick = {
                         val t = clock()
                         onStopwatch(if (stopwatch.running) stopwatch.pause(t) else stopwatch.start(t))
-                    }) { Text(if (stopwatch.running) "Pause" else "Démarrer") }
-                    OutlinedButton(onClick = { onStopwatch(stopwatch.lap(clock())) }, enabled = stopwatch.running) { Text("Tour") }
+                    }) { Text(if (stopwatch.running) tr("Pause", "Pause") else tr("Démarrer", "Start")) }
+                    OutlinedButton(onClick = { onStopwatch(stopwatch.lap(clock())) }, enabled = stopwatch.running) { Text(tr("Tour", "Lap")) }
                     TextButton(onClick = { onStopwatch(stopwatch.reset()) }, enabled = !stopwatch.running && stopwatch.accumulated > 0) {
-                        Text("Réinitialiser")
+                        Text(tr("Réinitialiser", "Reset"))
                     }
                 }
             }

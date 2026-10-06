@@ -1,5 +1,6 @@
 package app.lanceur.builtin.calendar
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -109,8 +110,8 @@ fun MonthCard(
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = CARD_PADDING, vertical = CARD_PADDING)) {
         CardHeader(
             title = MonthGrid.title(monthAt(pager.currentPage)),
-            previous = "Mois précédent",
-            next = "Mois suivant",
+            previous = tr("Mois précédent", "Previous month"),
+            next = tr("Mois suivant", "Next month"),
             onPrevious = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } },
             onNext = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
         )
@@ -131,12 +132,12 @@ fun MonthCard(
             }
         }
         if (load != null && !load.granted) {
-            TextButton(onClick = actions.requestCalendar) { Text("Autoriser l'agenda") }
+            TextButton(onClick = actions.requestCalendar) { Text(tr("Autoriser l'agenda", "Allow calendar")) }
         } else if (size != WidgetSize.SMALL) {
             val lines = MonthGrid.dayLines(selected, events, zone).let { if (size == WidgetSize.MEDIUM) it.take(3) else it }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 8.dp, top = 6.dp, end = 8.dp)) {
                 if (lines.isEmpty()) {
-                    Text("Rien de prévu", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    Text(tr("Rien de prévu", "Nothing planned"), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                 }
                 lines.forEachIndexed { index, line ->
                     TimelineRow(line, isLast = index == lines.lastIndex) { actions.openEvent(line.event) }
@@ -203,13 +204,13 @@ fun WeekCard(
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = CARD_PADDING, vertical = CARD_PADDING)) {
         CardHeader(
             title = strip.title,
-            previous = "Semaine précédente",
-            next = "Semaine suivante",
+            previous = tr("Semaine précédente", "Previous week"),
+            next = tr("Semaine suivante", "Next week"),
             onPrevious = { onWeekChange(WeekStrip.weekStart(weekStart).minusWeeks(1)) },
             onNext = { onWeekChange(WeekStrip.weekStart(weekStart).plusWeeks(1)) },
         )
         if (load != null && !load.granted) {
-            TextButton(onClick = actions.requestCalendar) { Text("Autoriser l'agenda") }
+            TextButton(onClick = actions.requestCalendar) { Text(tr("Autoriser l'agenda", "Allow calendar")) }
             return@Column
         }
         Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(3.dp)) {

@@ -1,5 +1,6 @@
 package app.lanceur.builtin.todo
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -50,10 +51,10 @@ fun TodoCard(list: TodoList, onChange: (TodoList) -> Unit, modifier: Modifier = 
     var draft by remember { mutableStateOf("") }
     Column(modifier.fillMaxSize().background(cardBackground()).padding(start = 22.dp, end = 10.dp, top = 12.dp, bottom = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CardLabel("À faire", Modifier.weight(1f))
+            CardLabel(tr("À faire", "To do"), Modifier.weight(1f))
             if (list.hasDone) {
                 TextButton(onClick = { onChange(list.clearDone()) }) {
-                    Text("Effacer les tâches faites", style = MaterialTheme.typography.labelMedium)
+                    Text(tr("Effacer les tâches faites", "Clear done tasks"), style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
@@ -75,7 +76,7 @@ fun TodoCard(list: TodoList, onChange: (TodoList) -> Unit, modifier: Modifier = 
                             overflow = TextOverflow.Ellipsis,
                         )
                         IconButton(onClick = { onChange(list.remove(item.id)) }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Supprimer ${item.text}", modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Clear, contentDescription = tr("Supprimer ", "Delete ") + item.text, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -97,7 +98,7 @@ fun TodoCard(list: TodoList, onChange: (TodoList) -> Unit, modifier: Modifier = 
                             draft = ""
                         }),
                     )
-                    if (draft.isEmpty()) Text("Ajouter une tâche…", style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
+                    if (draft.isEmpty()) Text(tr("Ajouter une tâche…", "Add a task…"), style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
                 }
             }
         }

@@ -1,5 +1,6 @@
 package app.lanceur.settings
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ class SettingsActions(
     val setWidgetPageEnabled: (Boolean) -> Unit = {},
     val setNewsEnabled: (Boolean) -> Unit = {},
     val movePage: (PageKind, Int) -> Unit = { _, _ -> },
+    val openLanguage: () -> Unit = {},
 )
 
 @Composable
@@ -61,40 +63,46 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
     ) {
-        Text("Réglages", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 16.dp))
+        Text(tr("Réglages", "Settings"), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 16.dp))
         SettingRow(
-            title = "Écran d'accueil par défaut",
-            subtitle = if (isDefaultLauncher) "Lanceur est ton écran d'accueil" else "Lanceur n'est pas encore ton écran d'accueil",
-            actionLabel = if (isDefaultLauncher) null else "Définir",
+            title = tr("Écran d'accueil par défaut", "Default home app"),
+            subtitle = if (isDefaultLauncher) tr("Lanceur est ton écran d'accueil", "Lanceur is your home app") else tr("Lanceur n'est pas encore ton écran d'accueil", "Lanceur is not your home app yet"),
+            actionLabel = if (isDefaultLauncher) null else tr("Définir", "Set"),
             onAction = actions.setDefault,
         )
         SettingRow(
-            title = "Agenda et contacts dans la recherche",
-            subtitle = if (permissionsGranted) "Autorisés" else "Non autorisés",
-            actionLabel = if (permissionsGranted) null else "Autoriser",
+            title = tr("Agenda et contacts dans la recherche", "Calendar and contacts in search"),
+            subtitle = if (permissionsGranted) tr("Autorisés", "Allowed") else tr("Non autorisés", "Not allowed"),
+            actionLabel = if (permissionsGranted) null else tr("Autoriser", "Allow"),
             onAction = actions.requestPermissions,
         )
         SettingRow(
-            title = "Double toucher pour verrouiller",
-            subtitle = if (lockServiceEnabled) "Activé" else "Non activé : à autoriser dans Accessibilité",
-            actionLabel = if (lockServiceEnabled) null else "Activer",
+            title = tr("Double toucher pour verrouiller", "Double tap to lock"),
+            subtitle = if (lockServiceEnabled) tr("Activé", "On") else tr("Non activé : à autoriser dans Accessibilité", "Off: allow it in Accessibility"),
+            actionLabel = if (lockServiceEnabled) null else tr("Activer", "Turn on"),
             onAction = actions.enableLockService,
         )
         SettingRow(
-            title = "Applis cachées",
-            subtitle = "Protégées par ton empreinte",
-            actionLabel = "Ouvrir",
+            title = tr("Applis cachées", "Hidden apps"),
+            subtitle = tr("Protégées par ton empreinte", "Protected by your fingerprint"),
+            actionLabel = tr("Ouvrir", "Open"),
             onAction = actions.openHidden,
         )
+        SettingRow(
+            title = tr("Langue", "Language"),
+            subtitle = tr("Français · suit le téléphone ou ton choix", "English · follows the phone or your choice"),
+            actionLabel = tr("Changer", "Change"),
+            onAction = actions.openLanguage,
+        )
         PagesSection(pageOrder, widgetPageEnabled, newsEnabled, actions)
-        SectionTitle("Côté de l'alphabet")
+        SectionTitle(tr("Côté de l'alphabet", "Alphabet side"))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = side == AlphabetSide.LEFT, onClick = { actions.setSide(AlphabetSide.LEFT) }, label = { Text("Gauche") })
-            FilterChip(selected = side == AlphabetSide.RIGHT, onClick = { actions.setSide(AlphabetSide.RIGHT) }, label = { Text("Droite") })
+            FilterChip(selected = side == AlphabetSide.LEFT, onClick = { actions.setSide(AlphabetSide.LEFT) }, label = { Text(tr("Gauche", "Left")) })
+            FilterChip(selected = side == AlphabetSide.RIGHT, onClick = { actions.setSide(AlphabetSide.RIGHT) }, label = { Text(tr("Droite", "Right")) })
         }
-        SectionTitle("Ordre des favoris")
+        SectionTitle(tr("Ordre des favoris", "Favorites order"))
         if (favorites.isEmpty()) {
-            HintText("Aucun favori pour l'instant.")
+            HintText(tr("Aucun favori pour l'instant.", "No favorites yet."))
         } else {
             ReorderableFavorites(favorites, icon, actions.reorderFavorites)
         }
@@ -115,8 +123,8 @@ private fun SettingRow(title: String, subtitle: String, actionLabel: String?, on
 /** Pages de gauche à droite, comme quand on fait défiler ; l'Accueil ne se masque pas. */
 @Composable
 private fun PagesSection(order: List<PageKind>, widgetsEnabled: Boolean, newsEnabled: Boolean, actions: SettingsActions) {
-    SectionTitle("Pages")
-    HintText("Appui long puis glisse pour changer l'ordre ; l'œil affiche ou masque la page")
+    SectionTitle(tr("Pages", "Pages"))
+    HintText(tr("Appui long puis glisse pour changer l'ordre ; l'œil affiche ou masque la page", "Long press then drag to reorder; the eye shows or hides the page"))
     PagePreviews(
         order = order,
         isShown = { kind ->

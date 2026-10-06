@@ -1,5 +1,6 @@
 package app.lanceur.builtin
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -211,7 +212,7 @@ fun BuiltinWidget(slot: WidgetSlot, services: BuiltinServices, modifier: Modifie
             WeatherCard(
                 state,
                 size,
-                onOpen = { (state as? WeatherViewState.Ready)?.let { services.openUrl(WeatherQuery.searchUrl(it.placeName.takeUnless { n -> n == "Ma position" } ?: "")) } },
+                onOpen = { (state as? WeatherViewState.Ready)?.let { services.openUrl(WeatherQuery.searchUrl(it.placeName.takeUnless { n -> n == tr("Ma position", "My location") } ?: "")) } },
                 onChooseCity = { services.openSettings(slot) },
                 modifier = modifier,
             )

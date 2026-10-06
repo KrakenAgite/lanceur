@@ -1,27 +1,28 @@
 package app.lanceur.search
 
+import app.lanceur.i18n.tr
 import app.lanceur.text.TextNormalizer
 
 data class SettingShortcut(val action: String, val label: String, val keywords: List<String>)
 
 /** Raccourcis vers les réglages Android. Les actions sont écrites en clair pour rester testables sur la JVM. */
 object SettingsProvider : SearchProvider {
-    val SHORTCUTS = listOf(
-        SettingShortcut("android.settings.SETTINGS", "Paramètres", listOf("paramètres", "réglages")),
-        SettingShortcut("android.settings.WIFI_SETTINGS", "Wi-Fi", listOf("wifi", "wi-fi", "sans fil", "internet")),
-        SettingShortcut("android.settings.BLUETOOTH_SETTINGS", "Bluetooth", listOf("bluetooth", "écouteurs", "casque")),
-        SettingShortcut("android.settings.DISPLAY_SETTINGS", "Affichage", listOf("écran", "luminosité", "mode sombre", "veille")),
-        SettingShortcut("android.intent.action.POWER_USAGE_SUMMARY", "Batterie", listOf("batterie", "autonomie", "économie")),
-        SettingShortcut("android.settings.SOUND_SETTINGS", "Son et vibreur", listOf("son", "volume", "sonnerie", "vibreur")),
-        SettingShortcut("android.settings.MANAGE_APPLICATIONS_SETTINGS", "Applis", listOf("applications", "applis")),
-        SettingShortcut("android.settings.ALL_APPS_NOTIFICATION_SETTINGS", "Notifications", listOf("notifications", "alertes")),
-        SettingShortcut("android.settings.LOCATION_SOURCE_SETTINGS", "Localisation", listOf("localisation", "gps", "position")),
-        SettingShortcut("android.settings.SECURITY_SETTINGS", "Sécurité et confidentialité", listOf("sécurité", "confidentialité", "empreinte", "verrouillage", "espace privé")),
-        SettingShortcut("android.settings.INTERNAL_STORAGE_SETTINGS", "Stockage", listOf("stockage", "mémoire", "espace")),
-        SettingShortcut("android.settings.WIRELESS_SETTINGS", "Réseau et Internet", listOf("réseau", "données mobiles", "avion", "sim")),
-        SettingShortcut("android.settings.DATE_SETTINGS", "Date et heure", listOf("date", "heure", "fuseau")),
-        SettingShortcut("android.settings.ACCESSIBILITY_SETTINGS", "Accessibilité", listOf("accessibilité", "taille du texte")),
-        SettingShortcut("android.settings.DEVICE_INFO_SETTINGS", "À propos du téléphone", listOf("à propos", "version", "android")),
+    val SHORTCUTS: List<SettingShortcut> get() = listOf(
+        SettingShortcut("android.settings.SETTINGS", tr("Paramètres", "Settings"), listOf("paramètres", "réglages", "settings")),
+        SettingShortcut("android.settings.WIFI_SETTINGS", tr("Wi-Fi", "Wi-Fi"), listOf("wifi", "wi-fi", "sans fil", "internet", "wireless")),
+        SettingShortcut("android.settings.BLUETOOTH_SETTINGS", tr("Bluetooth", "Bluetooth"), listOf("bluetooth", "écouteurs", "casque", "headphones", "earbuds")),
+        SettingShortcut("android.settings.DISPLAY_SETTINGS", tr("Affichage", "Display"), listOf("écran", "luminosité", "mode sombre", "veille", "display", "screen", "brightness", "dark mode")),
+        SettingShortcut("android.intent.action.POWER_USAGE_SUMMARY", tr("Batterie", "Battery"), listOf("batterie", "autonomie", "économie", "battery", "power")),
+        SettingShortcut("android.settings.SOUND_SETTINGS", tr("Son et vibreur", "Sound & vibration"), listOf("son", "volume", "sonnerie", "vibreur", "sound", "volume", "ringtone", "vibration")),
+        SettingShortcut("android.settings.MANAGE_APPLICATIONS_SETTINGS", tr("Applis", "Apps"), listOf("applications", "applis", "apps")),
+        SettingShortcut("android.settings.ALL_APPS_NOTIFICATION_SETTINGS", tr("Notifications", "Notifications"), listOf("notifications", "alertes", "notifications")),
+        SettingShortcut("android.settings.LOCATION_SOURCE_SETTINGS", tr("Localisation", "Location"), listOf("localisation", "gps", "position", "location")),
+        SettingShortcut("android.settings.SECURITY_SETTINGS", tr("Sécurité et confidentialité", "Security & privacy"), listOf("sécurité", "confidentialité", "empreinte", "verrouillage", "espace privé", "security", "privacy", "fingerprint", "screen lock", "private space")),
+        SettingShortcut("android.settings.INTERNAL_STORAGE_SETTINGS", tr("Stockage", "Storage"), listOf("stockage", "mémoire", "espace", "storage", "memory")),
+        SettingShortcut("android.settings.WIRELESS_SETTINGS", tr("Réseau et Internet", "Internet & network"), listOf("réseau", "données mobiles", "avion", "sim", "network", "mobile data", "airplane")),
+        SettingShortcut("android.settings.DATE_SETTINGS", tr("Date et heure", "Date & time"), listOf("date", "heure", "fuseau", "time", "time zone")),
+        SettingShortcut("android.settings.ACCESSIBILITY_SETTINGS", tr("Accessibilité", "Accessibility"), listOf("accessibilité", "taille du texte", "accessibility", "font size")),
+        SettingShortcut("android.settings.DEVICE_INFO_SETTINGS", tr("À propos du téléphone", "About phone"), listOf("à propos", "version", "android", "about")),
     )
 
     override suspend fun search(query: String): List<SearchResult> =

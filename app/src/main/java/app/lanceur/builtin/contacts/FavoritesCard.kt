@@ -1,5 +1,6 @@
 package app.lanceur.builtin.contacts
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,12 +44,12 @@ private const val PER_ROW = 4
 fun FavoritesCard(state: FavoritesState, size: WidgetSize, actions: FavoritesActions, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 18.dp, vertical = 12.dp)) {
-        CardLabel("Favoris", Modifier.padding(start = 4.dp))
+        CardLabel(tr("Favoris", "Favorites"), Modifier.padding(start = 4.dp))
         Spacer(Modifier.height(6.dp))
         when (state) {
-            FavoritesState.NoPermission -> TextButton(onClick = actions.requestPermission) { Text("Autoriser les contacts") }
+            FavoritesState.NoPermission -> TextButton(onClick = actions.requestPermission) { Text(tr("Autoriser les contacts", "Allow contacts")) }
             is FavoritesState.Loaded -> if (state.contacts.isEmpty()) {
-                Text("Ajoute des favoris ⭐ dans Contacts", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp))
+                Text(tr("Ajoute des favoris ⭐ dans Contacts", "Add favorites ⭐ in Contacts"), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp))
             } else {
                 val rows = if (size == WidgetSize.SMALL) 1 else 2
                 state.contacts.take(rows * PER_ROW).chunked(PER_ROW).forEach { row ->

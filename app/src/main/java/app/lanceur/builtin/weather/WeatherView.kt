@@ -1,5 +1,6 @@
 package app.lanceur.builtin.weather
 
+import app.lanceur.i18n.tr
 import app.lanceur.builtin.Freshness
 import java.time.Instant
 import java.time.ZoneId
@@ -18,7 +19,7 @@ object WeatherView {
     fun state(config: WeatherConfig?, cache: WeatherCache?, outcome: WeatherOutcome?, now: Long, zone: ZoneId): WeatherViewState {
         val forecast = cache?.let { Forecast.parse(it.raw, Instant.ofEpochMilli(now)) }
         if (cache != null && forecast != null) {
-            val name = if (config?.usePosition == true) "Ma position" else config?.place?.name.orEmpty()
+            val name = if (config?.usePosition == true) tr("Ma position", "My location") else config?.place?.name.orEmpty()
             return WeatherViewState.Ready(name, forecast, Freshness.label(cache.fetchedAt, now, zone))
         }
         return when (outcome) {

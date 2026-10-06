@@ -1,5 +1,6 @@
 package app.lanceur.builtin.battery
 
+import app.lanceur.i18n.tr
 import android.os.BatteryManager
 import java.util.Locale
 
@@ -25,11 +26,11 @@ data class BatteryInfo(
     val statusText: String
         get() = when (status) {
             ChargeStatus.CHARGING ->
-                if (chargeTimeRemainingMs > 0) "En charge · pleine dans ${duration(chargeTimeRemainingMs)}" else "En charge"
+                if (chargeTimeRemainingMs > 0) tr("En charge · pleine dans ", "Charging · full in ") + duration(chargeTimeRemainingMs) else tr("En charge", "Charging")
             // Charge adaptative du Pixel : branché, mais la charge attend
-            ChargeStatus.PLUGGED -> "Branchée · charge en pause"
-            ChargeStatus.DISCHARGING -> "Sur batterie"
-            ChargeStatus.FULL -> "Chargée"
+            ChargeStatus.PLUGGED -> tr("Branchée · charge en pause", "Plugged in · charging paused")
+            ChargeStatus.DISCHARGING -> tr("Sur batterie", "On battery")
+            ChargeStatus.FULL -> tr("Chargée", "Charged")
         }
 
     /** Pour la barre : « ⚡ 42 min », « ⚡ » sans estimation, rien hors charge. */
@@ -39,7 +40,7 @@ data class BatteryInfo(
 
     val temperatureText: String? get() = temperatureTenths?.let { "${Math.round(it / 10.0)} °C" }
 
-    val powerSaveText: String get() = if (powerSave) "Économiseur activé" else "Économiseur désactivé"
+    val powerSaveText: String get() = if (powerSave) tr("Économiseur activé", "Battery Saver on") else tr("Économiseur désactivé", "Battery Saver off")
 
     companion object {
         /** Arrondi à la minute supérieure : « 42 min », « 1 h 05 ». */

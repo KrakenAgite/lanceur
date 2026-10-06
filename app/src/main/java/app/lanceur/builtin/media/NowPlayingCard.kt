@@ -1,5 +1,6 @@
 package app.lanceur.builtin.media
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -74,7 +75,7 @@ fun NowPlayingCard(
         ) {
             Text("🎵", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.width(12.dp))
-            Text("Rien en lecture", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr("Rien en lecture", "Nothing playing"), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         NowPlayingState.NoAccess -> Column(
             modifier.fillMaxSize().background(cardBackground()).padding(16.dp),
@@ -83,15 +84,15 @@ fun NowPlayingCard(
         ) {
             if (size != WidgetSize.SMALL) {
                 Text(
-                    "Pour voir et piloter tes lecteurs, Lanceur a besoin de l'accès aux notifications. Il ne les lit pas.",
+                    tr("Pour voir et piloter tes lecteurs, Lanceur a besoin de l'accès aux notifications. Il ne les lit pas.", "To see and control your players, Lanceur needs notification access. It doesn't read them."),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Button(onClick = actions.grantAccess) { Text("Autoriser l'accès aux lecteurs") }
+            Button(onClick = actions.grantAccess) { Text(tr("Autoriser l'accès aux lecteurs", "Allow player access")) }
             if (size == WidgetSize.LARGE) {
                 Text(
-                    "Option grisée ? Infos de l'appli › ⋮ › Autoriser les paramètres restreints",
+                    tr("Option grisée ? Infos de l'appli › ⋮ › Autoriser les paramètres restreints", "Option greyed out? App info › ⋮ › Allow restricted settings"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -121,7 +122,7 @@ private fun ActiveCard(media: MediaSnapshot, size: WidgetSize, actions: NowPlayi
         }
         Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.25f), Color.Black.copy(alpha = 0.65f)))))
         Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
-            if (size == WidgetSize.LARGE) CardLabel("En cours", Modifier.padding(bottom = 8.dp), color = Color.White.copy(alpha = 0.85f))
+            if (size == WidgetSize.LARGE) CardLabel(tr("En cours", "Now playing"), Modifier.padding(bottom = 8.dp), color = Color.White.copy(alpha = 0.85f))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val thumb = if (size == WidgetSize.LARGE) 96.dp else 56.dp
                 Box(Modifier.size(thumb).clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
@@ -162,17 +163,17 @@ private fun ActiveCard(media: MediaSnapshot, size: WidgetSize, actions: NowPlayi
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                 val tint = IconButtonDefaults.iconButtonColors(contentColor = Color.White, disabledContentColor = Color.White.copy(alpha = 0.35f))
-                IconButton(onClick = actions.previous, enabled = media.canPrevious, colors = tint) { Icon(MediaIcons.SkipPrevious, contentDescription = "Précédent") }
+                IconButton(onClick = actions.previous, enabled = media.canPrevious, colors = tint) { Icon(MediaIcons.SkipPrevious, contentDescription = tr("Précédent", "Previous")) }
                 FilledIconButton(
                     onClick = actions.playPause,
                     modifier = Modifier.size(52.dp),
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White, contentColor = Color.Black),
                 ) {
-                    if (media.isPlaying) Icon(MediaIcons.Pause, contentDescription = "Pause")
-                    else Icon(Icons.Default.PlayArrow, contentDescription = "Lecture")
+                    if (media.isPlaying) Icon(MediaIcons.Pause, contentDescription = tr("Pause", "Pause"))
+                    else Icon(Icons.Default.PlayArrow, contentDescription = tr("Lecture", "Play"))
                 }
-                IconButton(onClick = actions.next, enabled = media.canNext, colors = tint) { Icon(MediaIcons.SkipNext, contentDescription = "Suivant") }
+                IconButton(onClick = actions.next, enabled = media.canNext, colors = tint) { Icon(MediaIcons.SkipNext, contentDescription = tr("Suivant", "Next")) }
             }
         }
     }

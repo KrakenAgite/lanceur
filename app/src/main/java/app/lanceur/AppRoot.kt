@@ -1,7 +1,9 @@
 package app.lanceur
 
+import app.lanceur.i18n.tr
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.provider.AlarmClock
 import android.provider.Settings
 import android.widget.Toast
@@ -165,7 +167,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     val widgetLabels = remember(prefs.widgets, widgetRefresh) {
         prefs.widgets.associate { slot ->
             slot.appWidgetId to when {
-                BuiltinSlots.isBuiltin(slot) -> BuiltinSlots.kindOf(slot)?.label ?: "Widget Lanceur"
+                BuiltinSlots.isBuiltin(slot) -> BuiltinSlots.kindOf(slot)?.label ?: tr("Widget Lanceur", "Lanceur widget")
                 else -> container.widgetHost.label(slot.appWidgetId)
             }
         }
@@ -195,7 +197,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
 
     fun launch(entry: AppEntry) {
         if (!container.appLauncher.launch(entry.key)) {
-            toast("Appli introuvable")
+            toast(tr("Appli introuvable", "App not found"))
             container.catalog.reload()
         }
     }
@@ -203,8 +205,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     fun openVault() {
         when {
             vm.vault.value is VaultState.Unlocked -> vm.show(Screen.VAULT)
-            !authenticator.canAuthenticate() -> toast("Configure un verrouillage d'écran pour utiliser le dossier caché")
-            vm.requestVault() -> authenticator.authenticate("Dossier caché") { ok ->
+            !authenticator.canAuthenticate() -> toast(tr("Configure un verrouillage d'écran pour utiliser le dossier caché", "Set up a screen lock to use the hidden folder"))
+            vm.requestVault() -> authenticator.authenticate(tr("Dossier caché", "Hidden folder")) { ok ->
                 vm.vaultEvent(if (ok) VaultEvent.AuthSucceeded else VaultEvent.AuthFailed)
             }
         }
@@ -216,7 +218,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
 
     fun lockScreen() {
         if (!LockScreenService.lock()) {
-            toast("Active « Lanceur » dans Accessibilité pour verrouiller d'un double toucher")
+            toast(tr("Active « Lanceur » dans Accessibilité pour verrouiller d'un double toucher", "Turn on “Lanceur” in Accessibility to lock with a double tap"))
             openAccessibilitySettings()
         }
     }
@@ -239,7 +241,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         }
         val opened = container.resultActions.open(result)
         if (!opened && result is SearchResult.App) {
-            toast("Appli introuvable")
+            toast(tr("Appli introuvable", "App not found"))
             container.catalog.reload()
         }
         // Copier un calcul garde la recherche ouverte
@@ -299,7 +301,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         ),
         torch = container.torch,
         shortcutActions = ShortcutActions(
-            toggleTorch = { on -> if (!container.torch.set(on)) toast("Lampe indisponible") },
+            toggleTorch = { on -> if (!container.torch.set(on)) toast(tr("Lampe indisponible", "Flashlight unavailable")) },
             internet = { container.appLauncher.startSafely(Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY)) },
             bluetooth = { container.appLauncher.startSafely(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
             sound = { container.appLauncher.startSafely(Intent(Settings.Panel.ACTION_VOLUME)) },
@@ -360,7 +362,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     summary = summary,
                     cards = widgetCards,
                     editMode = widgetEditMode,
-                    label = { widgetLabels[it.appWidgetId] ?: "Widget" },
+                    label = { widgetLabels[it.appWidgetId] ?: tr("Widget", "Widget") },
                     isReconfigurable = { if (BuiltinSlots.isBuiltin(it)) BuiltinSlots.kindOf(it)?.configurable == true else container.widgetHost.isReconfigurable(it.appWidgetId) },
                     widgetView = { slot, modifier ->
                         if (BuiltinSlots.isBuiltin(slot)) BuiltinWidget(slot, builtinServices, modifier)
@@ -510,6 +512,11 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     requestPermissions = { permissionLauncher.launch(SearchPermissions.ALL) },
                     setSide = vm::setAlphabetSide,
                     enableLockService = ::openAccessibilitySettings,
+                    openLanguage = {
+                        container.appLauncher.startSafely(
+                            Intent(android.provider.Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null)),
+                        )
+                    },
                     setWidgetPageEnabled = vm::setWidgetPageEnabled,
                     setNewsEnabled = vm::setNewsEnabled,
                     movePage = vm::movePage,

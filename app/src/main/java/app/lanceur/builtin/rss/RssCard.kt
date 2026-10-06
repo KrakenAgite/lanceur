@@ -1,5 +1,6 @@
 package app.lanceur.builtin.rss
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,11 +29,11 @@ import app.lanceur.widgets.WidgetSize
 fun RssCard(state: RssViewState, size: WidgetSize, now: Long, onOpen: (String) -> Unit, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     Column(modifier.fillMaxSize().background(cardBackground()).padding(horizontal = 20.dp, vertical = 14.dp)) {
-        CardLabel("Actualités")
+        CardLabel(tr("Actualités", "News"))
         Spacer(Modifier.height(6.dp))
         when (state) {
-            RssViewState.Loading -> Text("Chargement des flux…", color = colors.onSurfaceVariant)
-            RssViewState.Unavailable -> Text("Flux indisponibles", color = colors.onSurfaceVariant)
+            RssViewState.Loading -> Text(tr("Chargement des flux…", "Loading feeds…"), color = colors.onSurfaceVariant)
+            RssViewState.Unavailable -> Text(tr("Flux indisponibles", "Feeds unavailable"), color = colors.onSurfaceVariant)
             is RssViewState.Ready -> {
                 val count = when (size) {
                     WidgetSize.SMALL -> 3
@@ -40,7 +41,7 @@ fun RssCard(state: RssViewState, size: WidgetSize, now: Long, onOpen: (String) -
                     WidgetSize.LARGE -> 10
                 }
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (state.articles.isEmpty()) Text("Aucun article", color = colors.onSurfaceVariant)
+                    if (state.articles.isEmpty()) Text(tr("Aucun article", "No articles"), color = colors.onSurfaceVariant)
                     state.articles.take(count).forEach { a ->
                         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onOpen(a.link) }.padding(vertical = 6.dp)) {
                             Text(a.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -52,7 +53,7 @@ fun RssCard(state: RssViewState, size: WidgetSize, now: Long, onOpen: (String) -
                         }
                     }
                 }
-                if (state.failed) Text("Hors ligne · ${Freshness.ago(state.fetchedAt, now)}", style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                if (state.failed) Text(tr("Hors ligne · ", "Offline · ") + Freshness.ago(state.fetchedAt, now), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
         }
     }

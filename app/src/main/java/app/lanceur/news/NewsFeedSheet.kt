@@ -1,5 +1,6 @@
 package app.lanceur.news
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,7 +43,7 @@ fun NewsFeedForm(existing: Set<String>, check: suspend (String) -> FeedCheck, on
         val clean = candidate.trim()
         RssConfig.validate(clean)?.let { status = "✗ $it"; return }
         checking = true
-        status = "Vérification…"
+        status = tr("Vérification…", "Checking…")
         scope.launch {
             when (val result = check(clean)) {
                 is FeedCheck.Ok -> { status = "✓ ${result.title} — ${result.count} articles"; onAdd(clean, result.title) }
@@ -52,24 +53,24 @@ fun NewsFeedForm(existing: Set<String>, check: suspend (String) -> FeedCheck, on
         }
     }
     Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Ajouter un flux", style = MaterialTheme.typography.headlineSmall)
+        Text(tr("Ajouter un flux", "Add a feed"), style = MaterialTheme.typography.headlineSmall)
         OutlinedTextField(
             value = url,
             onValueChange = { url = it; status = null },
-            label = { Text("Adresse du flux") },
+            label = { Text(tr("Adresse du flux", "Feed address")) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().testTag("news-url"),
         )
-        Button(onClick = { tryAdd(url) }, enabled = !checking && url.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text("Vérifier et ajouter") }
+        Button(onClick = { tryAdd(url) }, enabled = !checking && url.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text(tr("Vérifier et ajouter", "Check and add")) }
         status?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-        Text("Suggestions", style = MaterialTheme.typography.titleSmall)
+        Text(tr("Suggestions", "Suggestions"), style = MaterialTheme.typography.titleSmall)
         RssSuggestions.all.filterNot { it.url in existing }.forEach { suggestion ->
             Row(
                 Modifier.fillMaxWidth().clickable(enabled = !checking) { tryAdd(suggestion.url) }.padding(vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(suggestion.name, Modifier.weight(1f))
-                Text("Ajouter", color = MaterialTheme.colorScheme.primary)
+                Text(tr("Ajouter", "Add"), color = MaterialTheme.colorScheme.primary)
             }
         }
         Spacer(Modifier.padding(4.dp))

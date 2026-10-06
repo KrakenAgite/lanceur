@@ -1,5 +1,6 @@
 package app.lanceur.home
 
+import app.lanceur.i18n.tr
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -217,7 +218,7 @@ fun HomeScreen(
                     if (shown.isEmpty() && mode == ListMode.Favorites) {
                         item {
                             Text(
-                                "Appui long sur une appli pour l'ajouter aux favoris",
+                                tr("Appui long sur une appli pour l'ajouter aux favoris", "Long press an app to add it to favorites"),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(16.dp),

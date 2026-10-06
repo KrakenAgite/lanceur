@@ -1,5 +1,6 @@
 package app.lanceur.builtin
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -86,7 +87,7 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
     val sampleEvents = remember(today) {
         fun at(day: LocalDate, hour: Int) = day.atTime(hour, 0).atZone(zone).toInstant().toEpochMilli()
         listOf(
-            SummaryEvent(1, "Dentiste", at(today, 14), at(today, 15), false, 0xFF4285F4.toInt()),
+            SummaryEvent(1, tr("Dentiste", "Dentist"), at(today, 14), at(today, 15), false, 0xFF4285F4.toInt()),
             SummaryEvent(2, "Sport", at(today.plusDays(2), 18), at(today.plusDays(2), 19), false, 0xFF0B8043.toInt()),
         )
     }
@@ -109,10 +110,10 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
         BuiltinKind.CALENDAR_MONTH -> MonthCard(today, kind.defaultSize, CalendarLoad(true, sampleEvents), {}, CalendarCardActions(), modifier, zone)
         BuiltinKind.CALENDAR_WEEK ->
             WeekCard(today, WeekStrip.weekStart(today), kind.defaultSize, CalendarLoad(true, sampleEvents), {}, CalendarCardActions(), modifier, zone)
-        BuiltinKind.NOTE -> NoteCard("Pain, lait, œufs\nAppeler le garage", onSave = {}, modifier = modifier)
-        BuiltinKind.TODO -> TodoCard(TodoList().add("Pain").add("Rendre le livre").add("Réserver le train").toggle(2), onChange = {}, modifier = modifier)
+        BuiltinKind.NOTE -> NoteCard(tr("Pain, lait, œufs\nAppeler le garage", "Bread, milk, eggs\nCall the garage"), onSave = {}, modifier = modifier)
+        BuiltinKind.TODO -> TodoCard(TodoList().add(tr("Pain", "Bread")).add(tr("Rendre le livre", "Return the book")).add(tr("Réserver le train", "Book the train")).toggle(2), onChange = {}, modifier = modifier)
         BuiltinKind.COUNTDOWN -> CountdownCard(
-            CountdownConfig("Vacances", today.plusDays(12), null, 0),
+            CountdownConfig(tr("Vacances", "Holidays"), today.plusDays(12), null, 0),
             kind.defaultSize,
             onSetUp = {},
             modifier = modifier,
@@ -123,7 +124,7 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
         }
         BuiltinKind.TIMER -> TimerCard(StopwatchState(), onStopwatch = {}, onTimer = { false }, onOtherTimer = {}, modifier = modifier)
         BuiltinKind.FAVORITE_CONTACTS -> FavoritesCard(
-            FavoritesState.Loaded(listOf("Maman", "Léa", "Hugo", "Inès").map { FavoriteContact(it, it, "0", null) }),
+            FavoritesState.Loaded(listOf(tr("Maman", "Mom"), "Léa", "Hugo", "Inès").map { FavoriteContact(it, it, "0", null) }),
             kind.defaultSize,
             FavoritesActions(),
             modifier,
@@ -137,8 +138,8 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
         BuiltinKind.WEATHER -> WeatherCard(
             WeatherViewState.Ready(
                 "Nantes",
-                Forecast(16, 15, "⛅", "Éclaircies", 12, 20, 9, 17, (15..20).map { HourForecast("$it h", if (it < 18) "⛅" else "🌧", it) }, emptyList()),
-                "Mis à jour à 14:05",
+                Forecast(16, 15, "⛅", tr("Éclaircies", "Partly cloudy"), 12, 20, 9, 17, (15..20).map { HourForecast(tr("$it h", "$it:00"), if (it < 18) "⛅" else "🌧", it) }, emptyList()),
+                tr("Mis à jour à 14:05", "Updated at 14:05"),
             ),
             kind.defaultSize,
             onOpen = {},
@@ -150,9 +151,9 @@ private fun SampleCard(kind: BuiltinKind, modifier: Modifier) {
             RssCard(
                 RssViewState.Ready(
                     listOf(
-                        Article("Élections : les premiers résultats", "a", "Le Monde", now - 25 * 60_000),
-                        Article("Une astuce Linux pour gagner du temps", "b", "Korben", now - 3 * 3_600_000),
-                        Article("Le budget 2027 présenté", "c", "France Info", now - 5 * 3_600_000),
+                        Article(tr("Élections : les premiers résultats", "Elections: first results"), "a", "Le Monde", now - 25 * 60_000),
+                        Article(tr("Une astuce Linux pour gagner du temps", "A Linux tip to save time"), "b", "Korben", now - 3 * 3_600_000),
+                        Article(tr("Le budget 2027 présenté", "The 2027 budget unveiled"), "c", "France Info", now - 5 * 3_600_000),
                     ),
                     now,
                     failed = false,

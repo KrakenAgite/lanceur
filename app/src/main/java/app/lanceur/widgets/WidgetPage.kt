@@ -1,5 +1,6 @@
 package app.lanceur.widgets
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material.icons.filled.Check
@@ -133,10 +134,10 @@ fun WidgetPage(
                 horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
             ) {
                 if (editMode) {
-                    Button(onClick = { actions.setEditMode(false) }) { ButtonContent(Icons.Default.Check, "Terminé") }
+                    Button(onClick = { actions.setEditMode(false) }) { ButtonContent(Icons.Default.Check, tr("Terminé", "Done")) }
                 } else {
-                    FilledTonalButton(onClick = actions.addWidget) { ButtonContent(Icons.Default.Add, "Ajouter") }
-                    OutlinedButton(onClick = { actions.setEditMode(true) }) { ButtonContent(Icons.Default.Edit, "Modifier") }
+                    FilledTonalButton(onClick = actions.addWidget) { ButtonContent(Icons.Default.Add, tr("Ajouter", "Add")) }
+                    OutlinedButton(onClick = { actions.setEditMode(true) }) { ButtonContent(Icons.Default.Edit, tr("Modifier", "Edit")) }
                 }
             }
         }
@@ -159,14 +160,14 @@ private fun SummaryCard(summary: DaySummaryState, actions: WidgetPageActions) {
         Spacer(Modifier.height(14.dp))
         when {
             !summary.calendarGranted ->
-                TextButton(onClick = actions.requestCalendar) { Text("Autoriser l'agenda pour voir tes événements") }
+                TextButton(onClick = actions.requestCalendar) { Text(tr("Autoriser l'agenda pour voir tes événements", "Allow calendar access to see your events")) }
             summary.events.isEmpty() ->
-                Text("Rien de prévu", style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
+                Text(tr("Rien de prévu", "Nothing planned"), style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
             else -> summary.events.forEachIndexed { index, line ->
                 // Un seul intertitre au passage à demain, au lieu de répéter « Demain » sur chaque ligne
                 if (line.tomorrow && (index == 0 || !summary.events[index - 1].tomorrow)) {
                     Text(
-                        "DEMAIN",
+                        tr("DEMAIN", "TOMORROW"),
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.onSurfaceVariant,
                         letterSpacing = 1.5.sp,
@@ -326,7 +327,7 @@ private fun WidgetList(
 @Composable
 private fun EditToolbar(card: WidgetCard, label: String, reconfigurable: Boolean, actions: WidgetPageActions, handle: Modifier) {
     Row(Modifier.fillMaxWidth().height(TOOLBAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Menu, contentDescription = "Déplacer $label", modifier = handle.padding(12.dp))
+        Icon(Icons.Default.Menu, contentDescription = tr("Déplacer ", "Move ") + label, modifier = handle.padding(12.dp))
         Text(label, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
         val sizes = WidgetLayout.sizes(card.slot)
         // Une seule taille possible (batterie) : rien à choisir
@@ -344,9 +345,9 @@ private fun EditToolbar(card: WidgetCard, label: String, reconfigurable: Boolean
             }
         }
         if (reconfigurable) {
-            IconButton(onClick = { actions.reconfigure(card.slot) }) { Icon(Icons.Default.Settings, contentDescription = "Reconfigurer") }
+            IconButton(onClick = { actions.reconfigure(card.slot) }) { Icon(Icons.Default.Settings, contentDescription = tr("Reconfigurer", "Reconfigure")) }
         }
-        IconButton(onClick = { actions.remove(card.slot) }) { Icon(Icons.Default.Clear, contentDescription = "Retirer") }
+        IconButton(onClick = { actions.remove(card.slot) }) { Icon(Icons.Default.Clear, contentDescription = tr("Retirer", "Remove")) }
     }
 }
 
@@ -357,9 +358,9 @@ private fun UnavailableCard(label: String, onRemove: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Widget indisponible", style = MaterialTheme.typography.titleMedium)
+        Text(tr("Widget indisponible", "Widget unavailable"), style = MaterialTheme.typography.titleMedium)
         Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        TextButton(onClick = onRemove) { Text("Retirer") }
+        TextButton(onClick = onRemove) { Text(tr("Retirer", "Remove")) }
     }
 }
 
@@ -395,7 +396,7 @@ private fun EmptyWidgetsCard(onAdd: () -> Unit) {
     ) {
         Icon(Icons.Default.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(32.dp))
         Spacer(Modifier.height(6.dp))
-        Text("Ajoute ton premier widget", style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
-        Text("Météo, agenda, musique…", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+        Text(tr("Ajoute ton premier widget", "Add your first widget"), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+        Text(tr("Météo, agenda, musique…", "Weather, calendar, music…"), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
     }
 }

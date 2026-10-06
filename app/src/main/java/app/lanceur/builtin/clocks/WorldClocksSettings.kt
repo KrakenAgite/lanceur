@@ -1,5 +1,6 @@
 package app.lanceur.builtin.clocks
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,12 +31,12 @@ fun WorldClocksSettings(initial: WorldClocksConfig?, home: City, onSave: (String
     var query by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(initial?.cityIds?.takeIf { it.isNotEmpty() } ?: listOf(home.id)) }
     Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Horloges du monde", style = MaterialTheme.typography.headlineSmall)
+        Text(tr("Horloges du monde", "World clocks"), style = MaterialTheme.typography.headlineSmall)
         Text("${selected.size} / ${WorldClocksConfig.MAX} villes", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
-            label = { Text("Chercher une ville") },
+            label = { Text(tr("Chercher une ville", "Search a city")) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().testTag("city-search"),
         )
@@ -56,6 +57,6 @@ fun WorldClocksSettings(initial: WorldClocksConfig?, home: City, onSave: (String
             onClick = { onSave(WorldClocksConfig(selected).toData()) },
             enabled = selected.isNotEmpty(),
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Enregistrer") }
+        ) { Text(tr("Enregistrer", "Save")) }
     }
 }

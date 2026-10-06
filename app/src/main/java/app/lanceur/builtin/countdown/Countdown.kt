@@ -1,5 +1,7 @@
 package app.lanceur.builtin.countdown
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.tr
 import app.lanceur.builtin.WidgetData
 import java.time.Duration
 import java.time.LocalDate
@@ -38,8 +40,8 @@ data class CountdownConfig(val title: String, val date: LocalDate, val time: Loc
 data class CountdownView(val big: String, val dateText: String, val progress: Float)
 
 object Countdown {
-    private val DATE = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH)
-    private val DATE_TIME = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy 'à' HH:mm", Locale.FRENCH)
+    private val DATE get() = DateTimeFormatter.ofPattern(tr("EEEE d MMMM yyyy", "EEEE, MMMM d, yyyy"), L10n.locale)
+    private val DATE_TIME get() = DateTimeFormatter.ofPattern(tr("EEEE d MMMM yyyy 'à' HH:mm", "EEEE, MMMM d, yyyy 'at' HH:mm"), L10n.locale)
 
     fun of(config: CountdownConfig, now: ZonedDateTime): CountdownView {
         val target = config.time?.let { config.date.atTime(it).atZone(now.zone) }
@@ -50,15 +52,15 @@ object Countdown {
                 val d = minutes / (24 * 60)
                 val h = minutes % (24 * 60) / 60
                 when {
-                    d > 0 -> "$d j $h h"
+                    d > 0 -> tr("$d j $h h", "${d}d ${h}h")
                     h > 0 -> "$h h ${minutes % 60} min"
                     else -> "${maxOf(1, minutes)} min"
                 }
             }
-            days > 0 -> "J-$days"
-            days == 0L -> "C'est aujourd'hui 🎉"
-            days == -1L -> "Il y a 1 jour"
-            else -> "Il y a ${-days} jours"
+            days > 0 -> tr("J-$days", "D-$days")
+            days == 0L -> tr("C'est aujourd'hui 🎉", "It's today 🎉")
+            days == -1L -> tr("Il y a 1 jour", "1 day ago")
+            else -> tr("Il y a ${-days} jours", "${-days} days ago")
         }
         val end = (target ?: config.date.atStartOfDay(now.zone)).toInstant().toEpochMilli()
         val nowMs = now.toInstant().toEpochMilli()

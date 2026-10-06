@@ -1,5 +1,6 @@
 package app.lanceur.net
 
+import app.lanceur.i18n.tr
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -43,11 +44,11 @@ class Network {
     private fun fetch(start: String): NetResult {
         var current = start
         repeat(NetRules.MAX_REDIRECTS + 1) {
-            if (!NetRules.allowed(current)) return NetResult.Failed("Adresse HTTPS requise")
+            if (!NetRules.allowed(current)) return NetResult.Failed(tr("Adresse HTTPS requise", "HTTPS address required"))
             val connection = try {
                 URL(current).openConnection() as HttpURLConnection
             } catch (e: Exception) {
-                return NetResult.Failed("Adresse invalide")
+                return NetResult.Failed(tr("Adresse invalide", "Invalid address"))
             }
             connection.apply {
                 connectTimeout = NetRules.TIMEOUT_MS
@@ -60,19 +61,19 @@ class Network {
                 when (val code = connection.responseCode) {
                     in 200..299 -> return NetResult.Ok(connection.inputStream.use(::readLimited))
                     301, 302, 303, 307, 308 ->
-                        current = NetRules.next(current, connection.getHeaderField("Location")) ?: return NetResult.Failed("Redirection refusée")
-                    else -> return NetResult.Failed("Erreur $code")
+                        current = NetRules.next(current, connection.getHeaderField("Location")) ?: return NetResult.Failed(tr("Redirection refusée", "Redirect refused"))
+                    else -> return NetResult.Failed(tr("Erreur ", "Error ") + code)
                 }
             } catch (e: IOException) {
-                return NetResult.Failed(e.message ?: "Réseau indisponible")
+                return NetResult.Failed(e.message ?: tr("Réseau indisponible", "Network unavailable"))
             } catch (e: RuntimeException) {
                 // Hôte ou port étrange, refus du système… : jamais une raison de faire planter le launcher
-                return NetResult.Failed("Adresse invalide")
+                return NetResult.Failed(tr("Adresse invalide", "Invalid address"))
             } finally {
                 connection.disconnect()
             }
         }
-        return NetResult.Failed("Trop de redirections")
+        return NetResult.Failed(tr("Trop de redirections", "Too many redirects"))
     }
 
     /** Lit au plus `MAX_BYTES` : au-delà, erreur sans tout charger en mémoire. */

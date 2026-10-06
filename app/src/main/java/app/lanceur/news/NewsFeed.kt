@@ -1,5 +1,7 @@
 package app.lanceur.news
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.tr
 import app.lanceur.builtin.Freshness
 import app.lanceur.builtin.rss.Article
 import java.time.ZoneId
@@ -30,12 +32,12 @@ object NewsFeed {
     /** « Mis à jour à 14:05 », ou « Hors ligne · il y a 2 h » si tous les flux ont échoué au dernier essai. */
     fun footer(state: NewsState, now: Long, zone: ZoneId): String? {
         val latest = state.feeds.mapNotNull { it.fetchedAt }.maxOrNull() ?: return null
-        return if (state.feeds.all { it.failed }) "Hors ligne · ${Freshness.ago(latest, now)}" else Freshness.label(latest, now, zone)
+        return if (state.feeds.all { it.failed }) tr("Hors ligne · ", "Offline · ") + Freshness.ago(latest, now) else Freshness.label(latest, now, zone)
     }
 
     fun allFailedEmpty(state: NewsState): Boolean = state.feeds.isNotEmpty() && state.feeds.all { it.failed && it.articles.isEmpty() }
 
-    private val DATE = java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", java.util.Locale.FRENCH)
+    private val DATE get() = java.time.format.DateTimeFormatter.ofPattern(tr("EEEE d MMMM", "EEEE, MMMM d"), L10n.locale)
 
     /** « Mardi 6 octobre », comme l'en-tête du résumé du jour. */
     fun dateLabel(now: Long, zone: ZoneId): String =

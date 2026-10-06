@@ -1,5 +1,6 @@
 package app.lanceur.builtin.calendar
 
+import app.lanceur.i18n.L10n
 import app.lanceur.summary.DaySummary
 import app.lanceur.summary.SummaryEvent
 import app.lanceur.summary.SummaryLine
@@ -18,7 +19,7 @@ data class MonthGridState(val month: YearMonth, val title: String, val weeks: Li
 
 object MonthGrid {
     const val MAX_DOTS = 3
-    private val TITLE = DateTimeFormatter.ofPattern("LLLL yyyy", Locale.FRENCH)
+    private val TITLE get() = DateTimeFormatter.ofPattern("LLLL yyyy", L10n.locale)
 
     fun build(month: YearMonth, today: LocalDate, events: List<SummaryEvent>, zone: ZoneId): MonthGridState {
         val byDay = EventDays.byDay(events, zone)

@@ -1,5 +1,6 @@
 package app.lanceur.builtin.rss
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,18 +38,18 @@ fun RssSettings(initial: RssConfig?, check: suspend (String) -> FeedCheck, onSav
         Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("Flux RSS", style = MaterialTheme.typography.headlineSmall)
+        Text(tr("Flux RSS", "RSS feeds"), style = MaterialTheme.typography.headlineSmall)
         urls.indices.forEach { i ->
             OutlinedTextField(
                 value = urls[i],
                 onValueChange = { urls[i] = it; statuses = statuses - i },
-                label = { Text("Adresse du flux ${i + 1}") },
+                label = { Text(tr("Adresse du flux ${i + 1}", "Feed address ${i + 1}")) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().testTag("feed-url-$i"),
             )
             statuses[i]?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         }
-        Text("Suggestions", style = MaterialTheme.typography.titleSmall)
+        Text(tr("Suggestions", "Suggestions"), style = MaterialTheme.typography.titleSmall)
         RssSuggestions.all.forEach { s ->
             val index = urls.indexOf(s.url)
             Row(
@@ -70,7 +71,7 @@ fun RssSettings(initial: RssConfig?, check: suspend (String) -> FeedCheck, onSav
                     val results = filled.associate { (i, url) -> i to (RssConfig.validate(url)?.let { FeedCheck.Failed(it) } ?: check(url.trim())) }
                     statuses = results.mapValues { (_, r) ->
                         when (r) {
-                            is FeedCheck.Ok -> "✓ ${r.title} — ${r.count} articles"
+                            is FeedCheck.Ok -> "✓ ${r.title} — ${r.count} " + tr("articles", "articles")
                             is FeedCheck.Failed -> "✗ ${r.message}"
                         }
                     }
@@ -80,6 +81,6 @@ fun RssSettings(initial: RssConfig?, check: suspend (String) -> FeedCheck, onSav
             },
             enabled = !checking && urls.any { it.isNotBlank() },
             modifier = Modifier.fillMaxWidth(),
-        ) { Text(if (checking) "Vérification…" else "Vérifier et enregistrer") }
+        ) { Text(if (checking) tr("Vérification…", "Checking…") else tr("Vérifier et enregistrer", "Check and save")) }
     }
 }

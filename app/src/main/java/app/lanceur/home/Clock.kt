@@ -1,5 +1,7 @@
 package app.lanceur.home
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -21,7 +23,7 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 
 private val TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.FRENCH)
-private val DATE = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRENCH)
+private val DATE get() = DateTimeFormatter.ofPattern(tr("EEEE d MMMM", "EEEE, MMMM d"), L10n.locale)
 
 /** Heure et date. L'appui long sur l'heure est le geste discret du dossier caché. */
 @OptIn(ExperimentalFoundationApi::class)

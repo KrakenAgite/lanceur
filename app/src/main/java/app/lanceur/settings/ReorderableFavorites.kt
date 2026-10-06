@@ -1,5 +1,6 @@
 package app.lanceur.settings
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Column
@@ -71,7 +72,7 @@ fun ReorderableFavorites(items: List<AppEntry>, icon: @Composable (AppKey) -> Un
                     Text(entry.label, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Icon(
                         Icons.Default.Menu,
-                        contentDescription = "Déplacer ${entry.label}",
+                        contentDescription = tr("Déplacer ", "Move ") + entry.label,
                         modifier = Modifier.pointerInput(entry.key) {
                             detectDragGestures(
                                 onDragStart = { draggingKey = entry.key; dragOffset = 0f },

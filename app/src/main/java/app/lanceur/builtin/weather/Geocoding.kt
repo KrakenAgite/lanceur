@@ -1,5 +1,7 @@
 package app.lanceur.builtin.weather
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.tr
 import java.net.URLEncoder
 import java.util.Locale
 import org.json.JSONObject
@@ -34,9 +36,9 @@ object WeatherQuery {
             "&timezone=auto&forecast_days=6"
 
     fun geocodeUrl(query: String): String =
-        "https://geocoding-api.open-meteo.com/v1/search?name=${encode(query.trim())}&count=8&language=fr"
+        "https://geocoding-api.open-meteo.com/v1/search?name=${encode(query.trim())}&count=8&language=${L10n.lang.locale.language}"
 
-    fun searchUrl(placeName: String): String = "https://www.google.com/search?q=${encode("météo $placeName")}"
+    fun searchUrl(placeName: String): String = "https://www.google.com/search?q=${encode(tr("météo ", "weather ") + placeName)}"
 
     private fun coord(value: Double) = String.format(Locale.ROOT, "%.2f", value)
 

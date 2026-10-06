@@ -1,5 +1,6 @@
 package app.lanceur.vault
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -54,11 +55,11 @@ fun VaultScreen(
         contentPadding = PaddingValues(16.dp),
     ) {
         item {
-            Text("Dossier caché", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 16.dp))
+            Text(tr("Dossier caché", "Hidden folder"), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 16.dp))
         }
-        item { SectionTitle("Masquées") }
+        item { SectionTitle(tr("Masquées", "Hidden")) }
         if (hidden.isEmpty()) {
-            item { HintText("Aucune appli cachée. Fais un appui long sur une appli, puis « Cacher ».") }
+            item { HintText(tr("Aucune appli cachée. Fais un appui long sur une appli, puis « Cacher ».", "No hidden apps. Long press an app, then “Hide”.")) }
         }
         items(hidden, key = { "h:" + it.key.encode() }) { entry ->
             AppRow(
@@ -69,16 +70,16 @@ fun VaultScreen(
                 onMenu = { actions.menu(entry, it) },
             )
         }
-        item { SectionTitle("Espace privé") }
+        item { SectionTitle(tr("Espace privé", "Private space")) }
         when (privateSpace) {
             PrivateSpaceState.ABSENT -> item {
-                HintText("Aucun Espace privé. Crée-le dans Paramètres > Sécurité et confidentialité > Espace privé.")
+                HintText(tr("Aucun Espace privé. Crée-le dans Paramètres > Sécurité et confidentialité > Espace privé.", "No Private space. Create it in Settings > Security & privacy > Private space."))
             }
             PrivateSpaceState.LOCKED -> item {
                 Button(onClick = actions.unlockPrivateSpace, modifier = Modifier.padding(horizontal = 16.dp)) {
                     Icon(Icons.Default.Lock, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Déverrouiller")
+                    Text(tr("Déverrouiller", "Unlock"))
                 }
             }
             PrivateSpaceState.UNLOCKED -> {
@@ -93,7 +94,7 @@ fun VaultScreen(
                 }
                 item {
                     OutlinedButton(onClick = actions.lockPrivateSpace, modifier = Modifier.padding(16.dp)) {
-                        Text("Verrouiller l'Espace privé")
+                        Text(tr("Verrouiller l'Espace privé", "Lock Private space"))
                     }
                 }
             }

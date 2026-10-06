@@ -1,5 +1,6 @@
 package app.lanceur.builtin.storage
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,9 +27,9 @@ fun StorageCard(reading: StorageReading, onClick: () -> Unit, modifier: Modifier
         modifier.fillMaxSize().background(cardBackground()).clickable(onClick = onClick).padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        CardLabel("Stockage")
-        GaugeRow("Stockage", StorageInfo.text(reading.storage, decimals = 0), reading.storage)
-        GaugeRow("Mémoire vive", StorageInfo.text(reading.memory, decimals = 1), reading.memory)
+        CardLabel(tr("Stockage", "Storage"))
+        GaugeRow(tr("Stockage", "Storage"), StorageInfo.text(reading.storage, decimals = 0), reading.storage)
+        GaugeRow(tr("Mémoire vive", "RAM"), StorageInfo.text(reading.memory, decimals = 1), reading.memory)
     }
 }
 

@@ -1,5 +1,6 @@
 package app.lanceur
 
+import app.lanceur.i18n.L10n
 import android.graphics.Color
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        L10n.apply(resources.configuration.locales[0])
         super.onCreate(savedInstanceState)
         // Barre des 3 boutons sans voile : le fond d'écran continue jusqu'en bas, comme sur l'accueil du Pixel
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT))

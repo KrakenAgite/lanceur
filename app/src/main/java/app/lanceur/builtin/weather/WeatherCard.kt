@@ -1,5 +1,6 @@
 package app.lanceur.builtin.weather
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,11 +30,11 @@ fun WeatherCard(state: WeatherViewState, size: WidgetSize, onOpen: () -> Unit, o
     val colors = MaterialTheme.colorScheme
     val base = modifier.fillMaxSize().background(cardBackground())
     when (state) {
-        WeatherViewState.Loading -> Message(base, "Chargement de la météo…")
-        WeatherViewState.Unavailable -> Message(base, "Météo indisponible, réessaie plus tard")
+        WeatherViewState.Loading -> Message(base, tr("Chargement de la météo…", "Loading weather…"))
+        WeatherViewState.Unavailable -> Message(base, tr("Météo indisponible, réessaie plus tard", "Weather unavailable, try again later"))
         WeatherViewState.NoPosition -> Column(base.padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text("Position indisponible", style = MaterialTheme.typography.titleMedium)
-            TextButton(onClick = onChooseCity) { Text("Choisir une ville") }
+            Text(tr("Position indisponible", "Location unavailable"), style = MaterialTheme.typography.titleMedium)
+            TextButton(onClick = onChooseCity) { Text(tr("Choisir une ville", "Choose a city")) }
         }
         is WeatherViewState.Ready -> {
             val f = state.forecast
@@ -51,7 +52,7 @@ fun WeatherCard(state: WeatherViewState, size: WidgetSize, onOpen: () -> Unit, o
                 }
                 if (size != WidgetSize.SMALL) {
                     Text(
-                        listOfNotNull("Ressenti ${f.apparent}°", "Vent ${f.wind} km/h", f.rain?.let { "Pluie $it %" }).joinToString(" · "),
+                        listOfNotNull(tr("Ressenti ", "Feels like ") + "${f.apparent}°", tr("Vent ", "Wind ") + "${f.wind} km/h", f.rain?.let { tr("Pluie ", "Rain ") + "$it %" }).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(top = 6.dp),
@@ -88,7 +89,7 @@ fun WeatherCard(state: WeatherViewState, size: WidgetSize, onOpen: () -> Unit, o
 @Composable
 private fun Message(modifier: Modifier, text: String) {
     Column(modifier.padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        CardLabel("Météo")
+        CardLabel(tr("Météo", "Weather"))
         Spacer(Modifier.height(8.dp))
         Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

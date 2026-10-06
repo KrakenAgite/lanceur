@@ -1,5 +1,6 @@
 package app.lanceur.news
 
+import app.lanceur.i18n.tr
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -112,7 +113,7 @@ fun NewsPage(
             val shadow = Shadow(color = (if (dark) Color.Black else Color.White).copy(alpha = 0.5f), offset = Offset(0f, 2f), blurRadius = 10f)
             Column(Modifier.weight(1f)) {
                 Text(
-                    "ACTUALITÉS",
+                    tr("ACTUALITÉS", "NEWS"),
                     style = MaterialTheme.typography.labelLarge.copy(shadow = shadow),
                     color = colors.primaryFixed,
                     fontWeight = FontWeight.Bold,
@@ -127,11 +128,11 @@ fun NewsPage(
                     )
                 }
             }
-            FilledTonalIconButton(onClick = actions.refresh) { Icon(Icons.Default.Refresh, contentDescription = "Actualiser") }
+            FilledTonalIconButton(onClick = actions.refresh) { Icon(Icons.Default.Refresh, contentDescription = tr("Actualiser", "Refresh")) }
         }
         if (chips.isNotEmpty()) {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                item { Bubble("Tout", selected = filter == null, failed = false, onClick = { actions.filter(null) }) }
+                item { Bubble(tr("Tout", "All"), selected = filter == null, failed = false, onClick = { actions.filter(null) }) }
                 items(chips, key = { it.url }) { chip ->
                     Bubble(chip.label, selected = filter == chip.url, failed = chip.failed, onClick = { actions.filter(chip.url) }, onRemove = { actions.remove(chip.url) })
                 }
@@ -148,10 +149,10 @@ fun NewsPage(
                         Modifier.fillMaxWidth().clip(CardShape).background(cardBackground()).padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text("Flux indisponibles", style = MaterialTheme.typography.titleMedium)
-                        Text("Vérifie ta connexion", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                        Text(tr("Flux indisponibles", "Feeds unavailable"), style = MaterialTheme.typography.titleMedium)
+                        Text(tr("Vérifie ta connexion", "Check your connection"), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                         Spacer(Modifier.height(12.dp))
-                        Button(onClick = actions.refresh) { Text("Réessayer") }
+                        Button(onClick = actions.refresh) { Text(tr("Réessayer", "Retry")) }
                     }
                 }
                 else -> LazyColumn(
@@ -202,7 +203,7 @@ private fun Bubble(label: String, selected: Boolean, failed: Boolean, onClick: (
         }
         if (onRemove != null) {
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(text = { Text("Retirer ce flux") }, onClick = { menu = false; onRemove() })
+                DropdownMenuItem(text = { Text(tr("Retirer ce flux", "Remove this feed")) }, onClick = { menu = false; onRemove() })
             }
         }
     }
@@ -219,7 +220,7 @@ private fun AddBubble(onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Default.Add, contentDescription = "Ajouter un flux", modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+        Icon(Icons.Default.Add, contentDescription = tr("Ajouter un flux", "Add a feed"), modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -282,8 +283,8 @@ private fun EmptyNewsCard(onAdd: () -> Unit) {
         ) {
             Icon(Icons.Default.Add, contentDescription = null, tint = colors.primary, modifier = Modifier.size(32.dp))
             Spacer(Modifier.height(8.dp))
-            Text("Ajoute tes premiers flux", style = MaterialTheme.typography.titleMedium)
-            Text("Le Monde, Numerama, Korben… ou l'adresse de ton choix", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
+            Text(tr("Ajoute tes premiers flux", "Add your first feeds"), style = MaterialTheme.typography.titleMedium)
+            Text(tr("Le Monde, Numerama, Korben… ou l'adresse de ton choix", "BBC, The Verge, Le Monde… or any address you like"), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
         }
     }
 }

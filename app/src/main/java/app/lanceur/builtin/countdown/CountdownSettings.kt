@@ -1,5 +1,6 @@
 package app.lanceur.builtin.countdown
 
+import app.lanceur.i18n.tr
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,11 +50,11 @@ fun CountdownSettings(initial: CountdownConfig?, onSave: (String) -> Unit, now: 
         Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Compte à rebours", style = MaterialTheme.typography.headlineSmall)
+        Text(tr("Compte à rebours", "Countdown"), style = MaterialTheme.typography.headlineSmall)
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
-            label = { Text("Titre") },
+            label = { Text(tr("Titre", "Title")) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().testTag("countdown-title"),
         )
@@ -61,7 +62,7 @@ fun CountdownSettings(initial: CountdownConfig?, onSave: (String) -> Unit, now: 
         Row(Modifier.fillMaxWidth().clickable { withTime = !withTime }, verticalAlignment = Alignment.CenterVertically) {
             Switch(checked = withTime, onCheckedChange = { withTime = it })
             Spacer(Modifier.width(12.dp))
-            Text("Heure précise")
+            Text(tr("Heure précise", "Exact time"))
         }
         if (withTime) TimeInput(state = timeState)
         Button(
@@ -69,10 +70,10 @@ fun CountdownSettings(initial: CountdownConfig?, onSave: (String) -> Unit, now: 
                 val millis = dateState.selectedDateMillis ?: return@Button
                 val date = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
                 val time = if (withTime) LocalTime.of(timeState.hour, timeState.minute) else null
-                onSave(CountdownConfig(title.trim().ifEmpty { "Compte à rebours" }, date, time, initial?.createdAt ?: now()).toData())
+                onSave(CountdownConfig(title.trim().ifEmpty { tr("Compte à rebours", "Countdown") }, date, time, initial?.createdAt ?: now()).toData())
             },
             enabled = dateState.selectedDateMillis != null,
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Enregistrer") }
+        ) { Text(tr("Enregistrer", "Save")) }
     }
 }

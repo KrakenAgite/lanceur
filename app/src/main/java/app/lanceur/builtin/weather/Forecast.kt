@@ -1,5 +1,7 @@
 package app.lanceur.builtin.weather
 
+import app.lanceur.i18n.L10n
+import app.lanceur.i18n.tr
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -40,7 +42,7 @@ data class Forecast(
             val hourCodes = hourly.getJSONArray("weather_code")
             val firstHour = hourTimes.indexOfFirst { it.isAfter(localNow) }.takeIf { it >= 0 } ?: hourTimes.size
             val hours = (firstHour until minOf(firstHour + 6, hourTimes.size)).map { i ->
-                HourForecast("${hourTimes[i].hour} h", WeatherCode.icon(hourCodes.getInt(i)), hourTemps.getDouble(i).roundToInt())
+                HourForecast(tr("${hourTimes[i].hour} h", "${hourTimes[i].hour}:00"), WeatherCode.icon(hourCodes.getInt(i)), hourTemps.getDouble(i).roundToInt())
             }
             val dayTimes = daily.getJSONArray("time").strings().map(LocalDate::parse)
             val today = dayTimes.indexOf(localNow.toLocalDate()).coerceAtLeast(0)
@@ -49,7 +51,7 @@ data class Forecast(
             val mins = daily.getJSONArray("temperature_2m_min")
             val rains = daily.optJSONArray("precipitation_probability_max")
             val days = (today + 1 until minOf(today + 6, dayTimes.size)).map { i ->
-                val name = dayTimes[i].dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.FRENCH).replaceFirstChar { it.titlecase(Locale.FRENCH) }
+                val name = dayTimes[i].dayOfWeek.getDisplayName(TextStyle.SHORT, L10n.locale).replaceFirstChar { it.titlecase(L10n.locale) }
                 DayForecast(name, WeatherCode.icon(dayCodes.getInt(i)), mins.getDouble(i).roundToInt(), maxs.getDouble(i).roundToInt(), rains?.optIntOrNull(i))
             }
             val code = current.getInt("weather_code")

@@ -1,5 +1,6 @@
 package app.lanceur.builtin
 
+import app.lanceur.i18n.tr
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -20,7 +21,7 @@ class BuiltinSettingsServices(
     val searchPlaces: suspend (String) -> List<app.lanceur.builtin.weather.Place> = { emptyList() },
     val locationGranted: Boolean = false,
     val requestLocation: () -> Unit = {},
-    val checkFeed: suspend (String) -> FeedCheck = { FeedCheck.Failed("Indisponible") },
+    val checkFeed: suspend (String) -> FeedCheck = { FeedCheck.Failed(tr("Indisponible", "Unavailable")) },
 )
 
 /** Feuille de réglages d'un widget configurable ; `initial` vaut `null` à l'ajout. Annuler n'enregistre rien. */

@@ -1,5 +1,6 @@
 package app.lanceur.widgets
 
+import app.lanceur.i18n.tr
 import android.app.Activity
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetHostView
@@ -42,7 +43,7 @@ class WidgetHost(context: Context) {
         slot.appWidgetId.takeIf { info(it) != null }
     }
 
-    fun label(id: Int): String = info(id)?.loadLabel(appContext.packageManager) ?: "Widget"
+    fun label(id: Int): String = info(id)?.loadLabel(appContext.packageManager) ?: tr("Widget", "Widget")
 
     /** `true` si Android a lié le widget sans rien demander ; sinon il faut lancer [bindIntent]. */
     fun bindIfAllowed(id: Int, provider: AppKey): Boolean {
