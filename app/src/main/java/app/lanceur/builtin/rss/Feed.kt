@@ -1,5 +1,6 @@
 package app.lanceur.builtin.rss
 
+import app.lanceur.net.NetRules
 import java.io.ByteArrayInputStream
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -8,7 +9,7 @@ import java.time.format.DateTimeFormatter
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
 
-data class Article(val title: String, val link: String, val source: String, val published: Long?)
+data class Article(val title: String, val link: String, val source: String, val published: Long?, val image: String? = null)
 
 data class FeedResult(val title: String, val articles: List<Article>)
 
@@ -54,7 +55,7 @@ object Feed {
         val items = (channel.children("item") + root.children("item")).mapNotNull { item ->
             val link = item.childText("link").trim()
             if (!webLink(link)) null
-            else Article(clean(item.childText("title")).ifBlank { link }, link, title, date(item.childText("pubDate")) ?: date(item.childText("date")))
+            else Article(clean(item.childText("title")).ifBlank { link }, link, title, date(item.childText("pubDate")) ?: date(item.childText("date")), image(item, link))
         }
         return FeedResult(title, items)
     }
@@ -66,7 +67,7 @@ object Feed {
             val link = (links.firstOrNull { it.getAttribute("rel").let { r -> r.isEmpty() || r == "alternate" } } ?: links.firstOrNull())
                 ?.getAttribute("href")?.trim().orEmpty()
             if (!webLink(link)) null
-            else Article(clean(entry.childText("title")).ifBlank { link }, link, title, date(entry.childText("published")) ?: date(entry.childText("updated")))
+            else Article(clean(entry.childText("title")).ifBlank { link }, link, title, date(entry.childText("published")) ?: date(entry.childText("updated")), image(entry, link))
         }
         return FeedResult(title, entries)
     }
@@ -106,6 +107,26 @@ object Feed {
         return runCatching { ZonedDateTime.parse(t, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant().toEpochMilli() }.getOrNull()
             ?: runCatching { OffsetDateTime.parse(t).toInstant().toEpochMilli() }.getOrNull()
             ?: runCatching { Instant.parse(t).toEpochMilli() }.getOrNull()
+    }
+
+    private const val MEDIA_NS = "search.yahoo.com/mrss"
+    private val IMG_SRC = Regex("""<img[^>]+src\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+
+    /**
+     * Image de l'article : `media:content` / `media:thumbnail`, puis `enclosure` d'image, puis premier `<img>` du
+     * contenu HTML. Lien relatif résolu par rapport à l'article ; HTTPS exigé, sinon pas d'image.
+     */
+    private fun image(item: Element, base: String): String? {
+        val media = (item.children("content") + item.children("thumbnail")).firstOrNull { el ->
+            el.namespaceURI?.contains(MEDIA_NS) == true &&
+                (el.localName == "thumbnail" || el.getAttribute("medium") == "image" || el.getAttribute("type").startsWith("image/"))
+        }?.getAttribute("url")
+        val enclosure = item.children("enclosure").firstOrNull { it.getAttribute("type").startsWith("image/") }?.getAttribute("url")
+        val html = listOf("description", "encoded", "content", "summary").joinToString(" ") { item.childText(it) }
+        val inHtml = IMG_SRC.find(html)?.groupValues?.get(1)
+        val raw = listOfNotNull(media, enclosure, inHtml).firstOrNull { it.isNotBlank() } ?: return null
+        val resolved = runCatching { java.net.URI(base).resolve(raw.trim().replace("&amp;", "&")).toString() }.getOrNull() ?: return null
+        return resolved.takeIf(NetRules::allowed)
     }
 
     private fun Element.children(name: String): List<Element> {
