@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Version de test installée par les tests d'interface : nom distinct pour ne pas la confondre avec la vraie -->
+    <string name="app_name">Lanceur (test)</string>
+</resources>
