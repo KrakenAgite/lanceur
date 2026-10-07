@@ -193,4 +193,28 @@ class HomeScreenTest {
         }
         assertEquals(banque, launched)
     }
+
+    @Test
+    fun one_slide_goes_from_the_alphabet_into_the_folders() {
+        val games = app.lanceur.folders.Folder(2, "Jeux", app.lanceur.folders.FolderIcon.GAMES, listOf(chrome.key))
+        var launched: AppEntry? = null
+        show(lists.copy(folders = listOf(app.lanceur.prefs.FolderApps(games, listOf(chrome))))) { setMode ->
+            HomeActions(launch = { launched = it }, changeMode = setMode)
+        }
+        val bar = rule.onNodeWithTag("alphabet").fetchSemanticsNode().boundsInRoot
+        val folder = rule.onNodeWithTag("folder-2").fetchSemanticsNode().boundsInRoot.center
+        rule.onRoot().performTouchInput {
+            down(Offset(bar.center.x, bar.top + bar.height / 27f * 1.5f)) // lettre B
+        }
+        rule.onNodeWithText("Banque").assertIsDisplayed()
+        rule.onRoot().performTouchInput { moveTo(Offset(bar.center.x, bar.top + 5f)) }
+        rule.onRoot().performTouchInput { moveTo(folder) }
+        rule.onNodeWithText("Jeux").assertIsDisplayed()
+        val row = rule.onNodeWithText("Chrome").fetchSemanticsNode().boundsInRoot.center
+        rule.onRoot().performTouchInput {
+            moveTo(Offset(folder.x - 200f, row.y))
+            up()
+        }
+        assertEquals(chrome, launched)
+    }
 }

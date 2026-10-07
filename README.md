@@ -49,7 +49,7 @@ rôle d'écran d'accueil sont conservés. Espresso est fixé en 3.7.0 : la versi
 | Glisser vers le haut | Recherche |
 | Glisser vers le bas | Notifications |
 | Appui long sur une appli | Favori, ranger dans un dossier, cacher, infos, désinstaller |
-| Glisser sur les dossiers | Comme l'alphabet : chaque dossier s'ouvre au passage ; glisser vers une ligne et lâcher pour l'ouvrir |
+| Glisser sur les dossiers | Comme l'alphabet, dans le même geste : on passe des lettres aux dossiers sans lever le doigt ; chaque dossier s'ouvre au passage |
 | Toucher l'icône d'un dossier | Ouvre le dossier ; retoucher (ou toucher une zone vide) revient aux favoris |
 | Appui long sur l'icône d'un dossier | Renommer, changer l'icône, supprimer |
 | Appui long sur l'heure | Dossier caché (empreinte) |

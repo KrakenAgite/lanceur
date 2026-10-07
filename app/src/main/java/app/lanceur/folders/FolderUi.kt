@@ -5,8 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -55,24 +53,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.lanceur.alphabet.ScrubInput
 import app.lanceur.i18n.tr
-import app.lanceur.prefs.AlphabetSide
 import app.lanceur.prefs.FolderApps
 import app.lanceur.ui.cardBackground
 
@@ -101,74 +94,24 @@ val FolderIcon.vector: ImageVector
         FolderIcon.STAR -> Icons.Outlined.StarOutline
     }
 
+/** Écart entre deux icônes : beaucoup de dossiers se serrent pour toujours tenir dans l'angle. */
+fun folderPitch(maxHeight: Dp, count: Int): Dp = if (count == 0) MAX_PITCH else minOf(MAX_PITCH, maxHeight / count)
+
 /**
- * Icônes des dossiers, dans l'angle au-dessus de l'alphabet, qui se parcourent du doigt comme l'alphabet :
- * [onScrub] reçoit la position du doigt (hauteur = celle des icônes), [onRelease] le lever. Un toucher sans
- * glisser est signalé par `tap`, un appui long sans bouger par [onLongPress] (le lever est alors annulé).
+ * Icônes des dossiers, dans l'angle au-dessus de l'alphabet. Le geste (parcours, toucher, appui long) est géré
+ * par la colonne entière, avec l'alphabet : voir `BarScrub`. [activeIndex] : dossier sous le doigt.
  */
 @Composable
 fun FolderColumn(
     folders: List<FolderApps>,
     openId: Int?,
     activeIndex: Int?,
-    side: AlphabetSide,
-    onScrub: (ScrubInput) -> Unit,
-    onRelease: (cancelled: Boolean, tap: Boolean) -> Unit,
-    onLongPress: (Folder) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
-    val density = LocalDensity.current
-    val threshold = with(density) { 24.dp.toPx() }
-    val latestScrub by rememberUpdatedState(onScrub)
-    val latestRelease by rememberUpdatedState(onRelease)
-    val latestLongPress by rememberUpdatedState(onLongPress)
-    val latestSide by rememberUpdatedState(side)
-    val latestFolders by rememberUpdatedState(folders)
     BoxWithConstraints(modifier.testTag("folders")) {
-        val count = folders.size
-        // Beaucoup de dossiers : les icônes se serrent pour toujours tenir dans l'angle
-        val pitch = if (count == 0) MAX_PITCH else minOf(MAX_PITCH, maxHeight / count)
-        val pitchPx = with(density) { pitch.toPx() }
-        Column(
-            Modifier.pointerInput(count, pitchPx) {
-                awaitEachGesture {
-                    val down = awaitFirstDown()
-                    if (down.position.y >= pitchPx * count) return@awaitEachGesture
-                    down.consume()
-                    fun input(p: Offset) = ScrubInput(p.x, p.y, size.width.toFloat(), pitchPx * count, latestSide, threshold)
-                    latestScrub(input(down.position))
-                    var moved = false
-                    var cancelled = true
-                    var longPressed = false
-                    while (true) {
-                        val event = if (moved || longPressed) {
-                            awaitPointerEvent()
-                        } else {
-                            withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) { awaitPointerEvent() }
-                        }
-                        if (event == null) {
-                            longPressed = true
-                            val index = (down.position.y / pitchPx).toInt().coerceIn(0, count - 1)
-                            latestFolders.getOrNull(index)?.let { latestLongPress(it.folder) }
-                            continue
-                        }
-                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed) {
-                            // Une annulation arrive comme un lever déjà consommé
-                            cancelled = change.isConsumed || longPressed
-                            break
-                        }
-                        change.consume()
-                        if (longPressed) continue
-                        if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) moved = true
-                        latestScrub(input(change.position))
-                    }
-                    latestRelease(cancelled, !moved && !longPressed)
-                }
-            },
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        val pitch = folderPitch(maxHeight, folders.size)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             folders.forEachIndexed { i, (folder) ->
                 val open = folder.id == openId
                 val active = i == activeIndex
