@@ -1,6 +1,7 @@
 package app.lanceur.settings
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -31,7 +32,7 @@ class AppearanceTest {
         var choose = false
         rule.setContent {
             MaterialTheme {
-                Column { AppearanceSection(state, SettingsActions(openWallpaper = { wallpaper = true }, setIconStyle = { style = it }), onChoosePack = { choose = true }) }
+                Column(androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) { AppearanceSection(state, SettingsActions(openWallpaper = { wallpaper = true }, setIconStyle = { style = it }), onChoosePack = { choose = true }) }
             }
         }
         rule.onNodeWithText("Fond d'écran et style").assertExists()
@@ -42,7 +43,9 @@ class AppearanceTest {
         assertTrue(choose)
         rule.onNodeWithTag("shape-CIRCLE").performScrollTo().performClick()
         assertEquals(IconStyle(pack = "com.pack.arc", shape = IconShape.CIRCLE), style)
-        rule.onNodeWithTag("icon-themed").performClick()
+        rule.onNodeWithTag("shape-HEART").performScrollTo().performClick()
+        assertEquals(IconStyle(pack = "com.pack.arc", shape = IconShape.HEART), style)
+        rule.onNodeWithTag("icon-themed").performScrollTo().performClick()
         assertEquals(IconStyle(pack = "com.pack.arc", themed = true), style)
     }
 

@@ -34,4 +34,14 @@ class IconRendererTest {
         val bitmap = IconRenderer.render(ColorDrawable(Color.RED), IconShape.CIRCLE, null, 32)
         assertEquals(Color.RED, bitmap.getPixel(0, 0))
     }
+
+    @Test
+    fun every_shape_fills_its_square_and_covers_the_center() {
+        IconShape.entries.filter { it != IconShape.SYSTEM }.forEach { shape ->
+            val bounds = android.graphics.RectF().also { IconRenderer.shapePath(shape, 96f)!!.computeBounds(it, true) }
+            assertEquals("$shape", 96f, maxOf(bounds.width(), bounds.height()), 0.5f)
+            org.junit.Assert.assertTrue("$shape", bounds.left >= -0.5f && bounds.top >= -0.5f && bounds.right <= 96.5f && bounds.bottom <= 96.5f)
+            assertEquals("$shape", Color.RED, IconRenderer.render(icon, shape, null, 96).getPixel(48, 48))
+        }
+    }
 }

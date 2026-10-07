@@ -3,10 +3,11 @@ package app.lanceur.settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -76,9 +77,12 @@ fun AppearanceSection(state: AppearanceState, actions: SettingsActions, onChoose
             onAction = onChoosePack,
         )
         Text(tr("Forme des icônes", "Icon shape"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        // Grille sur plusieurs lignes : toutes les formes d'un coup d'œil
+        FlowRow(
+            Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            maxItemsInEachRow = 4,
         ) {
             IconShape.entries.forEach { shape ->
                 ShapeChoice(shape, selected = shape == state.iconStyle.shape) { actions.setIconStyle(state.iconStyle.copy(shape = shape)) }
@@ -108,15 +112,16 @@ private fun SwitchRow(title: String, subtitle: String, checked: Boolean, tag: St
 }
 
 @Composable
-private fun ShapeChoice(shape: IconShape, selected: Boolean, onClick: () -> Unit) {
+private fun RowScope.ShapeChoice(shape: IconShape, selected: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Column(
         Modifier
+            .weight(1f)
             .clip(ROW_SHAPE)
             .background(if (selected) colors.primaryContainer else cardBackground())
             .clickable(onClick = onClick)
             .testTag("shape-${shape.name}")
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 4.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -134,6 +139,8 @@ private fun ShapeChoice(shape: IconShape, selected: Boolean, onClick: () -> Unit
         Text(
             shape.label,
             style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             color = if (selected) colors.onPrimaryContainer else colors.onSurface,
         )
