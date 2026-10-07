@@ -20,8 +20,8 @@ android {
         applicationId = "app.lanceur"
         minSdk = 35
         targetSdk = 37
-        versionCode = 13
-        versionName = "1.5.6"
+        versionCode = 14
+        versionName = "1.5.7"
         testInstrumentationRunner = "app.lanceur.LanceurTestRunner"
     }
 
