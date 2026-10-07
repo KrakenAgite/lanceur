@@ -62,6 +62,9 @@ import app.lanceur.alphabet.ScrubPhase
 import app.lanceur.alphabet.letterIndex
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
+import app.lanceur.folders.FolderColumn
+import app.lanceur.folders.vector
+import androidx.compose.material3.Icon
 import app.lanceur.prefs.AlphabetSide
 import app.lanceur.prefs.AppLists
 import app.lanceur.ui.AppMenuAction
@@ -86,7 +89,9 @@ fun HomeScreen(
     val shown = when (mode) {
         ListMode.Favorites -> lists.favorites
         is ListMode.Letter -> sections.firstOrNull { it.letter == mode.letter }?.apps.orEmpty()
+        is ListMode.Folder -> lists.folders.firstOrNull { it.folder.id == mode.id }?.apps.orEmpty()
     }
+    val openFolder = lists.folders.firstOrNull { it.folder.id == (mode as? ListMode.Folder)?.id }?.folder
 
     val act by rememberUpdatedState(actions)
     val currentMode by rememberUpdatedState(mode)
@@ -96,6 +101,10 @@ fun HomeScreen(
 
     var phase by remember { mutableStateOf<ScrubPhase>(ScrubPhase.Idle) }
     var barTop by remember { mutableFloatStateOf(0f) }
+    var folderPhase by remember { mutableStateOf<ScrubPhase>(ScrubPhase.Idle) }
+    var foldersTop by remember { mutableFloatStateOf(0f) }
+    /** Dossier ouvert quand le doigt s'est posé : le toucher à nouveau le referme. */
+    var openAtDown by remember { mutableStateOf<Int?>(null) }
     var fingerY by remember { mutableFloatStateOf(0f) }
     var highlighted by remember { mutableStateOf<AppKey?>(null) }
     val rowBounds = remember { mutableMapOf<AppKey, Rect>() }
@@ -123,16 +132,16 @@ fun HomeScreen(
         }
     }
 
-    val onScrub: (ScrubInput) -> Unit = { input ->
-        val before = phase
+    /** Parcours commun à l'alphabet et aux dossiers : [open] ouvre l'élément survolé. */
+    fun scrub(before: ScrubPhase, input: ScrubInput, top: Float, enabled: List<Boolean>, open: (Int) -> Unit): ScrubPhase {
         val next = Scrub.next(before, input, enabled)
-        fingerY = barTop + input.y
+        fingerY = top + input.y
         when (next) {
             is ScrubPhase.OnBar -> {
                 highlighted = null
                 if (next.index != before.letterIndex) {
                     view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
-                    act.changeMode(ListMode.Letter(LetterIndex.LETTERS[next.index]))
+                    open(next.index)
                 }
             }
             is ScrubPhase.OnList -> highlighted = shown.firstOrNull { entry ->
@@ -140,7 +149,31 @@ fun HomeScreen(
             }?.key
             ScrubPhase.Idle -> highlighted = null
         }
-        phase = next
+        return next
+    }
+
+    val onScrub: (ScrubInput) -> Unit = { input ->
+        phase = scrub(phase, input, barTop, enabled) { act.changeMode(ListMode.Letter(LetterIndex.LETTERS[it])) }
+    }
+
+    val folderList by rememberUpdatedState(lists.folders)
+    val onFolderScrub: (ScrubInput) -> Unit = { input ->
+        if (folderPhase == ScrubPhase.Idle) openAtDown = (currentMode as? ListMode.Folder)?.id
+        folderPhase = scrub(folderPhase, input, foldersTop, List(folderList.size) { true }) { i ->
+            folderList.getOrNull(i)?.let { act.changeMode(ListMode.Folder(it.folder.id)) }
+        }
+    }
+
+    val onFolderRelease: (Boolean, Boolean) -> Unit = { cancelled, tap ->
+        val target = highlighted?.let { key -> shown.firstOrNull { it.key == key } }
+        val tapped = (folderPhase as? ScrubPhase.OnBar)?.let { folderList.getOrNull(it.index)?.folder?.id }
+        folderPhase = ScrubPhase.Idle
+        highlighted = null
+        when {
+            cancelled -> Unit
+            target != null -> act.launch(target)
+            tap && tapped != null && tapped == openAtDown -> act.changeMode(ListMode.Favorites)
+        }
     }
 
     val onRelease: (Boolean) -> Unit = { cancelled ->
@@ -150,19 +183,36 @@ fun HomeScreen(
         if (target != null && !cancelled) act.launch(target)
     }
 
+    // Les dossiers occupent l'angle, au-dessus de l'alphabet
     val bar: @Composable () -> Unit = {
-        AlphabetBar(
-            sections = sections,
-            phase = phase,
-            side = side,
-            onScrub = onScrub,
-            onRelease = onRelease,
-            modifier = Modifier
-                .padding(top = HEADER_HEIGHT, bottom = 24.dp)
-                .width(BAR_WIDTH)
-                .fillMaxHeight()
-                .onGloballyPositioned { barTop = it.positionInRoot().y },
-        )
+        Column(Modifier.width(BAR_WIDTH).fillMaxHeight()) {
+            FolderColumn(
+                folders = lists.folders,
+                openId = openFolder?.id,
+                activeIndex = (folderPhase as? ScrubPhase.OnBar)?.index,
+                side = side,
+                onScrub = onFolderScrub,
+                onRelease = onFolderRelease,
+                onLongPress = { act.editFolder(it) },
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .height(HEADER_HEIGHT - 8.dp)
+                    .fillMaxWidth()
+                    .onGloballyPositioned { foldersTop = it.positionInRoot().y },
+            )
+            AlphabetBar(
+                sections = sections,
+                phase = phase,
+                side = side,
+                onScrub = onScrub,
+                onRelease = onRelease,
+                modifier = Modifier
+                    .padding(bottom = 24.dp)
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .onGloballyPositioned { barTop = it.positionInRoot().y },
+            )
+        }
     }
 
     Box(
@@ -216,6 +266,26 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.Bottom,
                     contentPadding = PaddingValues(start = 8.dp, end = 8.dp, bottom = 24.dp),
                 ) {
+                    if (openFolder != null) {
+                        item(key = "folder-title") {
+                            Text(
+                                openFolder.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
+                        if (shown.isEmpty()) {
+                            item {
+                                Text(
+                                    tr("Dossier vide : appui long sur une appli › Ranger dans un dossier", "Empty folder: long press an app › Add to folder"),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(16.dp),
+                                )
+                            }
+                        }
+                    }
                     if (shown.isEmpty() && mode == ListMode.Favorites) {
                         item {
                             Text(
@@ -231,7 +301,7 @@ fun HomeScreen(
                         AppRow(
                             entry = entry,
                             icon = icon,
-                            menuItems = menuFor(entry, favoriteKeys),
+                            menuItems = menuFor(entry, favoriteKeys, inFolder = openFolder != null),
                             highlighted = entry.key == highlighted,
                             onClick = { act.launch(entry) },
                             onMenu = { act.menu(entry, it) },
@@ -245,37 +315,43 @@ fun HomeScreen(
             if (side == AlphabetSide.RIGHT) bar()
         }
         val active = phase
-        if (active is ScrubPhase.OnBar) {
-            LetterBubble(
-                letter = LetterIndex.LETTERS[active.index],
+        val activeFolder = (folderPhase as? ScrubPhase.OnBar)?.let { lists.folders.getOrNull(it.index)?.folder }
+        if (active is ScrubPhase.OnBar || activeFolder != null) {
+            Bubble(
                 modifier = Modifier
                     .align(if (side == AlphabetSide.RIGHT) Alignment.TopEnd else Alignment.TopStart)
                     .offset {
                         IntOffset(
                             x = (if (side == AlphabetSide.RIGHT) -1 else 1) * 72.dp.roundToPx(),
-                            y = (fingerY - 40.dp.toPx()).roundToInt(),
+                            y = (fingerY - 40.dp.toPx()).roundToInt().coerceAtLeast(0),
                         )
                     },
-            )
+            ) {
+                if (activeFolder != null) {
+                    Icon(activeFolder.icon.vector, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(40.dp))
+                } else if (active is ScrubPhase.OnBar) {
+                    Text(LetterIndex.LETTERS[active.index].toString(), style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun LetterBubble(letter: Char, modifier: Modifier = Modifier) {
+private fun Bubble(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
         modifier
             .size(80.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center,
-    ) {
-        Text(letter.toString(), style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-    }
+    ) { content() }
 }
 
-private fun menuFor(entry: AppEntry, favorites: Set<AppKey>) = listOf(
+private fun menuFor(entry: AppEntry, favorites: Set<AppKey>, inFolder: Boolean) = listOfNotNull(
     if (entry.key in favorites) AppMenuAction.REMOVE_FAVORITE else AppMenuAction.ADD_FAVORITE,
+    AppMenuAction.FOLDER,
+    if (inFolder) AppMenuAction.REMOVE_FROM_FOLDER else null,
     AppMenuAction.HIDE,
     AppMenuAction.INFO,
     AppMenuAction.UNINSTALL,

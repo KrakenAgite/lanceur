@@ -27,4 +27,6 @@ data class LauncherPrefs(
     val focus: app.lanceur.focus.FocusMode = app.lanceur.focus.FocusMode(),
     val backup: BackupSettings = BackupSettings(),
     val updates: UpdateSettings = UpdateSettings(),
+    /** Dossiers, dans l'ordre d'affichage en haut de l'alphabet. */
+    val folders: List<app.lanceur.folders.Folder> = emptyList(),
 )

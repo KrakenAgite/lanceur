@@ -68,4 +68,15 @@ class VisibleAppsTest {
         val lists = VisibleApps.compute(listOf(secret, workSecret), LauncherPrefs(hidden = setOf(secret.key)))
         assertEquals(listOf(workSecret), lists.allVisible)
     }
+
+    @Test
+    fun folders_show_only_visible_apps_and_prune_drops_uninstalled_ones() {
+        val chrome = app("Chrome")
+        val agenda = app("Agenda")
+        val gone = app("Disparue")
+        val folder = app.lanceur.folders.Folder(1, "Travail", app.lanceur.folders.FolderIcon.WORK, listOf(chrome.key, agenda.key, gone.key))
+        val prefs = LauncherPrefs(hidden = setOf(agenda.key), folders = listOf(folder))
+        assertEquals(listOf(chrome), VisibleApps.compute(listOf(chrome, agenda), prefs).folders.single().apps)
+        assertEquals(listOf(chrome.key, agenda.key), VisibleApps.prune(listOf(chrome, agenda), prefs).folders.single().apps)
+    }
 }

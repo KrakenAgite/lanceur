@@ -127,6 +127,24 @@ class LauncherViewModel(
         viewModelScope.launch { prefsRepo.unhide(key) }
     }
 
+    fun createFolder(name: String, icon: app.lanceur.folders.FolderIcon, first: AppKey? = null) {
+        viewModelScope.launch { prefsRepo.createFolder(name, icon, first) }
+    }
+
+    fun editFolder(id: Int, name: String, icon: app.lanceur.folders.FolderIcon) {
+        viewModelScope.launch { prefsRepo.editFolder(id, name, icon) }
+    }
+
+    /** Un dossier ouvert qu'on supprime ramène aux favoris. */
+    fun deleteFolder(id: Int) {
+        if (_listMode.value == ListMode.Folder(id)) _listMode.value = ListMode.Favorites
+        viewModelScope.launch { prefsRepo.deleteFolder(id) }
+    }
+
+    fun setInFolder(id: Int, key: AppKey, inFolder: Boolean) {
+        viewModelScope.launch { prefsRepo.setInFolder(id, key, inFolder) }
+    }
+
     fun setFavoritesOrder(keys: List<AppKey>) {
         viewModelScope.launch { prefsRepo.setFavoritesOrder(keys) }
     }

@@ -48,11 +48,21 @@ rôle d'écran d'accueil sont conservés. Espresso est fixé en 3.7.0 : la versi
 | Glisser sur l'alphabet | Applis de la lettre ; glisser vers une ligne et lâcher pour l'ouvrir |
 | Glisser vers le haut | Recherche |
 | Glisser vers le bas | Notifications |
-| Appui long sur une appli | Favori, cacher, infos, désinstaller |
+| Appui long sur une appli | Favori, ranger dans un dossier, cacher, infos, désinstaller |
+| Glisser sur les dossiers | Comme l'alphabet : chaque dossier s'ouvre au passage ; glisser vers une ligne et lâcher pour l'ouvrir |
+| Toucher l'icône d'un dossier | Ouvre le dossier ; retoucher (ou toucher une zone vide) revient aux favoris |
+| Appui long sur l'icône d'un dossier | Renommer, changer l'icône, supprimer |
 | Appui long sur l'heure | Dossier caché (empreinte) |
 | Appui long sur une zone vide | Réglages |
 | Double toucher sur une zone vide | Mise en veille (voir ci-dessous) |
 | Glisser vers la droite | Page de widgets (désactivable dans les réglages) |
+
+## Dossiers
+
+Leurs icônes sont dans l'angle en haut, au-dessus de l'alphabet. Pour en créer un : appui long sur une appli ›
+*Ranger dans un dossier…* › *Nouveau dossier*, puis un nom et une icône parmi la sélection. La même feuille coche ou
+décoche l'appli dans chaque dossier ; une appli peut être dans plusieurs dossiers. Une appli cachée n'y apparaît pas,
+une appli désinstallée en est retirée. Supprimer un dossier ne touche pas aux applis.
 
 ## Double toucher pour verrouiller
 

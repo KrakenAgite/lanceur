@@ -15,4 +15,6 @@ class HomeActions(
     val openCalendar: () -> Unit = {},
     val lockScreen: () -> Unit = {},
     val stopFocus: () -> Unit = {},
+    /** Appui long sur l'icône d'un dossier. */
+    val editFolder: (app.lanceur.folders.Folder) -> Unit = {},
 )

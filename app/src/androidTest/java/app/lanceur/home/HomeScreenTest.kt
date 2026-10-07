@@ -9,6 +9,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -47,7 +48,7 @@ class HomeScreenTest {
         privateApps = emptyList(),
     )
 
-    private fun show(actions: (setMode: (ListMode) -> Unit) -> HomeActions) {
+    private fun show(lists: AppLists = this.lists, actions: (setMode: (ListMode) -> Unit) -> HomeActions) {
         rule.setContent {
             var mode by remember { mutableStateOf<ListMode>(ListMode.Favorites) }
             MaterialTheme {
@@ -149,5 +150,47 @@ class HomeScreenTest {
         rule.onRoot().performTouchInput { click(Offset(centerX, height * 0.4f)) }
         rule.waitUntil(timeoutMillis = 2_000) { rule.onAllNodesWithText("Chrome").fetchSemanticsNodes().isNotEmpty() }
         assertFalse(locked)
+    }
+
+    @Test
+    fun folder_icons_open_their_apps_and_close_again() {
+        val work = app.lanceur.folders.Folder(4, "Travail", app.lanceur.folders.FolderIcon.WORK, listOf(agenda.key))
+        var edited: app.lanceur.folders.Folder? = null
+        show(lists.copy(folders = listOf(app.lanceur.prefs.FolderApps(work, listOf(agenda))))) { setMode ->
+            HomeActions(changeMode = setMode, editFolder = { edited = it })
+        }
+        rule.onNodeWithTag("folder-4").performClick()
+        rule.onNodeWithText("Travail").assertIsDisplayed()
+        rule.onNodeWithText("Agenda").assertIsDisplayed()
+        rule.onNodeWithText("Chrome").assertDoesNotExist()
+
+        rule.onNodeWithTag("folder-4").performClick()
+        rule.onNodeWithText("Chrome").assertIsDisplayed()
+
+        rule.onNodeWithTag("folder-4").performTouchInput { longClick() }
+        assertEquals(work, edited)
+    }
+
+    @Test
+    fun sliding_over_folders_opens_each_one_and_releasing_on_a_row_launches_it() {
+        val work = app.lanceur.folders.Folder(1, "Travail", app.lanceur.folders.FolderIcon.WORK, listOf(agenda.key))
+        val games = app.lanceur.folders.Folder(2, "Jeux", app.lanceur.folders.FolderIcon.GAMES, listOf(banque.key))
+        var launched: AppEntry? = null
+        val folders = listOf(app.lanceur.prefs.FolderApps(work, listOf(agenda)), app.lanceur.prefs.FolderApps(games, listOf(banque)))
+        show(lists.copy(folders = folders)) { setMode -> HomeActions(launch = { launched = it }, changeMode = setMode) }
+
+        val first = rule.onNodeWithTag("folder-1").fetchSemanticsNode().boundsInRoot.center
+        val second = rule.onNodeWithTag("folder-2").fetchSemanticsNode().boundsInRoot.center
+        rule.onRoot().performTouchInput {
+            down(first)
+            moveTo(second)
+        }
+        rule.onNodeWithText("Jeux").assertIsDisplayed()
+        val row = rule.onNodeWithText("Banque").fetchSemanticsNode().boundsInRoot.center
+        rule.onRoot().performTouchInput {
+            moveTo(Offset(second.x - 200f, row.y))
+            up()
+        }
+        assertEquals(banque, launched)
     }
 }

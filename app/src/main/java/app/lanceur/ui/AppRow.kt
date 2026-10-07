@@ -37,6 +37,8 @@ enum class AppMenuAction(private val fr: String, private val en: String) {
     UNHIDE("Ne plus cacher", "Unhide"),
     INFO("Infos de l'appli", "App info"),
     UNINSTALL("Désinstaller", "Uninstall"),
+    FOLDER("Ranger dans un dossier…", "Add to folder…"),
+    REMOVE_FROM_FOLDER("Retirer du dossier", "Remove from folder"),
     ;
 
     val label: String get() = tr(fr, en)

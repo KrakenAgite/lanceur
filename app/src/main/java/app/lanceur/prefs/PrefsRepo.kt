@@ -2,6 +2,8 @@ package app.lanceur.prefs
 
 import app.lanceur.apps.icons.IconShape
 import app.lanceur.focus.FocusMode
+import app.lanceur.folders.Folder
+import app.lanceur.folders.FolderIcon
 import app.lanceur.ui.AppLabelStyle
 import app.lanceur.apps.icons.IconStyle
 import androidx.datastore.core.DataStore
@@ -144,6 +146,31 @@ class PrefsRepo(
 
     suspend fun setWidgetPageEnabled(enabled: Boolean) = update { it.copy(widgetPageEnabled = enabled) }
 
+    /** Crée le dossier et y range [first] s'il est donné ; l'identifiant est choisi dans la transaction. */
+    suspend fun createFolder(name: String, icon: FolderIcon, first: AppKey? = null) = update { prefs ->
+        val folder = Folder(Folder.nextId(prefs.folders), Folder.clean(name), icon, listOfNotNull(first))
+        prefs.copy(folders = prefs.folders + folder)
+    }
+
+    suspend fun editFolder(id: Int, name: String, icon: FolderIcon) = update { prefs ->
+        prefs.copy(folders = prefs.folders.map { if (it.id == id) it.copy(name = Folder.clean(name), icon = icon) else it })
+    }
+
+    suspend fun deleteFolder(id: Int) = update { prefs -> prefs.copy(folders = prefs.folders.filterNot { it.id == id }) }
+
+    /** Ajoute ou retire [key] du dossier [id]. */
+    suspend fun setInFolder(id: Int, key: AppKey, inFolder: Boolean) = update { prefs ->
+        prefs.copy(
+            folders = prefs.folders.map { folder ->
+                when {
+                    folder.id != id -> folder
+                    inFolder -> if (key in folder.apps) folder else folder.copy(apps = folder.apps + key)
+                    else -> folder.copy(apps = folder.apps - key)
+                }
+            },
+        )
+    }
+
     suspend fun prune(catalog: List<AppEntry>) = update { VisibleApps.prune(catalog, it) }
 
     /** Une écriture impossible est signalée, pas propagée : le changement est simplement perdu. */
@@ -180,6 +207,7 @@ class PrefsRepo(
         val BACKUP_AUTO = booleanPreferencesKey("backup_auto")
         val BACKUP_LAST = androidx.datastore.preferences.core.longPreferencesKey("backup_last")
         val LABEL_UPPERCASE = booleanPreferencesKey("label_uppercase")
+        val FOLDERS = stringPreferencesKey("folders")
 
         fun decode(stored: Preferences) = LauncherPrefs(
             favorites = stored[FAVORITES].orEmpty().split('\n').mapNotNull(AppKey::decode),
@@ -195,6 +223,7 @@ class PrefsRepo(
             backup = BackupSettings(stored[BACKUP_FOLDER], stored[BACKUP_AUTO] ?: false, stored[BACKUP_LAST]),
             appLabelStyle = AppLabelStyle(stored[SHOW_ICONS] ?: true, stored[LABEL_UPPERCASE] ?: false),
             iconStyle = IconStyle(stored[ICON_PACK], IconShape.decode(stored[ICON_SHAPE]), stored[ICON_THEMED] ?: false),
+            folders = Folder.decodeAll(stored[FOLDERS]),
             widgets = stored[WIDGETS].orEmpty().split('\n').mapNotNull(WidgetSlot::decode).distinctBy { it.appWidgetId },
             widgetData = stored.asMap().mapNotNull { (key, value) ->
                 val id = key.name.takeIf { it.startsWith(DATA_PREFIX) }?.removePrefix(DATA_PREFIX)?.toIntOrNull()
@@ -225,6 +254,7 @@ class PrefsRepo(
             prefs.updates.notified?.let { out[UPDATE_NOTIFIED] = it } ?: out.remove(UPDATE_NOTIFIED)
             prefs.backup.last?.let { out[BACKUP_LAST] = it } ?: out.remove(BACKUP_LAST)
             out[LABEL_UPPERCASE] = prefs.appLabelStyle.uppercase
+            out[FOLDERS] = Folder.encodeAll(prefs.folders)
             out[WIDGETS] = prefs.widgets.joinToString("\n") { it.encode() }
             // Les données d'un widget retiré disparaissent avec lui
             out.asMap().keys.filter { it.name.startsWith(DATA_PREFIX) }.toList().forEach { out.remove(it) }

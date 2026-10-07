@@ -223,4 +223,25 @@ class PrefsRepoTest {
         repo.updateNews { (it ?: "") + "y" }
         assertEquals("xy", repo.prefs.first().news)
     }
+
+    @Test
+    fun folders_are_created_filled_edited_and_deleted() = runTest {
+        val repo = PrefsRepo(store())
+        repo.createFolder("Travail", app.lanceur.folders.FolderIcon.WORK, chrome.key)
+        repo.createFolder("Jeux", app.lanceur.folders.FolderIcon.GAMES)
+        val (work, games) = repo.prefs.first().folders
+        assertEquals(listOf(chrome.key), work.apps)
+        assertEquals(work.id + 1, games.id)
+
+        repo.setInFolder(games.id, agenda.key, true)
+        repo.setInFolder(games.id, agenda.key, true)
+        repo.setInFolder(work.id, chrome.key, false)
+        repo.editFolder(games.id, "Loisirs", app.lanceur.folders.FolderIcon.MOVIE)
+        val after = repo.prefs.first().folders
+        assertEquals(emptyList<Any>(), after[0].apps)
+        assertEquals(app.lanceur.folders.Folder(games.id, "Loisirs", app.lanceur.folders.FolderIcon.MOVIE, listOf(agenda.key)), after[1])
+
+        repo.deleteFolder(work.id)
+        assertEquals(listOf(games.id), repo.prefs.first().folders.map { it.id })
+    }
 }

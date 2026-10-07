@@ -66,6 +66,8 @@ import app.lanceur.builtin.calendar.CalendarCardActions
 import app.lanceur.builtin.contacts.FavoritesActions
 import app.lanceur.builtin.rememberMinuteClock
 import app.lanceur.builtin.shortcuts.ShortcutActions
+import app.lanceur.folders.FolderEditor
+import app.lanceur.folders.FolderSheet
 import app.lanceur.home.HomeActions
 import app.lanceur.home.HomePager
 import app.lanceur.home.HomeScreen
@@ -145,6 +147,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     var widgetRefresh by remember { mutableIntStateOf(0) }
     var pickerQuery by remember { mutableStateOf("") }
     // Feuille de réglages d'un widget intégré : à l'ajout (`appWidgetId` nul) ou par ⚙
+    var filing by remember { mutableStateOf<AppEntry?>(null) }
+    var editingFolder by remember { mutableStateOf<app.lanceur.folders.Folder?>(null) }
     var settingsRequest by remember { mutableStateOf<Pair<BuiltinKind, Int?>?>(null) }
 
     fun reloadSummary() {
@@ -283,6 +287,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
             AppMenuAction.UNHIDE -> vm.unhide(entry.key)
             AppMenuAction.INFO -> container.appLauncher.openAppInfo(entry.key)
             AppMenuAction.UNINSTALL -> container.appLauncher.uninstall(entry.key)
+            AppMenuAction.FOLDER -> filing = entry
+            AppMenuAction.REMOVE_FROM_FOLDER -> (mode as? ListMode.Folder)?.let { vm.setInFolder(it.id, entry.key, false) }
         }
     }
 
@@ -479,6 +485,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                         openClock = { container.appLauncher.openClock() },
                         openCalendar = { container.appLauncher.openCalendar() },
                         lockScreen = ::lockScreen,
+                        editFolder = { editingFolder = it },
                     ),
                 )
             },
@@ -685,6 +692,24 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 onDismiss = { addingFeed = false },
                 mine = newsState.feeds.map { it.url to it.title },
                 onRemoveFeeds = { urls -> vm.updateNews { urls.fold(NewsState.decode(it)) { state, url -> state.remove(url) }.encode() } },
+            )
+        }
+        filing?.let { entry ->
+            FolderSheet(
+                appLabel = entry.label,
+                folders = prefs.folders,
+                contains = { entry.key in it.apps },
+                onToggle = { folder, inFolder -> vm.setInFolder(folder.id, entry.key, inFolder) },
+                onCreate = { name, icon -> vm.createFolder(name, icon, entry.key) },
+                onDismiss = { filing = null },
+            )
+        }
+        editingFolder?.let { folder ->
+            FolderEditor(
+                folder = folder,
+                onSave = { name, icon -> vm.editFolder(folder.id, name, icon); editingFolder = null },
+                onDelete = { vm.deleteFolder(folder.id); editingFolder = null },
+                onDismiss = { editingFolder = null },
             )
         }
         settingsRequest?.let { (kind, id) ->

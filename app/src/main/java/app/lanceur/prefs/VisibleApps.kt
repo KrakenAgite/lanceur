@@ -15,11 +15,15 @@ data class AppLists(
     /** Applis qu'on peut cocher pour la concentration : la liste de l'accueil, sans le filtre de la concentration. */
     val focusCandidates: List<AppEntry> = emptyList(),
     val focusUntil: java.time.ZonedDateTime? = null,
+    /** Dossiers avec leurs applis visibles (un dossier vide reste affiché). */
+    val folders: List<FolderApps> = emptyList(),
 ) {
     companion object {
         val EMPTY = AppLists(emptyList(), emptyList(), emptyList(), emptyList())
     }
 }
+
+data class FolderApps(val folder: app.lanceur.folders.Folder, val apps: List<AppEntry>)
 
 object VisibleApps {
     fun compute(catalog: List<AppEntry>, prefs: LauncherPrefs, now: java.time.ZonedDateTime = java.time.ZonedDateTime.now()): AppLists {
@@ -37,6 +41,7 @@ object VisibleApps {
             focusActive = prefs.focus.isActive(now),
             focusCandidates = launchable.filterNot { it.key.packageName.startsWith("app.lanceur") },
             focusUntil = prefs.focus.activeUntil(now),
+            folders = prefs.folders.map { folder -> FolderApps(folder, folder.apps.mapNotNull { visibleByKey[it] }) },
         )
     }
 
@@ -51,6 +56,7 @@ object VisibleApps {
         return prefs.copy(
             favorites = prefs.favorites.filter { it in installed },
             hidden = prefs.hidden.filterTo(LinkedHashSet()) { it.packageInProfile() in installedPackages },
+            folders = prefs.folders.map { folder -> folder.copy(apps = folder.apps.filter { it in installed }) },
         )
     }
 
