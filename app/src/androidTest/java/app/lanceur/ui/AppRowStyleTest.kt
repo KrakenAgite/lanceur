@@ -10,6 +10,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
+import org.junit.Assert.assertEquals
 import app.lanceur.apps.AppEntry
 import app.lanceur.apps.AppKey
 import org.junit.Rule
@@ -57,5 +62,26 @@ class AppRowStyleTest {
         rule.onNodeWithTag("badge", useUnmergedTree = true).assertExists()
         badges = setOf("com.a" to 10L)
         rule.onNodeWithTag("badge", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun favorite_info_and_uninstall_are_icons_on_top_and_the_rest_stays_in_text() {
+        val picked = mutableListOf<AppMenuAction>()
+        rule.setContent {
+            MaterialTheme {
+                AppRow(
+                    entry, icon = {},
+                    menuItems = listOf(AppMenuAction.REMOVE_FAVORITE, AppMenuAction.HIDE, AppMenuAction.INFO, AppMenuAction.UNINSTALL),
+                    onClick = {}, onMenu = { picked += it },
+                )
+            }
+        }
+        rule.onNodeWithText("Calendrier").performTouchInput { longClick() }
+        rule.onNodeWithContentDescription("Retirer des favoris").assertExists()
+        rule.onNodeWithContentDescription("Désinstaller").assertExists()
+        rule.onNodeWithText("Cacher").assertExists()
+        rule.onNodeWithText("Infos de l'appli").assertDoesNotExist()
+        rule.onNodeWithTag("menu-INFO").performClick()
+        assertEquals(listOf(AppMenuAction.INFO), picked)
     }
 }

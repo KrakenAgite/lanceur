@@ -48,7 +48,7 @@ rôle d'écran d'accueil sont conservés. Espresso est fixé en 3.7.0 : la versi
 | Glisser sur l'alphabet | Applis de la lettre ; glisser vers une ligne et lâcher pour l'ouvrir |
 | Glisser vers le haut | Recherche |
 | Glisser vers le bas | Notifications |
-| Appui long sur une appli | Raccourcis de l'appli, favori, dossier, renommer, pause, cacher, infos, désinstaller |
+| Appui long sur une appli | En haut, trois icônes : favori (étoile, barrée pour le retirer), infos (i), désinstaller (poubelle) ; puis les raccourcis de l'appli, dossier, renommer, pause, cacher |
 | Glisser sur les dossiers | Comme l'alphabet, dans le même geste : on passe des lettres aux dossiers sans lever le doigt ; chaque dossier s'ouvre au passage |
 | Toucher l'icône d'un dossier | Ouvre le dossier ; retoucher (ou toucher une zone vide) revient aux favoris |
 | Appui long sur l'icône d'un dossier | Renommer, changer l'icône, réordonner ses applis, supprimer |

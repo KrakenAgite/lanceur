@@ -1,6 +1,18 @@
 package app.lanceur.ui
 
 import app.lanceur.i18n.tr
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -120,6 +132,18 @@ fun AppRow(
             }
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            // Favori, infos et désinstaller : une ligne d'icônes en haut du menu
+            val iconActions = menuItems.filter { it in ICON_ACTIONS }
+            if (iconActions.isNotEmpty()) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    iconActions.forEach { action ->
+                        IconButton(onClick = { menuOpen = false; onMenu(action) }, modifier = Modifier.testTag("menu-${action.name}")) {
+                            MenuIcon(action)
+                        }
+                    }
+                }
+                HorizontalDivider()
+            }
             shortcuts.forEach { shortcut ->
                 DropdownMenuItem(
                     text = { Text(shortcut.label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -128,9 +152,37 @@ fun AppRow(
                 )
             }
             if (shortcuts.isNotEmpty()) HorizontalDivider()
-            menuItems.forEach { action ->
+            menuItems.filter { it !in ICON_ACTIONS }.forEach { action ->
                 DropdownMenuItem(text = { Text(action.label) }, onClick = { menuOpen = false; onMenu(action) })
             }
         }
     }
 }
+
+private val ICON_ACTIONS = setOf(AppMenuAction.ADD_FAVORITE, AppMenuAction.REMOVE_FAVORITE, AppMenuAction.INFO, AppMenuAction.UNINSTALL)
+
+/** Étoile (ajouter aux favoris), étoile barrée (retirer), i dans un rond, poubelle ; le libellé reste lu par TalkBack. */
+@Composable
+private fun MenuIcon(action: AppMenuAction) {
+    val tint = MaterialTheme.colorScheme.onSurface
+    when (action) {
+        AppMenuAction.ADD_FAVORITE -> Icon(Icons.Outlined.StarOutline, contentDescription = action.label, tint = tint)
+        AppMenuAction.REMOVE_FAVORITE -> {
+            val gap = MaterialTheme.colorScheme.surfaceContainer
+            Box(Modifier.size(24.dp).semantics { contentDescription = action.label }) {
+                Icon(Icons.Outlined.StarOutline, contentDescription = null, tint = tint)
+                // Barre en travers, détourée de la couleur du menu pour rester lisible sur l'étoile
+                Canvas(Modifier.matchParentSize()) {
+                    val start = Offset(size.width * 0.12f, size.height * 0.12f)
+                    val end = Offset(size.width * 0.88f, size.height * 0.88f)
+                    drawLine(gap, start, end, strokeWidth = 5.dp.toPx(), cap = StrokeCap.Round)
+                    drawLine(tint, start, end, strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round)
+                }
+            }
+        }
+        AppMenuAction.INFO -> Icon(Icons.Outlined.Info, contentDescription = action.label, tint = tint)
+        AppMenuAction.UNINSTALL -> Icon(Icons.Outlined.Delete, contentDescription = action.label, tint = tint)
+        else -> Unit
+    }
+}
+
