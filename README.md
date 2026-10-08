@@ -1,7 +1,7 @@
 # Lanceur
 
 Launcher Android personnel pour Pixel 9 : favoris en liste, alphabet animé, recherche universelle
-(applis, web, agenda, contacts, réglages, calcul) et dossier caché protégé par l'empreinte, avec l'Espace privé.
+(applis, web, agenda, contacts, réglages, calcul, conversions) et dossier caché protégé par l'empreinte, avec l'Espace privé.
 
 Conception : `docs/superpowers/specs/2026-10-05-lanceur-design.md`.
 
@@ -66,6 +66,12 @@ rôle d'écran d'accueil sont conservés. Espresso est fixé en 3.7.0 : la versi
 - **Renommer** : le nouveau nom sert partout (listes, alphabet, recherche) ; *Nom d'origine* le rétablit.
 - **Pause avant d'ouvrir** : pour les applis qu'on ouvre trop vite, quelques secondes de respiration avant
   *Ouvrir* ; *Pas maintenant* ou Retour ne l'ouvrent pas. Fonctionne aussi depuis la recherche.
+
+## Conversions
+
+Dans la recherche, sans réseau : unités (« 5 miles en km », « 70°F », « 3 tasses en ml », « 2 Go en Mo »,
+« 100 km/h ») — sans unité demandée, l'équivalent usuel métrique ↔ impérial — et fuseaux horaires
+(« 15h à Tokyo », « heure à New York »), avec les villes des Horloges du monde. Toucher le résultat le copie.
 
 ## Horloge
 

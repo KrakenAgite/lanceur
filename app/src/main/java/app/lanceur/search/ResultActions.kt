@@ -21,6 +21,10 @@ class ResultActions(private val context: Context, private val launcher: AppLaunc
             context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(tr("Calcul", "Calculation"), result.value))
             true
         }
+        is SearchResult.Convert -> {
+            context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(tr("Conversion", "Conversion"), result.value))
+            true
+        }
         is SearchResult.Contact -> launcher.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(result.lookupUri)))
         is SearchResult.Event -> launcher.startSafely(
             Intent(Intent.ACTION_VIEW, ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, result.eventId))

@@ -162,7 +162,7 @@ fun SearchScreen(
         if (query.isBlank()) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
                 Text(
-                    tr("Applis · calcul · contacts · agenda · réglages · web", "Apps · math · contacts · calendar · settings · web"),
+                    tr("Applis · calcul · conversions · contacts · agenda · réglages · web", "Apps · math · conversions · contacts · calendar · settings · web"),
                     modifier = Modifier.padding(bottom = 16.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -276,6 +276,7 @@ private fun Tone.colors(): Pair<Color, Color> = with(MaterialTheme.colorScheme) 
 private fun resultKey(result: SearchResult): String = when (result) {
     is SearchResult.App -> "app:" + result.entry.key.encode()
     is SearchResult.Calc -> "calc"
+    is SearchResult.Convert -> "convert"
     is SearchResult.Contact -> "contact:" + result.lookupUri
     is SearchResult.Event -> "event:${result.eventId}:${result.begin}"
     is SearchResult.Setting -> "setting:" + result.action
@@ -293,6 +294,13 @@ private fun ResultRow(result: SearchResult, icon: @Composable (AppKey) -> Unit, 
             title = "= ${result.value}",
             titleStyle = MaterialTheme.typography.headlineSmall,
             subtitle = result.expression + tr(" · toucher pour copier", " · tap to copy"),
+            onClick = { actions.open(result) },
+        )
+        is SearchResult.Convert -> ResultLine(
+            badge = { TextBadge("⇄", Tone.PRIMARY) },
+            title = result.value,
+            titleStyle = MaterialTheme.typography.headlineSmall,
+            subtitle = result.detail + tr(" · toucher pour copier", " · tap to copy"),
             onClick = { actions.open(result) },
         )
         is SearchResult.Contact -> ResultLine(

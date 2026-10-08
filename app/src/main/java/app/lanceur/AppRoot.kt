@@ -322,7 +322,7 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
             container.catalog.reload()
         }
         // Copier un calcul garde la recherche ouverte
-        if (opened && result !is SearchResult.Calc) vm.show(Screen.HOME)
+        if (opened && result !is SearchResult.Calc && result !is SearchResult.Convert) vm.show(Screen.HOME)
     }
 
     fun removeWidget(slot: WidgetSlot) {

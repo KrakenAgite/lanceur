@@ -6,6 +6,9 @@ import app.lanceur.apps.AppEntry
 sealed interface SearchResult {
     data class App(val entry: AppEntry) : SearchResult
     data class Calc(val expression: String, val value: String) : SearchResult
+
+    /** [detail] : ce qui a été converti (« 5 mi → km ») ; [value] : le résultat, copié au toucher. */
+    data class Convert(val detail: String, val value: String) : SearchResult
     data class Contact(val lookupUri: String, val name: String, val phone: String?) : SearchResult
     data class Event(
         val eventId: Long,

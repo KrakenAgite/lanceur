@@ -19,6 +19,7 @@ import app.lanceur.news.NewsSource
 import app.lanceur.search.AppSearchProvider
 import app.lanceur.search.CalcProvider
 import app.lanceur.search.CalendarProvider
+import app.lanceur.search.ConvertProvider
 import app.lanceur.search.ContactsProvider
 import app.lanceur.search.PermissionHintProvider
 import app.lanceur.search.ResultActions
@@ -122,6 +123,7 @@ class AppContainer(context: Context) {
         providers = listOf(
             AppSearchProvider(visibleApps),
             CalcProvider,
+            ConvertProvider(),
             ContactsProvider(appContext),
             CalendarProvider(appContext),
             SettingsProvider,

@@ -11,7 +11,7 @@ object ResultSections {
         results.groupBy(::kind).map { (kind, items) -> ResultSection(kind.name, kind.title, items) }
 
     private enum class Kind(private val fr: String?, private val en: String?) {
-        HINT(null, null), APPS("Applis", "Apps"), CALC("Calcul", "Math"), CONTACTS("Contacts", "Contacts"),
+        HINT(null, null), APPS("Applis", "Apps"), CALC("Calcul", "Math"), CONVERT("Conversion", "Conversion"), CONTACTS("Contacts", "Contacts"),
         AGENDA("Agenda", "Calendar"), SETTINGS("Réglages", "Settings"), WEB("Web", "Web");
 
         val title: String? get() = fr?.let { tr(it, en!!) }
@@ -20,6 +20,7 @@ object ResultSections {
     private fun kind(result: SearchResult): Kind = when (result) {
         is SearchResult.App -> Kind.APPS
         is SearchResult.Calc -> Kind.CALC
+        is SearchResult.Convert -> Kind.CONVERT
         is SearchResult.Contact -> Kind.CONTACTS
         is SearchResult.Event -> Kind.AGENDA
         is SearchResult.Setting -> Kind.SETTINGS
