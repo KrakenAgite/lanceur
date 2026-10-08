@@ -79,6 +79,8 @@ class SettingsActions(
     val openWallpaper: () -> Unit = {},
     val setIconStyle: (app.lanceur.apps.icons.IconStyle) -> Unit = {},
     val setAppLabelStyle: (AppLabelStyle) -> Unit = {},
+    val setClockStyle: (app.lanceur.home.ClockStyle) -> Unit = {},
+    val setBadges: (Boolean) -> Unit = {},
     val focus: FocusActions = FocusActions(),
     val findIconPacks: () -> Unit = {},
     val grantNotificationAccess: () -> Unit = {},
@@ -224,7 +226,7 @@ fun SettingsScreen(
                     }
                     SectionTitle(tr("Ordre des favoris", "Favorites order"))
                     if (favorites.isEmpty()) HintText(tr("Aucun favori pour l'instant.", "No favorites yet."))
-                    else ReorderableFavorites(favorites, icon, actions.reorderFavorites)
+                    else ReorderableApps(favorites, icon, actions.reorderFavorites)
                 }
                 SettingsPage.APPEARANCE -> AppearanceSection(appearance, actions, onChoosePack = { choosingPack = true })
                 SettingsPage.PAGES -> PagesSection(pageOrder, widgetPageEnabled, newsEnabled, actions)

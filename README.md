@@ -48,21 +48,37 @@ rôle d'écran d'accueil sont conservés. Espresso est fixé en 3.7.0 : la versi
 | Glisser sur l'alphabet | Applis de la lettre ; glisser vers une ligne et lâcher pour l'ouvrir |
 | Glisser vers le haut | Recherche |
 | Glisser vers le bas | Notifications |
-| Appui long sur une appli | Favori, ranger dans un dossier, cacher, infos, désinstaller |
+| Appui long sur une appli | Raccourcis de l'appli, favori, dossier, renommer, pause, cacher, infos, désinstaller |
 | Glisser sur les dossiers | Comme l'alphabet, dans le même geste : on passe des lettres aux dossiers sans lever le doigt ; chaque dossier s'ouvre au passage |
 | Toucher l'icône d'un dossier | Ouvre le dossier ; retoucher (ou toucher une zone vide) revient aux favoris |
-| Appui long sur l'icône d'un dossier | Renommer, changer l'icône, supprimer |
+| Appui long sur l'icône d'un dossier | Renommer, changer l'icône, réordonner ses applis, supprimer |
 | Appui long sur l'heure | Dossier caché (empreinte) |
 | Appui long sur une zone vide | Réglages |
 | Double toucher sur une zone vide | Mise en veille (voir ci-dessous) |
 | Glisser vers la droite | Page de widgets (désactivable dans les réglages) |
+
+## Applis
+
+- **Raccourcis** : l'appui long montre en tête les raccourcis de l'appli (« Nouvelle conversation », contacts…).
+  Android ne les donne qu'à l'écran d'accueil par défaut.
+- **Pastilles** : un point après le nom des applis qui ont des notifications (sans nombre). Elles passent par l'accès
+  aux notifications (rien n'est lu) ; Réglages › Apparence › *Pastilles de notification* pour les couper.
+- **Renommer** : le nouveau nom sert partout (listes, alphabet, recherche) ; *Nom d'origine* le rétablit.
+- **Pause avant d'ouvrir** : pour les applis qu'on ouvre trop vite, quelques secondes de respiration avant
+  *Ouvrir* ; *Pas maintenant* ou Retour ne l'ouvrent pas. Fonctionne aussi depuis la recherche.
+
+## Horloge
+
+Réglages › Apparence › *Horloge* : six polices (Standard, Fine, Grasse, Classique, Machine, Manuscrite), trois tailles,
+heures sur deux lignes et date affichée ou non. Les dossiers et l'alphabet se placent sous l'horloge.
 
 ## Dossiers
 
 Leurs icônes sont dans l'angle en haut, au-dessus de l'alphabet. Pour en créer un : appui long sur une appli ›
 *Ranger dans un dossier…* › *Nouveau dossier*, puis un nom et une icône parmi la sélection. La même feuille coche ou
 décoche l'appli dans chaque dossier ; une appli peut être dans plusieurs dossiers. Une appli cachée n'y apparaît pas,
-une appli désinstallée en est retirée. Supprimer un dossier ne touche pas aux applis.
+une appli désinstallée en est retirée. L'appui long sur l'icône d'un dossier
+permet aussi de réordonner ses applis avec la poignée ☰. Supprimer un dossier ne touche pas aux applis.
 
 ## Double toucher pour verrouiller
 

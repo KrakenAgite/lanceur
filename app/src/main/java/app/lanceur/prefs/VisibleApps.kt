@@ -27,7 +27,8 @@ data class FolderApps(val folder: app.lanceur.folders.Folder, val apps: List<App
 
 object VisibleApps {
     fun compute(catalog: List<AppEntry>, prefs: LauncherPrefs, now: java.time.ZonedDateTime = java.time.ZonedDateTime.now()): AppLists {
-        val sorted = catalog.sortedWith(LabelOrder)
+        // Les noms choisis remplacent ceux des applis partout : listes, alphabet, recherche
+        val sorted = catalog.map { entry -> prefs.labels[entry.key]?.let { entry.copy(label = it) } ?: entry }.sortedWith(LabelOrder)
         val hiddenPackages = prefs.hidden.mapTo(HashSet()) { it.packageInProfile() }
         val isHidden = { entry: AppEntry -> entry.key.packageInProfile() in hiddenPackages }
         val launchable = sorted.filter { !it.isPrivateSpace && !isHidden(it) }
@@ -57,6 +58,8 @@ object VisibleApps {
             favorites = prefs.favorites.filter { it in installed },
             hidden = prefs.hidden.filterTo(LinkedHashSet()) { it.packageInProfile() in installedPackages },
             folders = prefs.folders.map { folder -> folder.copy(apps = folder.apps.filter { it in installed }) },
+            labels = prefs.labels.filterKeys { it in installed },
+            paused = prefs.paused.filterTo(LinkedHashSet()) { it in installed },
         )
     }
 

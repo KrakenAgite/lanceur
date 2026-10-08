@@ -146,6 +146,20 @@ class PrefsRepo(
 
     suspend fun setWidgetPageEnabled(enabled: Boolean) = update { it.copy(widgetPageEnabled = enabled) }
 
+    /** Un nom vide (ou identique à celui de l'appli) rétablit le nom d'origine. */
+    suspend fun setLabel(key: AppKey, label: String?) = update { prefs ->
+        val clean = label?.let(Folder::clean)?.takeIf { it.isNotEmpty() }
+        prefs.copy(labels = if (clean == null) prefs.labels - key else prefs.labels + (key to clean))
+    }
+
+    suspend fun setPaused(key: AppKey, paused: Boolean) = update { prefs ->
+        prefs.copy(paused = if (paused) prefs.paused + key else prefs.paused - key)
+    }
+
+    suspend fun setClockStyle(style: app.lanceur.home.ClockStyle) = update { it.copy(clock = style) }
+
+    suspend fun setBadges(on: Boolean) = update { it.copy(badges = on) }
+
     /** Crée le dossier et y range [first] s'il est donné ; l'identifiant est choisi dans la transaction. */
     suspend fun createFolder(name: String, icon: FolderIcon, first: AppKey? = null) = update { prefs ->
         val folder = Folder(Folder.nextId(prefs.folders), Folder.clean(name), icon, listOfNotNull(first))
@@ -154,6 +168,16 @@ class PrefsRepo(
 
     suspend fun editFolder(id: Int, name: String, icon: FolderIcon) = update { prefs ->
         prefs.copy(folders = prefs.folders.map { if (it.id == id) it.copy(name = Folder.clean(name), icon = icon) else it })
+    }
+
+    /** Réordonne le dossier selon [keys] ; une appli absente de [keys] (cachée, par exemple) reste à la fin. */
+    suspend fun setFolderOrder(id: Int, keys: List<AppKey>) = update { prefs ->
+        prefs.copy(
+            folders = prefs.folders.map { folder ->
+                if (folder.id != id) folder
+                else folder.copy(apps = keys.distinct().filter { it in folder.apps } + folder.apps.filter { it !in keys })
+            },
+        )
     }
 
     suspend fun deleteFolder(id: Int) = update { prefs -> prefs.copy(folders = prefs.folders.filterNot { it.id == id }) }
@@ -208,6 +232,10 @@ class PrefsRepo(
         val BACKUP_LAST = androidx.datastore.preferences.core.longPreferencesKey("backup_last")
         val LABEL_UPPERCASE = booleanPreferencesKey("label_uppercase")
         val FOLDERS = stringPreferencesKey("folders")
+        val LABELS = stringPreferencesKey("labels")
+        val PAUSED = stringSetPreferencesKey("paused_apps")
+        val CLOCK = stringPreferencesKey("clock_style")
+        val BADGES = booleanPreferencesKey("badges")
 
         fun decode(stored: Preferences) = LauncherPrefs(
             favorites = stored[FAVORITES].orEmpty().split('\n').mapNotNull(AppKey::decode),
@@ -224,6 +252,13 @@ class PrefsRepo(
             appLabelStyle = AppLabelStyle(stored[SHOW_ICONS] ?: true, stored[LABEL_UPPERCASE] ?: false),
             iconStyle = IconStyle(stored[ICON_PACK], IconShape.decode(stored[ICON_SHAPE]), stored[ICON_THEMED] ?: false),
             folders = Folder.decodeAll(stored[FOLDERS]),
+            labels = stored[LABELS].orEmpty().split('\n').mapNotNull { line ->
+                val tab = line.indexOf('\t')
+                if (tab <= 0) null else AppKey.decode(line.substring(0, tab))?.let { it to line.substring(tab + 1) }
+            }.toMap(),
+            paused = stored[PAUSED].orEmpty().mapNotNullTo(LinkedHashSet(), AppKey::decode),
+            clock = app.lanceur.home.ClockStyle.decode(stored[CLOCK]),
+            badges = stored[BADGES] ?: true,
             widgets = stored[WIDGETS].orEmpty().split('\n').mapNotNull(WidgetSlot::decode).distinctBy { it.appWidgetId },
             widgetData = stored.asMap().mapNotNull { (key, value) ->
                 val id = key.name.takeIf { it.startsWith(DATA_PREFIX) }?.removePrefix(DATA_PREFIX)?.toIntOrNull()
@@ -255,6 +290,10 @@ class PrefsRepo(
             prefs.backup.last?.let { out[BACKUP_LAST] = it } ?: out.remove(BACKUP_LAST)
             out[LABEL_UPPERCASE] = prefs.appLabelStyle.uppercase
             out[FOLDERS] = Folder.encodeAll(prefs.folders)
+            out[LABELS] = prefs.labels.entries.joinToString("\n") { (key, label) -> key.encode() + "\t" + Folder.clean(label) }
+            out[PAUSED] = prefs.paused.mapTo(HashSet()) { it.encode() }
+            out[CLOCK] = prefs.clock.encode()
+            out[BADGES] = prefs.badges
             out[WIDGETS] = prefs.widgets.joinToString("\n") { it.encode() }
             // Les données d'un widget retiré disparaissent avec lui
             out.asMap().keys.filter { it.name.startsWith(DATA_PREFIX) }.toList().forEach { out.remove(it) }

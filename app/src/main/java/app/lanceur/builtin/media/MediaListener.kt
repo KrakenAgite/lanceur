@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
 /**
  * Accès aux notifications, autorisé par l'utilisateur. Il sert à deux choses :
  * - piloter les lecteurs (`MediaSessionManager.getActiveSessions`) ;
- * - pendant la concentration, mettre en attente les notifications des applis masquées (si l'option est choisie).
+ * - pendant la concentration, mettre en attente les notifications des applis masquées (si l'option est choisie) ;
+ * - savoir quelles applis ont des notifications, pour leur pastille ([NotificationBadges]).
  * Le contenu des notifications n'est jamais lu : seuls comptent l'appli, le profil et le type (appel, alarme…).
  */
 class MediaListener : NotificationListenerService() {
@@ -44,15 +45,40 @@ class MediaListener : NotificationListenerService() {
                 }
             }
         }
+        refreshBadges()
     }
 
     override fun onListenerDisconnected() {
         scope?.cancel()
         scope = null
+        NotificationBadges.set(emptySet())
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         snoozeIfHidden(sbn, ZonedDateTime.now())
+        refreshBadges()
+    }
+
+    override fun onNotificationRemoved(sbn: StatusBarNotification) {
+        refreshBadges()
+    }
+
+    override fun onNotificationRankingUpdate(rankingMap: RankingMap) {
+        refreshBadges()
+    }
+
+    /** Notifications qu'on peut effacer et dont le canal accepte les pastilles (pas la musique, pas les appels en cours). */
+    private fun refreshBadges() {
+        val active = runCatching { activeNotifications }.getOrNull() ?: return
+        val ranking = runCatching { currentRanking }.getOrNull()
+        val users = getSystemService(UserManager::class.java)
+        NotificationBadges.set(
+            active.filter { sbn ->
+                !sbn.isOngoing && ranking?.let { map -> Ranking().takeIf { map.getRanking(sbn.key, it) }?.canShowBadge() } != false
+            }.mapTo(HashSet()) { sbn ->
+                sbn.packageName to runCatching { users.getSerialNumberForUser(sbn.user) }.getOrDefault(0L)
+            },
+        )
     }
 
     private fun sweep(now: ZonedDateTime) {

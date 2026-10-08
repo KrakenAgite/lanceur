@@ -79,4 +79,15 @@ class VisibleAppsTest {
         assertEquals(listOf(chrome), VisibleApps.compute(listOf(chrome, agenda), prefs).folders.single().apps)
         assertEquals(listOf(chrome.key, agenda.key), VisibleApps.prune(listOf(chrome, agenda), prefs).folders.single().apps)
     }
+
+    @Test
+    fun custom_names_replace_labels_and_change_the_order_and_prune_drops_uninstalled() {
+        val gone = app("Disparue")
+        val prefs = LauncherPrefs(labels = mapOf(chrome.key to "Aaa web", gone.key to "Zut"), paused = setOf(chrome.key, gone.key))
+        val visible = VisibleApps.compute(listOf(agenda, chrome), prefs).allVisible
+        assertEquals(listOf("Aaa web", "Agenda"), visible.map { it.label })
+        val pruned = VisibleApps.prune(listOf(agenda, chrome), prefs)
+        assertEquals(mapOf(chrome.key to "Aaa web"), pruned.labels)
+        assertEquals(setOf(chrome.key), pruned.paused)
+    }
 }

@@ -3,7 +3,19 @@ package app.lanceur.ui
 import app.lanceur.i18n.tr
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import app.lanceur.apps.AppShortcut
+import app.lanceur.apps.LocalAppShortcuts
+import app.lanceur.builtin.media.LocalBadges
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -39,6 +51,9 @@ enum class AppMenuAction(private val fr: String, private val en: String) {
     UNINSTALL("Désinstaller", "Uninstall"),
     FOLDER("Ranger dans un dossier…", "Add to folder…"),
     REMOVE_FROM_FOLDER("Retirer du dossier", "Remove from folder"),
+    RENAME("Renommer…", "Rename…"),
+    PAUSE("Pause avant d'ouvrir", "Pause before opening"),
+    UNPAUSE("Ouvrir sans pause", "Open without pause"),
     ;
 
     val label: String get() = tr(fr, en)
@@ -56,6 +71,13 @@ fun AppRow(
     highlighted: Boolean = false,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
+    val shortcutSource = LocalAppShortcuts.current
+    val iconPx = with(LocalDensity.current) { 24.dp.roundToPx() }
+    // Raccourcis lus à l'ouverture du menu seulement (appel système)
+    val shortcuts by produceState(emptyList<AppShortcut>(), menuOpen, entry.key) {
+        value = if (menuOpen) withContext(Dispatchers.IO) { shortcutSource.list(entry.key, iconPx) } else emptyList()
+    }
+    val badged = (entry.key.packageName to entry.key.userSerial) in LocalBadges.current
     val background by animateColorAsState(
         if (highlighted) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
         label = "surbrillance",
@@ -84,9 +106,28 @@ fun AppRow(
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
             )
+            if (badged) {
+                Box(
+                    Modifier
+                        .padding(start = 8.dp)
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .testTag("badge"),
+                )
+            }
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            shortcuts.forEach { shortcut ->
+                DropdownMenuItem(
+                    text = { Text(shortcut.label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    leadingIcon = shortcut.icon?.let { bitmap -> { Image(bitmap, contentDescription = null, modifier = Modifier.size(24.dp)) } },
+                    onClick = { menuOpen = false; shortcutSource.open(shortcut) },
+                )
+            }
+            if (shortcuts.isNotEmpty()) HorizontalDivider()
             menuItems.forEach { action ->
                 DropdownMenuItem(text = { Text(action.label) }, onClick = { menuOpen = false; onMenu(action) })
             }

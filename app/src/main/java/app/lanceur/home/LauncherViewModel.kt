@@ -141,6 +141,10 @@ class LauncherViewModel(
         viewModelScope.launch { prefsRepo.deleteFolder(id) }
     }
 
+    fun setFolderOrder(id: Int, keys: List<AppKey>) {
+        viewModelScope.launch { prefsRepo.setFolderOrder(id, keys) }
+    }
+
     fun setInFolder(id: Int, key: AppKey, inFolder: Boolean) {
         viewModelScope.launch { prefsRepo.setInFolder(id, key, inFolder) }
     }
@@ -195,6 +199,22 @@ class LauncherViewModel(
 
     fun setAppLabelStyle(style: app.lanceur.ui.AppLabelStyle) {
         viewModelScope.launch { prefsRepo.setAppLabelStyle(style) }
+    }
+
+    fun setLabel(key: AppKey, label: String?) {
+        viewModelScope.launch { prefsRepo.setLabel(key, label) }
+    }
+
+    fun setPaused(key: AppKey, paused: Boolean) {
+        viewModelScope.launch { prefsRepo.setPaused(key, paused) }
+    }
+
+    fun setClockStyle(style: ClockStyle) {
+        viewModelScope.launch { prefsRepo.setClockStyle(style) }
+    }
+
+    fun setBadges(on: Boolean) {
+        viewModelScope.launch { prefsRepo.setBadges(on) }
     }
 
     fun setIconStyle(style: app.lanceur.apps.icons.IconStyle) {

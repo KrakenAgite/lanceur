@@ -29,4 +29,11 @@ data class LauncherPrefs(
     val updates: UpdateSettings = UpdateSettings(),
     /** Dossiers, dans l'ordre d'affichage en haut de l'alphabet. */
     val folders: List<app.lanceur.folders.Folder> = emptyList(),
+    /** Noms choisis par l'utilisateur, à la place de ceux des applis. */
+    val labels: Map<AppKey, String> = emptyMap(),
+    /** Applis précédées d'une pause de quelques secondes avant de s'ouvrir. */
+    val paused: Set<AppKey> = emptySet(),
+    val clock: app.lanceur.home.ClockStyle = app.lanceur.home.ClockStyle(),
+    /** Pastille après le nom des applis qui ont des notifications. */
+    val badges: Boolean = true,
 )

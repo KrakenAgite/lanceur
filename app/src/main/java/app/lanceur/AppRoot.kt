@@ -69,6 +69,8 @@ import app.lanceur.builtin.shortcuts.ShortcutActions
 import app.lanceur.folders.FolderEditor
 import app.lanceur.folders.FolderSheet
 import app.lanceur.home.HomeActions
+import app.lanceur.home.PauseOverlay
+import app.lanceur.home.RenameDialog
 import app.lanceur.home.HomePager
 import app.lanceur.home.HomeScreen
 import app.lanceur.home.LauncherViewModel
@@ -148,6 +150,10 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     var pickerQuery by remember { mutableStateOf("") }
     // Feuille de réglages d'un widget intégré : à l'ajout (`appWidgetId` nul) ou par ⚙
     var filing by remember { mutableStateOf<AppEntry?>(null) }
+    var renaming by remember { mutableStateOf<AppEntry?>(null) }
+    var pausing by remember { mutableStateOf<AppEntry?>(null) }
+    val shortcuts = remember { app.lanceur.apps.AppShortcuts(context) }
+    val badges by app.lanceur.builtin.media.NotificationBadges.apps.collectAsStateWithLifecycle()
     var editingFolder by remember { mutableStateOf<app.lanceur.folders.Folder?>(null) }
     var settingsRequest by remember { mutableStateOf<Pair<BuiltinKind, Int?>?>(null) }
 
@@ -249,11 +255,16 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
-    fun launch(entry: AppEntry) {
+    fun launchNow(entry: AppEntry) {
         if (!container.appLauncher.launch(entry.key)) {
             toast(tr("Appli introuvable", "App not found"))
             container.catalog.reload()
         }
+    }
+
+    /** Une appli marquée passe d'abord par la pause. */
+    fun launch(entry: AppEntry) {
+        if (entry.key in prefs.paused) pausing = entry else launchNow(entry)
     }
 
     fun openVault() {
@@ -289,12 +300,20 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
             AppMenuAction.UNINSTALL -> container.appLauncher.uninstall(entry.key)
             AppMenuAction.FOLDER -> filing = entry
             AppMenuAction.REMOVE_FROM_FOLDER -> (mode as? ListMode.Folder)?.let { vm.setInFolder(it.id, entry.key, false) }
+            AppMenuAction.RENAME -> renaming = entry
+            AppMenuAction.PAUSE -> vm.setPaused(entry.key, true)
+            AppMenuAction.UNPAUSE -> vm.setPaused(entry.key, false)
         }
     }
 
     fun openResult(result: SearchResult) {
         if (result == SearchResult.PermissionHint) {
             permissionLauncher.launch(SearchPermissions.ALL)
+            return
+        }
+        if (result is SearchResult.App && result.entry.key in prefs.paused) {
+            vm.show(Screen.HOME)
+            pausing = result.entry
             return
         }
         val opened = container.resultActions.open(result)
@@ -399,7 +418,11 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
     }
     LaunchedEffect(newsState.feeds.map { it.url }) { if (newsState.feeds.any { it.fetchedAt == null }) refreshNews(force = false) }
     // Icônes et casse des noms des applis, partout où une appli est listée
-    CompositionLocalProvider(LocalAppLabelStyle provides prefs.appLabelStyle) {
+    CompositionLocalProvider(
+        LocalAppLabelStyle provides prefs.appLabelStyle,
+        app.lanceur.apps.LocalAppShortcuts provides shortcuts,
+        app.lanceur.builtin.media.LocalBadges provides if (prefs.badges) badges else emptySet(),
+    ) {
     Box(Modifier.fillMaxSize()) {
         // Seul le fond d'écran est visible pendant les quelques millisecondes du chargement
         if (loaded) HomePager(
@@ -473,6 +496,8 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     mode = mode,
                     side = prefs.alphabetSide,
                     icon = icon,
+                    clockStyle = prefs.clock,
+                    paused = prefs.paused,
                     actions = HomeActions(
                         stopFocus = vm::stopFocus,
                         launch = ::launch,
@@ -576,11 +601,16 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                     labelStyle = prefs.appLabelStyle,
                     packs = remember { IconPacks.installed(context) },
                     wallpaperLabel = remember { Wallpaper(context).label() },
+                    clock = prefs.clock,
+                    badges = prefs.badges,
+                    notificationAccess = notificationAccess,
                 ),
                 actions = SettingsActions(
                     openWallpaper = { container.appLauncher.startSafely(Wallpaper(context).intent()) },
                     setIconStyle = vm::setIconStyle,
                     setAppLabelStyle = vm::setAppLabelStyle,
+                    setClockStyle = vm::setClockStyle,
+                    setBadges = vm::setBadges,
                     grantNotificationAccess = builtinServices.grantMediaAccess,
                     allowNotifications = { notifyLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS) },
                     backupNow = { backupFileLauncher.launch(app.lanceur.prefs.Backup.fileName(java.time.LocalDateTime.now())) },
@@ -704,12 +734,33 @@ fun AppRoot(vm: LauncherViewModel, searchVm: SearchViewModel, container: AppCont
                 onDismiss = { filing = null },
             )
         }
+        renaming?.let { entry ->
+            val original = container.catalog.apps.value?.firstOrNull { it.key == entry.key }?.label ?: entry.label
+            RenameDialog(
+                current = entry.label,
+                original = original,
+                onSave = { name -> vm.setLabel(entry.key, name.takeIf { it.trim() != original }); renaming = null },
+                onReset = { vm.setLabel(entry.key, null); renaming = null },
+                onDismiss = { renaming = null },
+            )
+        }
+        pausing?.let { entry ->
+            PauseOverlay(
+                entry = entry,
+                icon = icon,
+                onOpen = { pausing = null; launchNow(entry) },
+                onCancel = { pausing = null },
+            )
+        }
         editingFolder?.let { folder ->
             FolderEditor(
                 folder = folder,
                 onSave = { name, icon -> vm.editFolder(folder.id, name, icon); editingFolder = null },
                 onDelete = { vm.deleteFolder(folder.id); editingFolder = null },
                 onDismiss = { editingFolder = null },
+                apps = lists.folders.firstOrNull { it.folder.id == folder.id }?.apps.orEmpty(),
+                appIcon = icon,
+                onReorder = { vm.setFolderOrder(folder.id, it) },
             )
         }
         settingsRequest?.let { (kind, id) ->

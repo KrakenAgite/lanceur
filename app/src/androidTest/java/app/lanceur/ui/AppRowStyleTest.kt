@@ -2,6 +2,8 @@ package app.lanceur.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Box
@@ -38,5 +40,22 @@ class AppRowStyleTest {
         show(AppLabelStyle(showIcons = false, uppercase = true))
         rule.onNodeWithTag("icon", useUnmergedTree = true).assertDoesNotExist()
         rule.onNodeWithText("CALENDRIER").assertExists()
+    }
+
+    @Test
+    fun a_dot_follows_the_name_only_when_the_app_has_notifications() {
+        var badges by androidx.compose.runtime.mutableStateOf(emptySet<Pair<String, Long>>())
+        rule.setContent {
+            MaterialTheme {
+                CompositionLocalProvider(app.lanceur.builtin.media.LocalBadges provides badges) {
+                    AppRow(entry, icon = {}, menuItems = emptyList(), onClick = {}, onMenu = {})
+                }
+            }
+        }
+        rule.onNodeWithTag("badge", useUnmergedTree = true).assertDoesNotExist()
+        badges = setOf("com.a" to 0L)
+        rule.onNodeWithTag("badge", useUnmergedTree = true).assertExists()
+        badges = setOf("com.a" to 10L)
+        rule.onNodeWithTag("badge", useUnmergedTree = true).assertDoesNotExist()
     }
 }

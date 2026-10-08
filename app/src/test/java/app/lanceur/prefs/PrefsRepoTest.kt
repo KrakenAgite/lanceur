@@ -244,4 +244,38 @@ class PrefsRepoTest {
         repo.deleteFolder(work.id)
         assertEquals(listOf(games.id), repo.prefs.first().folders.map { it.id })
     }
+
+    @Test
+    fun labels_pauses_clock_and_badges_are_saved() = runTest {
+        val repo = PrefsRepo(store())
+        repo.setLabel(chrome.key, "  Web\tperso ")
+        repo.setLabel(agenda.key, "Planning")
+        repo.setLabel(agenda.key, " ")
+        repo.setPaused(chrome.key, true)
+        repo.setClockStyle(app.lanceur.home.ClockStyle(app.lanceur.home.ClockFont.MONO, stacked = true))
+        repo.setBadges(false)
+        val prefs = repo.prefs.first()
+        assertEquals(mapOf(chrome.key to "Web perso"), prefs.labels)
+        assertEquals(setOf(chrome.key), prefs.paused)
+        assertEquals(app.lanceur.home.ClockStyle(app.lanceur.home.ClockFont.MONO, stacked = true), prefs.clock)
+        assertFalse(prefs.badges)
+
+        repo.setLabel(chrome.key, null)
+        repo.setPaused(chrome.key, false)
+        assertEquals(emptyMap<Any, Any>(), repo.prefs.first().labels)
+        assertEquals(emptySet<Any>(), repo.prefs.first().paused)
+    }
+
+    @Test
+    fun folder_order_follows_the_given_keys_and_keeps_the_others_at_the_end() = runTest {
+        val repo = PrefsRepo(store())
+        val banque = app("Banque")
+        repo.createFolder("Perso", app.lanceur.folders.FolderIcon.HOME, chrome.key)
+        val id = repo.prefs.first().folders.single().id
+        repo.setInFolder(id, agenda.key, true)
+        repo.setInFolder(id, banque.key, true)
+        // Banque, cachée par exemple, n'est pas dans la liste réordonnée : elle reste, à la fin
+        repo.setFolderOrder(id, listOf(agenda.key, chrome.key, app("Inconnue").key))
+        assertEquals(listOf(agenda.key, chrome.key, banque.key), repo.prefs.first().folders.single().apps)
+    }
 }

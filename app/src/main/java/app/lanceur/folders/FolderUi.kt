@@ -65,7 +65,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.lanceur.apps.AppEntry
+import app.lanceur.apps.AppKey
 import app.lanceur.i18n.tr
+import app.lanceur.settings.ReorderableApps
 import app.lanceur.prefs.FolderApps
 import app.lanceur.ui.cardBackground
 
@@ -251,6 +254,10 @@ fun FolderEditor(
     onSave: (String, FolderIcon) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
+    /** Applis visibles du dossier, dans leur ordre ; [onReorder] l'enregistre dès qu'on lâche une appli. */
+    apps: List<AppEntry> = emptyList(),
+    appIcon: @Composable (AppKey) -> Unit = {},
+    onReorder: (List<AppKey>) -> Unit = {},
 ) {
     var name by remember { mutableStateOf(folder.name) }
     var icon by remember { mutableStateOf(folder.icon) }
@@ -269,7 +276,17 @@ fun FolderEditor(
         onDismissRequest = onDismiss,
         title = { Text(tr("Dossier", "Folder")) },
         text = {
-            FolderForm(folder.name, folder.icon, confirmLabel = null, onConfirm = { _, _ -> }, onChange = { n, i -> name = n; icon = i })
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                FolderForm(folder.name, folder.icon, confirmLabel = null, onConfirm = { _, _ -> }, onChange = { n, i -> name = n; icon = i })
+                if (apps.size > 1) {
+                    Text(
+                        tr("Ordre des applis", "App order"),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(top = 20.dp, bottom = 4.dp),
+                    )
+                    ReorderableApps(apps, appIcon, onReorder)
+                }
+            }
         },
         confirmButton = {
             Button(onClick = { onSave(name, icon) }, enabled = name.isNotBlank()) { Text(tr("Enregistrer", "Save")) }

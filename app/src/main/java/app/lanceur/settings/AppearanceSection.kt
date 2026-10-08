@@ -43,6 +43,10 @@ data class AppearanceState(
     val labelStyle: AppLabelStyle = AppLabelStyle(),
     val packs: List<IconPackInfo> = emptyList(),
     val wallpaperLabel: String? = null,
+    val clock: app.lanceur.home.ClockStyle = app.lanceur.home.ClockStyle(),
+    val badges: Boolean = true,
+    /** Les pastilles passent par l'accès aux notifications. */
+    val notificationAccess: Boolean = true,
 )
 
 private val ROW_SHAPE = RoundedCornerShape(20.dp)
@@ -67,6 +71,16 @@ fun AppearanceSection(state: AppearanceState, actions: SettingsActions, onChoose
         checked = state.labelStyle.uppercase,
         tag = "label-uppercase",
     ) { actions.setAppLabelStyle(state.labelStyle.copy(uppercase = it)) }
+    SwitchRow(
+        title = tr("Pastilles de notification", "Notification dots"),
+        subtitle = if (state.notificationAccess) tr("Un point après le nom des applis qui ont des notifications", "A dot after the name of apps with notifications")
+        else tr("Demande l'accès aux notifications (rien n'est lu)", "Needs notification access (nothing is read)"),
+        checked = state.badges && state.notificationAccess,
+        tag = "badges",
+    ) { on ->
+        if (on && !state.notificationAccess) actions.grantNotificationAccess()
+        actions.setBadges(on)
+    }
     // Pack, forme et thème n'ont de sens qu'avec les icônes
     if (state.labelStyle.showIcons) {
         val packName = state.iconStyle.pack?.let { p -> state.packs.firstOrNull { it.packageName == p }?.label ?: p }
@@ -98,10 +112,11 @@ fun AppearanceSection(state: AppearanceState, actions: SettingsActions, onChoose
             HintText(tr("Forme et thème s'appliquent aux applis absentes du pack.", "Shape and theme apply to apps missing from the pack."))
         }
     }
+    ClockSection(state.clock, actions.setClockStyle)
 }
 
 @Composable
-private fun SwitchRow(title: String, subtitle: String, checked: Boolean, tag: String, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(title: String, subtitle: String, checked: Boolean, tag: String, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium)

@@ -217,4 +217,17 @@ class HomeScreenTest {
         }
         assertEquals(chrome, launched)
     }
+
+    @Test
+    fun a_taller_clock_moves_the_alphabet_down() {
+        var style by mutableStateOf(ClockStyle())
+        rule.setContent {
+            MaterialTheme { HomeScreen(lists = lists, mode = ListMode.Favorites, side = AlphabetSide.RIGHT, actions = HomeActions(), icon = {}, clockStyle = style) }
+        }
+        val before = rule.onNodeWithTag("alphabet").fetchSemanticsNode().boundsInRoot.top
+        style = ClockStyle(size = ClockSize.LARGE, stacked = true)
+        rule.waitForIdle()
+        val after = rule.onNodeWithTag("alphabet").fetchSemanticsNode().boundsInRoot.top
+        assertTrue(after > before + 50f)
+    }
 }

@@ -33,6 +33,7 @@ fun Clock(
     onClockLongPress: () -> Unit,
     onDateTap: () -> Unit,
     modifier: Modifier = Modifier,
+    style: ClockStyle = ClockStyle(),
     currentTime: () -> LocalDateTime = LocalDateTime::now,
 ) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -53,13 +54,15 @@ fun Clock(
         blurRadius = 12f,
     )
     Column(modifier.padding(horizontal = 24.dp, vertical = 32.dp)) {
+        val time = now.format(TIME)
         Text(
-            now.format(TIME),
-            style = MaterialTheme.typography.displayLarge.copy(shadow = shadow, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
+            // Sur deux lignes : les heures au-dessus des minutes
+            if (style.stacked) time.replace(":", "\n") else time,
+            style = style.timeStyle(MaterialTheme.typography.displayLarge).copy(shadow = shadow),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.combinedClickable(onClick = onClockTap, onLongClick = onClockLongPress),
         )
-        Text(
+        if (style.showDate) Text(
             now.format(DATE).replaceFirstChar { it.titlecase(Locale.FRENCH) },
             style = MaterialTheme.typography.titleMedium.copy(shadow = shadow),
             color = MaterialTheme.colorScheme.onSurface,

@@ -41,9 +41,9 @@ import kotlin.math.roundToInt
 
 private val ROW_HEIGHT = 64.dp
 
-/** Glisser la poignée pour déplacer un favori ; l'ordre est enregistré quand on lâche. */
+/** Glisser la poignée pour déplacer une appli (favoris, contenu d'un dossier) ; l'ordre est enregistré quand on lâche. */
 @Composable
-fun ReorderableFavorites(items: List<AppEntry>, icon: @Composable (AppKey) -> Unit, onCommit: (List<AppKey>) -> Unit) {
+fun ReorderableApps(items: List<AppEntry>, icon: @Composable (AppKey) -> Unit, onCommit: (List<AppKey>) -> Unit) {
     // Un seul état stable : les gestes déjà lancés (pointerInput par clé) lisent toujours la liste à jour
     var working by remember { mutableStateOf(items) }
     var draggingKey by remember { mutableStateOf<AppKey?>(null) }

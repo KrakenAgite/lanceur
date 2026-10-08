@@ -43,7 +43,7 @@ class ReorderableFavoritesTest {
             val current by remember { derivedStateOf { order } }
             MaterialTheme {
                 // Comme dans l'app : l'ordre enregistré revient dans `items` après chaque dépôt
-                ReorderableFavorites(current, icon = {}, onCommit = { keys -> order = keys.map { k -> listOf(a, b, c).first { it.key == k } } })
+                ReorderableApps(current, icon = {}, onCommit = { keys -> order = keys.map { k -> listOf(a, b, c).first { it.key == k } } })
             }
         }
         drag("A", 2.4f) // A, B, C → B, C, A
@@ -52,5 +52,22 @@ class ReorderableFavoritesTest {
         assertEquals(listOf(c, b, a), order)
         drag("A", -1.2f) // → C, A, B
         assertEquals(listOf(c, a, b), order)
+    }
+
+    @Test
+    fun folder_editor_reorders_its_apps() {
+        var order: List<AppKey>? = null
+        rule.setContent {
+            MaterialTheme {
+                app.lanceur.folders.FolderEditor(
+                    folder = app.lanceur.folders.Folder(1, "Perso", app.lanceur.folders.FolderIcon.HOME, listOf(a.key, b.key, c.key)),
+                    onSave = { _, _ -> }, onDelete = {}, onDismiss = {},
+                    apps = listOf(a, b, c),
+                    onReorder = { order = it },
+                )
+            }
+        }
+        drag("A", 1.4f)
+        assertEquals(listOf(b.key, a.key, c.key), order)
     }
 }

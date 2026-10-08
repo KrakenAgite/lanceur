@@ -71,7 +71,6 @@ import app.lanceur.ui.AppMenuAction
 import app.lanceur.ui.AppRow
 import kotlin.math.roundToInt
 
-private val HEADER_HEIGHT = 168.dp
 private val BAR_WIDTH = 36.dp
 private val FOLDERS_TOP = 8.dp
 
@@ -83,7 +82,12 @@ fun HomeScreen(
     actions: HomeActions,
     icon: @Composable (AppKey) -> Unit,
     modifier: Modifier = Modifier,
+    clockStyle: ClockStyle = ClockStyle(),
+    /** Applis précédées d'une pause : leur menu propose de la retirer. */
+    paused: Set<AppKey> = emptySet(),
 ) {
+    // L'en-tête suit la taille de l'horloge : dossiers et alphabet commencent juste dessous
+    val headerHeight = clockStyle.headerHeight
     val sections = remember(lists.allVisible) { LetterIndex.build(lists.allVisible) }
     val enabled = remember(sections) { sections.map { !it.isEmpty } }
     val favoriteKeys = remember(lists.favorites) { lists.favorites.mapTo(HashSet()) { it.key } }
@@ -141,8 +145,8 @@ fun HomeScreen(
             width = width,
             folderCount = folderList.size,
             folderTop = FOLDERS_TOP.toPx(),
-            folderPitch = folderPitch(HEADER_HEIGHT - FOLDERS_TOP, folderList.size).toPx(),
-            alphabetTop = HEADER_HEIGHT.toPx(),
+            folderPitch = folderPitch(headerHeight - FOLDERS_TOP, folderList.size).toPx(),
+            alphabetTop = headerHeight.toPx(),
             alphabetHeight = alphabetHeight,
             side = currentSide,
             inwardThresholdPx = 24.dp.toPx(),
@@ -208,9 +212,11 @@ fun HomeScreen(
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         val width = size.width.toFloat()
-                        if (!BarScrub.startsOnBar(down.position.y, latestGeometry(width))) return@awaitEachGesture
+                        // Géométrie relue à chaque geste : l'en-tête change avec le style de l'horloge
+                        val geometry = latestGeometry(width)
+                        if (!BarScrub.startsOnBar(down.position.y, geometry)) return@awaitEachGesture
                         down.consume()
-                        val onFolders = down.position.y < HEADER_HEIGHT.toPx()
+                        val onFolders = down.position.y < geometry.alphabetTop
                         openAtDown = (currentMode as? ListMode.Folder)?.id
                         latestScrub(down.position.x, down.position.y, width)
                         var moved = false
@@ -249,7 +255,7 @@ fun HomeScreen(
                 activeIndex = BarScrub.folderIndex(barPhase),
                 modifier = Modifier
                     .padding(top = FOLDERS_TOP)
-                    .height(HEADER_HEIGHT - FOLDERS_TOP)
+                    .height(headerHeight - FOLDERS_TOP)
                     .fillMaxWidth(),
             )
             AlphabetBar(
@@ -308,7 +314,8 @@ fun HomeScreen(
                     onClockTap = { act.openClock() },
                     onClockLongPress = { act.openVault() },
                     onDateTap = { act.openCalendar() },
-                    modifier = Modifier.height(HEADER_HEIGHT),
+                    modifier = Modifier.height(headerHeight),
+                    style = clockStyle,
                 )
                 if (lists.focusActive) app.lanceur.focus.FocusBanner(until = lists.focusUntil, onStop = { act.stopFocus() })
                 LazyColumn(
@@ -351,7 +358,7 @@ fun HomeScreen(
                         AppRow(
                             entry = entry,
                             icon = icon,
-                            menuItems = menuFor(entry, favoriteKeys, inFolder = openFolder != null),
+                            menuItems = menuFor(entry, favoriteKeys, inFolder = openFolder != null, paused = entry.key in paused),
                             highlighted = entry.key == highlighted,
                             onClick = { act.launch(entry) },
                             onMenu = { act.menu(entry, it) },
@@ -398,10 +405,12 @@ private fun Bubble(modifier: Modifier = Modifier, content: @Composable () -> Uni
     ) { content() }
 }
 
-private fun menuFor(entry: AppEntry, favorites: Set<AppKey>, inFolder: Boolean) = listOfNotNull(
+private fun menuFor(entry: AppEntry, favorites: Set<AppKey>, inFolder: Boolean, paused: Boolean) = listOfNotNull(
     if (entry.key in favorites) AppMenuAction.REMOVE_FAVORITE else AppMenuAction.ADD_FAVORITE,
     AppMenuAction.FOLDER,
     if (inFolder) AppMenuAction.REMOVE_FROM_FOLDER else null,
+    AppMenuAction.RENAME,
+    if (paused) AppMenuAction.UNPAUSE else AppMenuAction.PAUSE,
     AppMenuAction.HIDE,
     AppMenuAction.INFO,
     AppMenuAction.UNINSTALL,
